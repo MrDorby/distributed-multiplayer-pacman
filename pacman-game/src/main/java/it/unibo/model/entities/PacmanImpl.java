@@ -42,7 +42,8 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
 
     @Override
     public void move(Direction direction) {
-
+        this.direction = direction;     // TODO: Is it right to do so?
+                                        // The MovementManager needs to calculate the position?
     }
 
     @Override
@@ -67,7 +68,8 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
 
     @Override
     public void update(GameContext currentContext) {
-
+        // TODO: Understand if here the pacman needs to check possible collision and
+        // accordingly move to the direction
     }
 
     @Override
