@@ -1,4 +1,4 @@
 package it.unibo.model.entities;
 
-public interface Ghost {
+public interface Ghost extends MovableEntity {
 }

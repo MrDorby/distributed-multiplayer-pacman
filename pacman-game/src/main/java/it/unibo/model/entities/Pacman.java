@@ -4,7 +4,7 @@ import it.unibo.model.common.Direction;
 
 import java.util.UUID;
 
-public interface Pacman {
+public interface Pacman extends MovableEntity {
     UUID getId();
     int getScore();
     int getLives();
