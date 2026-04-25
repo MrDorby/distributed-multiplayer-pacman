@@ -7,23 +7,35 @@ import java.util.Map;
 import java.util.Optional;
 
 public class GameStateImpl implements GameState {
+    private final Map<Pacman, Integer> leaderboard;
+    private final Duration timeLeft;
+    private final boolean isGameOver;
+    private final Pacman winner;
+
+    public GameStateImpl(Map<Pacman, Integer> leaderboard, Duration timeLeft, boolean isGameOver, Pacman winner) {
+        this.leaderboard = leaderboard;
+        this.timeLeft = timeLeft;
+        this.isGameOver = isGameOver;
+        this.winner = winner;
+    }
+
     @Override
     public Map<Pacman, Integer> getLeaderboard() {
-        return Map.of();
+        return leaderboard;
     }
 
     @Override
     public Duration getTimeLeft() {
-        return null;
+        return timeLeft;
     }
 
     @Override
     public boolean isGameOver() {
-        return false;
+        return isGameOver;
     }
 
     @Override
     public Optional<Pacman> getWinner() {
-        return Optional.empty();
+        return Optional.ofNullable(winner);
     }
 }
