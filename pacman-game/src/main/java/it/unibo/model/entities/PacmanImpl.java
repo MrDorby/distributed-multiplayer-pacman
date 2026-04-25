@@ -1,12 +1,15 @@
 package it.unibo.model.entities;
 
 import it.unibo.model.collisions.BoundingBox;
+import it.unibo.model.collisions.Collision;
 import it.unibo.model.common.Direction;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.Tile;
 
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 public class PacmanImpl extends GameEntityImpl implements Pacman{
 
@@ -17,6 +20,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
     private boolean controlledByPlayer;
     private boolean ghostCanBeEaten;
     private Direction direction;
+    private Direction previousDirection;
 
     public PacmanImpl(Tile tile) {
         super(tile);
@@ -42,6 +46,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
 
     @Override
     public void move(Direction direction) {
+        this.previousDirection = this.direction;
         this.direction = direction;     // TODO: Is it right to do so?
                                         // The MovementManager needs to calculate the position?
     }
@@ -70,20 +75,27 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
     public void update(GameContext currentContext) {
         // TODO: Understand if here the pacman needs to check possible collision and
         // accordingly move to the direction
+        Set<Collision> collision = currentContext.getCollisions(this);
+        Stream<Collision> ghosts = collision.stream().filter(x -> x.getGameEntity() instanceof Ghost);
+        ghosts.findFirst().ifPresent(_ -> checkPlayerIsAlive());
+        Stream<Collision> dots = collision.stream().filter(x -> x.getGameEntity() instanceof Dot);
+        dots.findAny().ifPresent(_ -> this.score = this.score + 1);
+
+        // At the end, invoking the method move from MovementManager.
     }
 
-    @Override
-    public Vector2D getPosition() {
-        return super.getPosition();
-    }
-
-    @Override
-    public BoundingBox getBoundingBox() {
-        return super.getBoundingBox();
+    private void checkPlayerIsAlive() {
+        if (!this.ghostCanBeEaten) {
+            if (this.lives > 0) {
+                this.lives = this.lives - 1;
+            } else {
+                super.setIsAlive(false);
+            }
+        }
     }
 
     @Override
     public boolean isAlive() {
-        return super.isAlive();
+        return this.lives > 0;
     }
 }

@@ -3,7 +3,6 @@ package it.unibo.test.entities;
 import it.unibo.model.common.Direction;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.Dot;
-import it.unibo.model.entities.GameEntity;
 import it.unibo.model.entities.Pacman;
 import it.unibo.model.entities.PacmanImpl;
 import it.unibo.model.map.Tile;
@@ -17,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GameEntitiesTest {
 
-    private static int NUMBER_LIVES = 3;
+    private static final int NUMBER_LIVES = 3;
 
     @Test
     public void initialPacmanInstance() {
@@ -30,15 +29,37 @@ public class GameEntitiesTest {
     public void movePacmanRight() {
         int x = 0, y = 0;
         Pacman pacman = beginningPacman();
-        assertEquals(new Vector2D(x, y), pacman.getPosition());
-        pacman.move(Direction.RIGHT);
-        assertEquals(new Vector2D(x + 1, y), pacman.getPosition());
+        Vector2D initialPosition = new Vector2D(x, y);
+        assertEquals(initialPosition, pacman.getPosition());
+        Direction direction = Direction.RIGHT;
+        pacman.move(direction);
+        assertEquals(nextPosition(direction, initialPosition), pacman.getPosition());
+    }
+
+    @Test
+    public void scorePacman() {
+
+    }
+
+    @Test
+    public void hungryPacman() {
+
     }
 
     private Pacman beginningPacman() {
         int x = 0, y = 0;
         Vector2D centre = new Vector2D(x, y);
         return new PacmanImpl(new TileForHelp(centre));
+    }
+
+    private Vector2D nextPosition(Direction direction, Vector2D initialPosition) {
+        return switch (direction) {
+            case UP -> new Vector2D(initialPosition.x(), initialPosition.y() - 1);
+            case DOWN -> new Vector2D(initialPosition.x(), initialPosition.y() + 1);
+            case LEFT -> new Vector2D(initialPosition.x() - 1, initialPosition.y());
+            case RIGHT -> new Vector2D(initialPosition.x() + 1, initialPosition.y());
+            default -> initialPosition;
+        };
     }
 
     private static class TileForHelp implements Tile {

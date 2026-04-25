@@ -29,4 +29,10 @@ public interface GameEntity {
      * @return a boolean that indicates if the GameEntity is alive or not.
      */
     boolean isAlive();
+
+    /**
+     * Sets if the GameEntity is alive or not.
+     * @param isAlive the condition to be applied.
+     */
+    void setIsAlive(boolean isAlive);
 }

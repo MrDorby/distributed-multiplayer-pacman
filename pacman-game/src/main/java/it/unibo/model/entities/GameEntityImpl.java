@@ -25,6 +25,10 @@ public abstract class GameEntityImpl implements GameEntity {
         return this.position;
     }
 
+    protected void setPosition(Vector2D position) {
+        this.position = position;
+    }
+
     @Override
     public BoundingBox getBoundingBox() {
         return this.boundingBox;
@@ -33,5 +37,10 @@ public abstract class GameEntityImpl implements GameEntity {
     @Override
     public boolean isAlive() {
         return this.alive;
+    }
+
+    @Override
+    public void setIsAlive(boolean isAlive) {
+        this.alive = isAlive;
     }
 }

@@ -4,11 +4,19 @@ import it.unibo.model.collisions.BoundingBox;
 import it.unibo.model.common.Direction;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
+import it.unibo.model.map.Tile;
 
-public class GhostImpl implements Ghost {
+public class GhostImpl extends GameEntityImpl implements Ghost {
+
+    private Direction direction;
+
+    public GhostImpl(Tile tile) {
+        super(tile);
+    }
+
     @Override
     public Direction getDirection() {
-        return null;
+        return this.direction;
     }
 
     @Override
@@ -16,18 +24,4 @@ public class GhostImpl implements Ghost {
 
     }
 
-    @Override
-    public Vector2D getPosition() {
-        return null;
-    }
-
-    @Override
-    public BoundingBox getBoundingBox() {
-        return null;
-    }
-
-    @Override
-    public boolean isAlive() {
-        return false;
-    }
 }
