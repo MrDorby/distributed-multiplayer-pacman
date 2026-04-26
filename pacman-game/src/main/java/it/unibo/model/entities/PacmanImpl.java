@@ -1,9 +1,7 @@
 package it.unibo.model.entities;
 
-import it.unibo.model.collisions.BoundingBox;
 import it.unibo.model.collisions.Collision;
 import it.unibo.model.common.Direction;
-import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.Tile;
 
@@ -14,11 +12,13 @@ import java.util.stream.Stream;
 public class PacmanImpl extends GameEntityImpl implements Pacman{
 
     private final static int NUMBER_LIVES = 3;
+    private final static int TIME_CAN_EAT_GHOSTS = 5;
     private final UUID id;
     private int score;
     private int lives;
     private boolean controlledByPlayer;
-    private boolean ghostCanBeEaten;
+    private boolean canEatGhosts;
+    private long whenSpecialDotEat;
     private Direction direction;
     private Direction previousDirection;
 
@@ -58,7 +58,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
 
     @Override
     public boolean canEatGhost() {
-        return this.ghostCanBeEaten;
+        return this.canEatGhosts;
     }
 
     @Override
@@ -76,22 +76,36 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
         // TODO: Understand if here the pacman needs to check possible collision and
         // accordingly move to the direction
         Set<Collision> collision = currentContext.getCollisions(this);
-        Stream<Collision> ghosts = collision.stream().filter(x -> x.getGameEntity() instanceof Ghost);
+        Stream<Ghost> ghosts = collision.stream().filter(x -> x.getGameEntity() instanceof Ghost).map(x -> (Ghost) x.getGameEntity());
         ghosts.findFirst().ifPresent(_ -> checkPlayerIsAlive());
-        Stream<Collision> dots = collision.stream().filter(x -> x.getGameEntity() instanceof Dot);
-        dots.findAny().ifPresent(_ -> this.score = this.score + 1);
+        if (this.isAlive()) {
+            Stream<Dot> dots = collision.stream().filter(x -> x.getGameEntity() instanceof Dot).map(x -> (Dot) x.getGameEntity());
+            dots.findFirst().ifPresent(this::checkSpecialDot);
+        }
+        if (System.currentTimeMillis() - this.whenSpecialDotEat >= TIME_CAN_EAT_GHOSTS) {
+            this.canEatGhosts = false;
+        }
 
         // At the end, invoking the method move from MovementManager.
+        // move();
     }
 
     private void checkPlayerIsAlive() {
-        if (!this.ghostCanBeEaten) {
+        if (!this.canEatGhosts) {
             if (this.lives > 0) {
                 this.lives = this.lives - 1;
             } else {
                 super.setIsAlive(false);
             }
         }
+    }
+
+    private void checkSpecialDot(Dot dot) {
+        if (dot.isSpecial()) {
+            this.canEatGhosts = true;
+            this.whenSpecialDotEat = System.currentTimeMillis();
+        }
+        this.score = this.score + dot.dotValue();
     }
 
     @Override
