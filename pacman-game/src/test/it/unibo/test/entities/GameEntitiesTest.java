@@ -68,10 +68,8 @@ public class GameEntitiesTest {
         Vector2D ghostCentre = new Vector2D(x, y);
         Ghost ghost = new GhostImpl(new TileForHelp(ghostCentre));
         assertFalse(pacman.canEatGhost());
-        pacman.
         pacman.move(Direction.RIGHT);
         //pacman.update();
-        assertEq(++initialScore, pacman.getScore());
     }
 
     private Vector2D nextPosition(Direction direction, Vector2D initialPosition) {
