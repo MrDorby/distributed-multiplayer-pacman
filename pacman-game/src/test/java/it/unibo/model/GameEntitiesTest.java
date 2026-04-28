@@ -1,4 +1,4 @@
-package it.unibo.test.entities;
+package it.unibo.model;
 
 import it.unibo.model.collisions.Collision;
 import it.unibo.model.common.Direction;
