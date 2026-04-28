@@ -22,7 +22,7 @@ public interface GameEntityFactory {
     /**
      * @return a new Ghost.
      */
-    Ghost createGhost();
+    Ghost createGhost(Tile spawnPoint);
 
     /**
      * @param entity

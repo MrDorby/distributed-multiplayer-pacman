@@ -9,20 +9,17 @@ public class TileImpl implements Tile {
 
     private final Vector2D matrixPosition;
     private final Vector2D centerPosition;
-    private final Vector2D size;    // TODO: returns the size.
     private final Optional<Dot> dot;
     private final TileType tileType;
 
     // TODO: Understand what is necessary for the constructor.
     public TileImpl(Vector2D matrixPosition,
                     Vector2D centerPosition,
-                    Vector2D size,
-                    Dot dot,
+                    Optional<Dot> dot,
                     TileType tileType) {
         this.matrixPosition = matrixPosition;
         this.centerPosition = centerPosition;
-        this.size = size;
-        this.dot = Optional.ofNullable(dot);
+        this.dot = dot;
         this.tileType = tileType;
     }
 

@@ -48,7 +48,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
     public void move(Direction direction) {
         this.previousDirection = this.direction;
         this.direction = direction;     // TODO: Is it right to do so?
-                                        // The MovementManager needs to calculate the position?
+        //changeDirection(direction);     // The MovementManager needs to calculate the position?
     }
 
     @Override

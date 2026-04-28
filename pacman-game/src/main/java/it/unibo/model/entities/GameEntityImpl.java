@@ -12,7 +12,7 @@ public abstract class GameEntityImpl implements GameEntity {
     private boolean alive;
 
     public GameEntityImpl(Tile tile) {
-        //this.boundingBox = new BoundingBoxImpl();
+        // TODO: this.boundingBox = new BoundingBoxImpl();
         this.position = tile.getCenterPosition();
         this.alive = true;
     }

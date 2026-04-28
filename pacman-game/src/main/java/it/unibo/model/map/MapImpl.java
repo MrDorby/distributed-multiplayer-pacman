@@ -12,6 +12,11 @@ public class MapImpl implements Map {
     }
 
     @Override
+    public Set<Tile> getTiles() {
+        return this.tiles;
+    }
+
+    @Override
     public Set<Tile> getPacmanSpawnPoints() {
         return tiles.stream()
                 .filter(x -> x.getTileType() == TileType.PACMAN_SPAWN)
