@@ -1,29 +1,28 @@
 package it.unibo.model.collisions;
 
 import it.unibo.model.common.Vector2D;
-import it.unibo.model.entities.GameEntity;
 
 public class CircleBoundingBoxImpl implements CircleBoundingBox {
-    private final GameEntity gameEntity;
+    private final Vector2D center;
     private final int radius;
 
-    public CircleBoundingBoxImpl(GameEntity gameEntity, int radius) {
-        this.gameEntity = gameEntity;
+    public CircleBoundingBoxImpl(Vector2D center, int radius) {
+        this.center = center;
         this.radius = radius;
     }
 
     @Override
     public Vector2D getCenter() {
-        return gameEntity.getPosition();
+        return center;
     }
 
     @Override
     public boolean collides(BoundingBox other) {
         // Two circles intersect if the distance between their centers is less than or equal to the sum of their radii.
-        if (other instanceof CircleBoundingBoxImpl c) {
-            int dx = c.getCenter().x() - getCenter().x();
-            int dy = c.getCenter().y() - getCenter().y();
-            int radiusSum = this.radius + c.radius;
+        if (other instanceof CircleBoundingBox otherCircle) {
+            int dx = otherCircle.getCenter().x() - center.x();
+            int dy = otherCircle.getCenter().y() - center.y();
+            int radiusSum = this.radius + otherCircle.getRadius();
             return dx * dx + dy * dy <= radiusSum * radiusSum;
         }
         throw new IllegalArgumentException("Unknown BoundingBox type");
