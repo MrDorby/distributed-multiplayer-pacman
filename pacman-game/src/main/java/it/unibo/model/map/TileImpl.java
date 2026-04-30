@@ -5,6 +5,7 @@ import it.unibo.model.entities.Dot;
 
 import java.util.Optional;
 
+// TODO: Cyclic dependencies with dot, how to resolve it?
 public class TileImpl implements Tile {
 
     private final Vector2D matrixPosition;

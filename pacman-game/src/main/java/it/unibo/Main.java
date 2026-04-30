@@ -1,5 +1,7 @@
 package it.unibo;
 
+import it.unibo.view.GameView;
+
 public class Main {
     static void main() {
         IO.println("Hello and welcome!");

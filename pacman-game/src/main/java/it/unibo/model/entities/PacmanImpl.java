@@ -86,7 +86,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
             this.canEatGhosts = false;
         }
 
-        // At the end, invoking the method move from MovementManager.
+        // TODO: At the end, invoking the method move from MovementManager.
         // move();
     }
 
