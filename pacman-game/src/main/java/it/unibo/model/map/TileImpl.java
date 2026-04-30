@@ -8,7 +8,6 @@ import java.util.Optional;
 public record TileImpl(
         Vector2D matrixPosition,
         Vector2D centerPosition,
-        Vector2D size, // TODO: keep or use fixed size?
         Optional<Dot> dot,
         TileType type
 ) implements Tile {
