@@ -25,7 +25,8 @@ public abstract class GameEntityImpl implements GameEntity {
         return this.position;
     }
 
-    protected void setPosition(Vector2D position) {
+    @Override
+    public void setPosition(Vector2D position) {
         this.position = position;
     }
 
