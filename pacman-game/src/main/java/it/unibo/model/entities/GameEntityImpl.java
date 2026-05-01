@@ -25,8 +25,8 @@ public abstract class GameEntityImpl implements GameEntity {
         return this.position;
     }
 
-    // TODO: Makes it visible on the interface? (Public)
-    protected void setPosition(Vector2D position) {
+    @Override
+    public void setPosition(Vector2D position) {
         this.position = position;
     }
 

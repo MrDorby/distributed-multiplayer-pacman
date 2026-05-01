@@ -21,6 +21,6 @@ public class GameEntityFactoryImpl implements GameEntityFactory {
 
     @Override
     public GameEntity unmodifiableGameEntity(GameEntity entity) {
-        return null; //TODO: To Complete
+        return new GameEntityProxy(entity);
     }
 }

@@ -35,4 +35,10 @@ public interface GameEntity {
      * @param isAlive the condition to be applied.
      */
     void setIsAlive(boolean isAlive);
+
+    /**
+     * Sets the position for the GameEntity.
+     * @param position the Vector2D that indicates the new position.
+     */
+    void setPosition(Vector2D position);
 }
