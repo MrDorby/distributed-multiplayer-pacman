@@ -1,5 +1,6 @@
 package it.unibo;
 
+import it.unibo.model.game.GameContextFactory;
 import it.unibo.view.GameView;
 
 public class Main {
@@ -8,6 +9,6 @@ public class Main {
         for (int i = 1; i <= 5; i++) {
             IO.println("i = " + i);
         }
-        new GameView().show();
+        new GameView(GameContextFactory.getTestContext()).show();
     }
 }
