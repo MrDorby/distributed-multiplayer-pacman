@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Arrays;
 
 public class GameView {
 
@@ -45,7 +46,18 @@ public class GameView {
 
             }
         });
-        this.panel.setBackground(Color.RED);
+        this.panel.setBackground(Color.BLACK);
+        this.panel.setLayout(new BorderLayout());
+        JPanel scoreboard = new JPanel(new GridLayout(0,2));
+        scoreboard.setOpaque(false);
+        scoreboard.add(new JLabel("Player name", SwingConstants.CENTER));
+        scoreboard.add(new JLabel("Scores", SwingConstants.CENTER));
+        Arrays.stream(scoreboard.getComponents())
+                .filter(x -> x instanceof JLabel)
+                .forEach(x -> x.setForeground(Color.WHITE));
+        this.panel.add(scoreboard, BorderLayout.NORTH);
+        JPanel map = new JPanel();
+        this.panel.add(map);
         this.frame.add(this.panel);
 
     }
