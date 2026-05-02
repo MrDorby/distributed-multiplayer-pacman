@@ -1,8 +1,9 @@
 package it.unibo.view;
 
+import it.unibo.model.common.GameConstants;
 import it.unibo.model.entities.Pacman;
-import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
+import it.unibo.model.map.TileType;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -10,7 +11,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
 
 public class GameView {
@@ -18,7 +18,7 @@ public class GameView {
     private final static int WIDTH_FRAME = Toolkit.getDefaultToolkit().getScreenSize().width;
     private final static int HEIGHT_FRAME = Toolkit.getDefaultToolkit().getScreenSize().height;
     private final JFrame frame = new JFrame();
-    private final GameMapView game;
+    private final GamePanel game;
 
     public GameView(GameContext gameContext) {
         this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -53,11 +53,11 @@ public class GameView {
 
             }
         });
-        this.game = new GameMapView(gameContext);
+        this.game = new GamePanel(gameContext);
         this.frame.add(this.game);
     }
 
-    private static class GameMapView extends JPanel {
+    private static class GamePanel extends JPanel {
 
         private GameContext gameContext;
         private JPanel scoreboard;
@@ -65,7 +65,7 @@ public class GameView {
         private JPanel menu;
         private JPanel life;
 
-        private GameMapView(GameContext gameContext) {
+        private GamePanel(GameContext gameContext) {
             this.gameContext = gameContext;
             this.setBackground(Color.BLACK);
             this.setLayout(new GridBagLayout());
@@ -81,6 +81,8 @@ public class GameView {
             constraints.gridwidth = 2;
             constraints.weightx = 0.8;
             constraints.weighty = 0.7;
+
+            map.add(new GameMapPanel(gameContext, this.getWidth(), this.getHeight()));
             this.add(map, constraints);
 
             scoreboardPanel();
@@ -92,6 +94,7 @@ public class GameView {
             constraints.weightx = 0.2;
             constraints.weighty = 0.7;
             JPanel panel = new JPanel(new BorderLayout());
+            panel.setBackground(Color.RED);
             panel.add(scoreboard, BorderLayout.NORTH);
             this.add(panel, constraints);
 
@@ -120,18 +123,20 @@ public class GameView {
 
         private void scoreboardPanel() {
             this.scoreboard = new JPanel(new GridLayout(0,2));
-            this.scoreboard.setBackground(Color.RED);
+            //this.scoreboard.setBackground(Color.RED);
             this.scoreboard.setBorder(new LineBorder(Color.BLACK, 2));
-            //this.scoreboard.setOpaque(false);
+            this.scoreboard.setOpaque(false);
             this.scoreboard.add(new JLabel("Player name", SwingConstants.CENTER));
             this.scoreboard.add(new JLabel("Scores", SwingConstants.CENTER));
             //this.gameContext.getGameState().getLeaderboard().forEach(this::setScoreboardInfos);
             Arrays.stream(this.scoreboard.getComponents())
                     .filter(x -> x instanceof JLabel)
                     .forEach(x -> x.setForeground(Color.WHITE));
+            //((JLabel) x).setBorder(new EmptyBorder(10, 0, 10, 0));
         }
 
         private void setScoreboardInfos(Pacman player, Integer score) {
+            //TODO: Inserting here the setForeground
             this.scoreboard.add(new JLabel(player.getId().toString()));
             this.scoreboard.add(new JLabel(String.valueOf(score)));
         }
@@ -141,10 +146,105 @@ public class GameView {
             super.paintComponent(g);
             g.drawOval(50, 50, 20, 20);
             scoreboardPanel();
+            this.map.repaint();
         }
 
         protected void setGameContext(GameContext gameContext) {
             this.gameContext = Objects.requireNonNull(gameContext);
+        }
+    }
+
+    private static class GameMapPanel extends JPanel {
+
+        private final int panelWidth;
+        private final int panelHeight;
+        private GameContext gameContext;
+
+        private GameMapPanel(GameContext gameContext, int panelWidth, int panelHeight) {
+            this.panelWidth = panelWidth;
+            this.panelHeight = panelHeight;
+            this.gameContext = gameContext;
+        }
+
+        //TODO: Make it more efficient (create a method to reduce the duplication)
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            this.gameContext.getMap()
+                    .getTiles()
+                    .forEach(tile -> {
+                        ((Graphics2D) g).setStroke(new BasicStroke(0));
+                        g.drawRect(
+                                panelCoordinate(tile.getCenterPosition().x()),
+                                panelCoordinate(tile.getCenterPosition().y()),
+                                GameConstants.TILE_SIZE,
+                                GameConstants.TILE_SIZE
+                        );
+                        if (tile.getTileType() == TileType.SIMPLE) {
+                            g.setColor(Color.WHITE);
+                        } else {
+                            g.setColor(Color.BLACK);
+                        }
+                        g.fillRect(
+                                panelCoordinate(tile.getCenterPosition().x()),
+                                panelCoordinate(tile.getCenterPosition().y()),
+                                GameConstants.TILE_SIZE,
+                                GameConstants.TILE_SIZE);
+                    });
+            this.gameContext.getDots()
+                    .forEach(dot -> {
+                        g.drawOval(
+                                panelCoordinate(dot.getPosition().x()),
+                                panelCoordinate(dot.getPosition().y()),
+                                GameConstants.GameEntityFeatures.DOT.getWidth(),
+                                GameConstants.GameEntityFeatures.DOT.getHeight()
+                        );
+                        g.setColor(Color.YELLOW);
+                        g.fillOval(
+                                panelCoordinate(dot.getPosition().x()),
+                                panelCoordinate(dot.getPosition().y()),
+                                GameConstants.GameEntityFeatures.DOT.getWidth(),
+                                GameConstants.GameEntityFeatures.DOT.getHeight()
+                        );
+                    });
+
+            this.gameContext.getGhosts()
+                    .forEach(ghost -> {
+                        g.drawOval(
+                                panelCoordinate(ghost.getPosition().x()),
+                                panelCoordinate(ghost.getPosition().y()),
+                                GameConstants.GameEntityFeatures.GHOST.getWidth(),
+                                GameConstants.GameEntityFeatures.GHOST.getHeight()
+                        );
+                        g.setColor(Color.RED);
+                        g.fillOval(
+                                panelCoordinate(ghost.getPosition().x()),
+                                panelCoordinate(ghost.getPosition().y()),
+                                GameConstants.GameEntityFeatures.GHOST.getWidth(),
+                                GameConstants.GameEntityFeatures.GHOST.getHeight()
+                        );
+                    });
+
+            this.gameContext.getPacmans()
+                    .forEach(pacman -> {
+                        g.drawOval(
+                                panelCoordinate(pacman.getPosition().x()),
+                                panelCoordinate(pacman.getPosition().y()),
+                                GameConstants.GameEntityFeatures.PACMAN.getWidth(),
+                                GameConstants.GameEntityFeatures.PACMAN.getHeight()
+                        );
+                        g.setColor(Color.BLUE);
+                        g.fillOval(
+                                panelCoordinate(pacman.getPosition().x()),
+                                panelCoordinate(pacman.getPosition().y()),
+                                GameConstants.GameEntityFeatures.PACMAN.getWidth(),
+                                GameConstants.GameEntityFeatures.PACMAN.getHeight()
+                        );
+                    });
+        }
+
+        private int panelCoordinate(int centreCoordinate) {
+            return centreCoordinate - (GameConstants.TILE_SIZE / 2);
         }
     }
 
