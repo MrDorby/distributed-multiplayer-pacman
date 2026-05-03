@@ -42,8 +42,10 @@ public class GameContextFactory {
         pacmans.add(new PacmanImpl(pacmanSpawn));
 
         Set<Ghost> ghosts = new HashSet<>();
-        ghosts.add(new GhostImpl(ghostSpawn));
+        ghosts.add(new GhostImpl(ghostSpawn.getCenterPosition()));
 
-        return new GameContextImpl(gameMap, dots, ghosts, pacmans, Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
+        GameContext factory = new GameContextImpl(gameMap, dots, ghosts, pacmans, Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
+        factory.createGameState();
+        return factory;
     }
 }

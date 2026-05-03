@@ -9,31 +9,25 @@ public class GameConstants {
 
     public enum GameEntityFeatures {
 
-        PACMAN(26, 26, 3000, 6),
+        PACMAN(26, 3000, 6),
 
-        GHOST(26, 26, 3000, 8),
+        GHOST(26, 3000, 8),
 
-        DOT(18, 18, 3000, 0);
+        DOT(18, 3000, 0);
 
-        private final int width;
-        private final int height;
+        private final int radius;
         private final int timeToRespawn;
         private final int velocity;
 
-        GameEntityFeatures(int width, int height, int timeToRespawn, int velocity) {
-            this.width = width;
-            this.height = height;
+        GameEntityFeatures(int radius, int timeToRespawn, int velocity) {
+            this.radius = radius;
             this.timeToRespawn = timeToRespawn;
             this.velocity = velocity;
         }
 
 
-        public int getWidth() {
-            return width;
-        }
-
-        public int getHeight() {
-            return height;
+        public int getRadius() {
+            return radius;
         }
 
         public int getTimeToRespawn() {

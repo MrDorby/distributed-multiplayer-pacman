@@ -1,5 +1,6 @@
 package it.unibo.model.entities;
 
+import it.unibo.model.common.Vector2D;
 import it.unibo.model.map.Tile;
 
 public class GameEntityFactoryImpl implements GameEntityFactory {
@@ -10,12 +11,12 @@ public class GameEntityFactoryImpl implements GameEntityFactory {
     }
 
     @Override
-    public Dot createDot(Tile tile) {
-        return new DotImpl(tile);
+    public Dot createDot(Vector2D position) {
+        return new DotImpl(position);
     }
 
     @Override
-    public Ghost createGhost(Tile spawnPoint) {
+    public Ghost createGhost(Vector2D spawnPoint) {
         return new GhostImpl(spawnPoint);
     }
 
