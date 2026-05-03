@@ -20,10 +20,10 @@ public interface GameMap {
     Tile getGhostSpawnPoint();
 
     /**
-     * Returns the Tile at the specified position in the Map's matrix.
-     * @param matrixPosition the matrix position
-     * @return the Tile at the specified position
-     * @throws IndexOutOfBoundsException in case the specified position is out of bounds
+     * Returns the Tile at the specified position in the map's matrix.
+     * @param matrixPosition the matrix position of the Tile.
+     * @return the Tile at the specified position.
+     * @throws IndexOutOfBoundsException in case the specified position is out of bounds.
      */
-    Tile getTileFromMatrixPosition(Vector2D matrixPosition);
+    Tile getTile(Vector2D matrixPosition);
 }

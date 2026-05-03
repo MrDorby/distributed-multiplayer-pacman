@@ -6,14 +6,11 @@ import it.unibo.model.entities.Dot;
 import it.unibo.model.entities.DotImpl;
 import it.unibo.model.entities.GameEntityFactory;
 import it.unibo.model.entities.Pacman;
-import it.unibo.model.game.GameContextImpl;
-import it.unibo.model.map.Map;
-import it.unibo.model.map.MapImpl;
+import it.unibo.model.map.GameMap;
+import it.unibo.model.map.FourPlayersGameMap;
 import it.unibo.model.map.Tile;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import it.unibo.model.map.TileImpl;
 import it.unibo.model.map.TileType;
@@ -27,7 +24,7 @@ public class GameEntitiesTest {
 
     private static final int NUMBER_LIVES = 3;
     private GameEntityFactory gameFactory;
-    private Map map;
+    private GameMap map;
     private Pacman pacman;
 
     @BeforeEach
@@ -35,7 +32,7 @@ public class GameEntitiesTest {
         int x = 0, y = 0;
         Vector2D start = new Vector2D(x, y);
         this.createMap(start);
-        this.pacman = gameFactory.createPacman(this.map.getTiles().stream().findFirst().get());
+        this.pacman = gameFactory.createPacman(this.map.getTile(start));
     }
 
     @Test
@@ -81,13 +78,13 @@ public class GameEntitiesTest {
 
     private void createMap(Vector2D start) {
         int x = start.x(), y = start.y(), numberTiles = 2;
-        Set<Tile> tiles = new HashSet<>();
+        Map<Vector2D, Tile> tiles = new HashMap<>();
         for (int i = 0; i < numberTiles; i++, x++) {
             Vector2D matrixPosition = new Vector2D(x, y);
             Vector2D centrePosition = new Vector2D(x, y);
-            tiles.add(new TileImpl(matrixPosition, centrePosition, Optional.empty(), TileType.SIMPLE));
+            tiles.put(matrixPosition, new TileImpl(matrixPosition, centrePosition, Optional.empty(), TileType.SIMPLE));
         }
-        map = new MapImpl(tiles);
+        map = new FourPlayersGameMap(tiles, new Vector2D(2, 1));
     }
 
     private Vector2D nextPosition(Direction direction, Vector2D initialPosition) {

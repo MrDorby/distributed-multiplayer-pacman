@@ -2,7 +2,7 @@ package it.unibo.model.game;
 
 import it.unibo.model.collisions.Collision;
 import it.unibo.model.entities.*;
-import it.unibo.model.map.Map;
+import it.unibo.model.map.GameMap;
 
 import java.time.Duration;
 import java.util.Comparator;
@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class GameContextImpl implements GameContext {
-    private final Map map;
+    private final GameMap map;
     private final Set<Dot> dots;
     private final Set<Ghost> ghosts;
     private final Set<Pacman> pacmans;
@@ -19,7 +19,7 @@ public class GameContextImpl implements GameContext {
     private final Duration timeLeft;
     private Set<Collision> collisions = new HashSet<>();
 
-    public GameContextImpl(Map map, Set<Dot> dots, Set<Ghost> ghosts, Set<Pacman> pacmans, Duration timeLeft) {
+    public GameContextImpl(GameMap map, Set<Dot> dots, Set<Ghost> ghosts, Set<Pacman> pacmans, Duration timeLeft) {
         this.map = map;
         this.dots = dots;
         this.ghosts = ghosts;
@@ -55,7 +55,7 @@ public class GameContextImpl implements GameContext {
     }
 
     @Override
-    public Map getMap() {
+    public GameMap getMap() {
         return this.map;
     }
 
