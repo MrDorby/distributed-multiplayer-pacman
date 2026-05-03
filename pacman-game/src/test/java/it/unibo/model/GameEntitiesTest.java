@@ -1,7 +1,7 @@
 package it.unibo.model;
 
 import it.unibo.model.common.Direction;
-import it.unibo.model.common.MatrixCoordinate;
+import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.Dot;
 import it.unibo.model.entities.DotImpl;
@@ -31,7 +31,7 @@ public class GameEntitiesTest {
     @BeforeEach
     public void start() {
         int x = 0, y = 0;
-        MatrixCoordinate start = new MatrixCoordinate(x, y);
+        MatrixCoordinates start = new MatrixCoordinates(x, y);
         this.createMap(start);
         this.pacman = gameFactory.createPacman(this.map.getTile(start));
     }
@@ -57,7 +57,7 @@ public class GameEntitiesTest {
     public void scorePacman() {
         int x = 1, y = 0;
         Vector2D dotCentre = new Vector2D(x, y);
-        MatrixCoordinate dotMatrix = new MatrixCoordinate(x, y);
+        MatrixCoordinates dotMatrix = new MatrixCoordinates(x, y);
         Dot dot = new DotImpl(new TileImpl(dotMatrix, dotCentre, Optional.empty(), TileType.SIMPLE));
         int initialScore = 0;
         assertEquals(initialScore, pacman.getScore());
@@ -77,15 +77,15 @@ public class GameEntitiesTest {
         //pacman.update();
     }
 
-    private void createMap(MatrixCoordinate start) {
+    private void createMap(MatrixCoordinates start) {
         int x = start.row(), y = start.column(), numberTiles = 2;
-        Map<MatrixCoordinate, Tile> tiles = new HashMap<>();
+        Map<MatrixCoordinates, Tile> tiles = new HashMap<>();
         for (int i = 0; i < numberTiles; i++, x++) {
-            MatrixCoordinate matrixPosition = new MatrixCoordinate(x, y);
+            MatrixCoordinates matrixPosition = new MatrixCoordinates(x, y);
             Vector2D centrePosition = new Vector2D(x, y);
             tiles.put(matrixPosition, new TileImpl(matrixPosition, centrePosition, Optional.empty(), TileType.SIMPLE));
         }
-        map = new FourPlayersGameMap(tiles, new MatrixCoordinate(2, 1));
+        map = new FourPlayersGameMap(tiles, new MatrixCoordinates(2, 1));
     }
 
     private Vector2D nextPosition(Direction direction, Vector2D initialPosition) {
