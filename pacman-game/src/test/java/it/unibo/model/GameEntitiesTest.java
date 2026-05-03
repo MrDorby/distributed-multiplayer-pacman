@@ -1,6 +1,7 @@
 package it.unibo.model;
 
 import it.unibo.model.common.Direction;
+import it.unibo.model.common.MatrixCoordinate;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.Dot;
 import it.unibo.model.entities.DotImpl;
@@ -30,7 +31,7 @@ public class GameEntitiesTest {
     @BeforeEach
     public void start() {
         int x = 0, y = 0;
-        Vector2D start = new Vector2D(x, y);
+        MatrixCoordinate start = new MatrixCoordinate(x, y);
         this.createMap(start);
         this.pacman = gameFactory.createPacman(this.map.getTile(start));
     }
@@ -56,7 +57,7 @@ public class GameEntitiesTest {
     public void scorePacman() {
         int x = 1, y = 0;
         Vector2D dotCentre = new Vector2D(x, y);
-        Vector2D dotMatrix = new Vector2D(x, y);
+        MatrixCoordinate dotMatrix = new MatrixCoordinate(x, y);
         Dot dot = new DotImpl(new TileImpl(dotMatrix, dotCentre, Optional.empty(), TileType.SIMPLE));
         int initialScore = 0;
         assertEquals(initialScore, pacman.getScore());
@@ -76,15 +77,15 @@ public class GameEntitiesTest {
         //pacman.update();
     }
 
-    private void createMap(Vector2D start) {
-        int x = start.x(), y = start.y(), numberTiles = 2;
-        Map<Vector2D, Tile> tiles = new HashMap<>();
+    private void createMap(MatrixCoordinate start) {
+        int x = start.row(), y = start.column(), numberTiles = 2;
+        Map<MatrixCoordinate, Tile> tiles = new HashMap<>();
         for (int i = 0; i < numberTiles; i++, x++) {
-            Vector2D matrixPosition = new Vector2D(x, y);
+            MatrixCoordinate matrixPosition = new MatrixCoordinate(x, y);
             Vector2D centrePosition = new Vector2D(x, y);
             tiles.put(matrixPosition, new TileImpl(matrixPosition, centrePosition, Optional.empty(), TileType.SIMPLE));
         }
-        map = new FourPlayersGameMap(tiles, new Vector2D(2, 1));
+        map = new FourPlayersGameMap(tiles, new MatrixCoordinate(2, 1));
     }
 
     private Vector2D nextPosition(Direction direction, Vector2D initialPosition) {

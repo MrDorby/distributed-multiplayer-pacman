@@ -1,5 +1,6 @@
 package it.unibo.model.map;
 
+import it.unibo.model.common.MatrixCoordinate;
 import it.unibo.model.common.Vector2D;
 
 import java.util.Set;
@@ -25,5 +26,5 @@ public interface GameMap {
      * @return the Tile at the specified position.
      * @throws IndexOutOfBoundsException in case the specified position is out of bounds.
      */
-    Tile getTile(Vector2D matrixPosition);
+    Tile getTile(MatrixCoordinate matrixPosition);
 }

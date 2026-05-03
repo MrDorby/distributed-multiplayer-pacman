@@ -1,5 +1,6 @@
 package it.unibo.model.map;
 
+import it.unibo.model.common.MatrixCoordinate;
 import it.unibo.model.common.Vector2D;
 
 import java.util.List;
@@ -9,12 +10,12 @@ import java.util.Set;
 // TODO: write documentation about this map's constraints
 public class FourPlayersGameMap implements GameMap {
 
-    private final Map<Vector2D, Tile> tilesGrid;
+    private final Map<MatrixCoordinate, Tile> tilesGrid;
     // TODO: consider creating a set of Tiles containing the Pacman spawn points
     //  and a single Tile field containing the ghosts' spawn point.
     //  Initialize these structures in the constructor.
 
-    public FourPlayersGameMap(Map<Vector2D, Tile> tilesGrid, Vector2D gridSize) {
+    public FourPlayersGameMap(Map<MatrixCoordinate, Tile> tilesGrid, MatrixCoordinate gridSize) {
         this.tilesGrid = tilesGrid;
         // TODO: implement any consistency checks on the given grid.
     }
@@ -37,7 +38,7 @@ public class FourPlayersGameMap implements GameMap {
     }
 
     @Override
-    public Tile getTile(Vector2D matrixPosition) {
+    public Tile getTile(MatrixCoordinate matrixPosition) {
         return null;
     }
 }

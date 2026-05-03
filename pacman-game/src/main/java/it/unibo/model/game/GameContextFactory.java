@@ -1,11 +1,14 @@
 package it.unibo.model.game;
 
+import it.unibo.model.common.MatrixCoordinate;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.*;
 import it.unibo.model.map.*;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -23,19 +26,21 @@ public class GameContextFactory {
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 16; j++) {
                 TileType type = (counter % 2 == 0) ? TileType.WALL : TileType.SIMPLE;
-                tiles.add(new TileImpl(new Vector2D(i, j), new Vector2D(i * TILE_SIZE, j * TILE_SIZE), null, type));
+                tiles.add(new TileImpl(new MatrixCoordinate(i, j), new Vector2D(i * TILE_SIZE, j * TILE_SIZE), null, type));
                 counter++;
             }
         }
 
-        Map gameMap = new MapImpl(tiles);
+        Map<MatrixCoordinate, Tile> tilesMap = new HashMap<>();
+        tiles.forEach(t -> tilesMap.put(t.getMatrixPosition(), t));
+        GameMap gameMap = new FourPlayersGameMap(tilesMap, new MatrixCoordinate(16, 16));
 
         Tile pacmanSpawn = tiles.stream()
-                .filter(tile -> tile.getMatrixPosition().equals(new Vector2D(0, 1)))
+                .filter(tile -> tile.getMatrixPosition().equals(new MatrixCoordinate(0, 1)))
                 .findFirst().orElseThrow();
 
         Tile ghostSpawn = tiles.stream()
-                .filter(tile -> tile.getMatrixPosition().equals(new Vector2D(1, 0)))
+                .filter(tile -> tile.getMatrixPosition().equals(new MatrixCoordinate(1, 0)))
                 .findFirst().orElseThrow();
 
         Set<Pacman> pacmans = new HashSet<>();

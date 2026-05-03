@@ -1,12 +1,13 @@
 package it.unibo.model.map;
 
+import it.unibo.model.common.MatrixCoordinate;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.Dot;
 
 import java.util.Optional;
 
 public record TileImpl(
-        Vector2D matrixPosition,
+        MatrixCoordinate matrixPosition,
         Vector2D centerPosition,
         Optional<Dot> dot,
         TileType type
@@ -34,7 +35,7 @@ public record TileImpl(
     }
 
     @Override
-    public Vector2D getMatrixPosition() {
+    public MatrixCoordinate getMatrixPosition() {
         return this.matrixPosition;
     }
 
