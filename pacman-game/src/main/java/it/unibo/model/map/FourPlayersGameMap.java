@@ -61,7 +61,7 @@ public class FourPlayersGameMap implements GameMap {
 //        return tilesGrid.stream()
 //                .filter(x -> x.getTileType() == TileType.PACMAN_SPAWN)
 //                .collect(Collectors.toSet());
-        return null; // TODO: implement
+        return this.pacmanSpawnPoints;
     }
 
     // TODO: Can it be reasonable?
@@ -70,7 +70,7 @@ public class FourPlayersGameMap implements GameMap {
 //        return tilesGrid.stream()
 //                .filter(x -> x.getTileType() == TileType.GHOST_SPAWN)
 //                .findFirst().get();
-        return null; // TODO: implement
+        return this.ghostsSpawnPoint;
     }
 
     @Override

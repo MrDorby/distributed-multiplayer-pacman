@@ -1,13 +1,16 @@
 package it.unibo.model.map;
 
 import it.unibo.model.common.MatrixCoordinates;
+import it.unibo.model.common.Vector2D;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.Optional;
+import java.util.Set;
 
+import static it.unibo.model.common.GameConstants.TILE_SIZE;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GameMapTest {
@@ -40,19 +43,43 @@ public class GameMapTest {
 
     @Test
     void testPacmanSpawnPoints() {
-        // TODO: write test
+        Set<Tile> pacmanSpawnPoints = Set.of(
+                instantiateTile(new MatrixCoordinates(1, 3), TileType.PACMAN_SPAWN),
+                instantiateTile(new MatrixCoordinates(1, 5), TileType.PACMAN_SPAWN),
+                instantiateTile(new MatrixCoordinates(9, 3), TileType.PACMAN_SPAWN),
+                instantiateTile(new MatrixCoordinates(9, 7), TileType.PACMAN_SPAWN)
+        );
+        GameMap map = mapFactory.fromJSON(RESOURCES_PATH + "correct_map.json");
+        assertEquals(pacmanSpawnPoints, map.getPacmanSpawnPoints());
+    }
+
+    private Tile instantiateTile(MatrixCoordinates coordinates, TileType type) {
+        return new TileImpl(
+                coordinates,
+                getCenterPosition(coordinates),
+                Optional.empty(),
+                type
+        );
+    }
+
+    private Vector2D getCenterPosition(MatrixCoordinates coordinates) {
+        return new Vector2D(
+                coordinates.row() * TILE_SIZE + TILE_SIZE / 2,
+                coordinates.column() * TILE_SIZE + TILE_SIZE / 2
+        );
     }
 
     @Test
     void testGhostSpawnPoint() {
-        // TODO: write test
+        Tile ghostSpawnPoint = instantiateTile(new MatrixCoordinates(5, 5), TileType.GHOST_SPAWN);
+        GameMap map = mapFactory.fromJSON(RESOURCES_PATH + "correct_map.json");
+        assertEquals(ghostSpawnPoint, map.getGhostSpawnPoint());
     }
 
     // TODO: fill these parameters
-    //  Understand how to pass an enum type as a CSV source parameter.
     @ParameterizedTest
     @CsvSource({
-        //"0, 0, " + TileType.WALL  -> DOES NOT WORK
+        "0, 0, WALL"
     })
     void testTiles(int tileRow, int tileCol, TileType expectedType) {
         // TODO: write test
