@@ -1,7 +1,5 @@
 package it.unibo.model.map;
 
-import java.util.Optional;
-
 /**
  * A factory for instantiating a Map.
  */

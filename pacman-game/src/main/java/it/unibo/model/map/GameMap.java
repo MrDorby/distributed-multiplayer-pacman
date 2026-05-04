@@ -26,4 +26,9 @@ public interface GameMap {
      * @throws IndexOutOfBoundsException in case the specified position is out of bounds.
      */
     Tile getTile(MatrixCoordinates matrixPosition);
+
+    /**
+     * @return a Set containing all of the Map's Tiles.
+     */
+    Set<Tile> getTiles();
 }

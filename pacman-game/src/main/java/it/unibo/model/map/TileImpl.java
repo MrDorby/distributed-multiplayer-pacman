@@ -20,11 +20,6 @@ public record TileImpl(
     }
 
     @Override
-    public boolean isWall() {
-        return this.type == TileType.WALL;
-    }
-
-    @Override
     public Optional<Dot> getDot() {
         return this.dot;
     }
