@@ -32,29 +32,29 @@ public class GameMapPanel extends JPanel {
                         g.setColor(Color.BLACK);
                     }
                     g.drawRect(
-                            panelCoordinate(tile.getCenterPosition().x()),
-                            panelCoordinate(tile.getCenterPosition().y()),
+                            tile.getCenterPosition().x(),
+                            tile.getCenterPosition().y(),
                             GameConstants.TILE_SIZE - 1,
                             GameConstants.TILE_SIZE - 1
                     );
                     g.fillRect(
-                            panelCoordinate(tile.getCenterPosition().x()),
-                            panelCoordinate(tile.getCenterPosition().y()),
+                            tile.getCenterPosition().x(),
+                            tile.getCenterPosition().y(),
                             GameConstants.TILE_SIZE,
                             GameConstants.TILE_SIZE - 1);
                 });
         this.gameContext.getDots()
                 .forEach(dot -> {
                     g.drawOval(
-                            panelCoordinate(dot.getPosition().x()),
-                            panelCoordinate(dot.getPosition().y()),
+                            dot.getPosition().x(),
+                            dot.getPosition().y(),
                             GameConstants.GameEntityFeatures.DOT.getRadius() - 1,
                             GameConstants.GameEntityFeatures.DOT.getRadius() - 1
                     );
                     g.setColor(Color.YELLOW);
                     g.fillOval(
-                            panelCoordinate(dot.getPosition().x()),
-                            panelCoordinate(dot.getPosition().y()),
+                            dot.getPosition().x(),
+                            dot.getPosition().y(),
                             GameConstants.GameEntityFeatures.DOT.getRadius(),
                             GameConstants.GameEntityFeatures.DOT.getRadius()
                     );

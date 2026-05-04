@@ -107,11 +107,13 @@ public class GamePanel extends JPanel {
         this.scoreboard.setOpaque(false);
         this.scoreboard.add(new JLabel("Player name", SwingConstants.CENTER));
         this.scoreboard.add(new JLabel("Scores", SwingConstants.CENTER));
-        //this.gameContext.getGameState().getLeaderboard().forEach(this::setScoreboardInfos);
+        this.gameContext.getGameState().getLeaderboard().forEach(this::setScoreboardInfos);
         Arrays.stream(this.scoreboard.getComponents())
                 .filter(x -> x instanceof JLabel)
-                .forEach(x -> {x.setForeground(Color.WHITE); ((JLabel) x).setBorder(new EmptyBorder(20, 0, 20, 0));});
-        //((JLabel) x).setBorder(new EmptyBorder(10, 0, 10, 0));
+                .forEach(x -> {
+                    x.setForeground(Color.WHITE);
+                    ((JLabel) x).setBorder(new EmptyBorder(20, 0, 20, 0));
+                });
     }
 
     private void setScoreboardInfos(Pacman player, Integer score) {
