@@ -29,6 +29,7 @@ public class GameMapTest {
             "missing_fields_map.json",
             "invalid_character_map.json",
             "no_ghosts_map.json",
+            "more_ghosts_map.json",
             "more_pacman_map.json",
             "less_pacman_map.json"
     })
@@ -53,6 +54,13 @@ public class GameMapTest {
         assertEquals(pacmanSpawnPoints, map.getPacmanSpawnPoints());
     }
 
+    @Test
+    void testGhostSpawnPoint() {
+        Tile ghostSpawnPoint = instantiateTile(new MatrixCoordinates(5, 5), TileType.GHOST_SPAWN);
+        GameMap map = mapFactory.fromJSON(RESOURCES_PATH + "correct_map.json");
+        assertEquals(ghostSpawnPoint, map.getGhostSpawnPoint());
+    }
+
     private Tile instantiateTile(MatrixCoordinates coordinates, TileType type) {
         return new TileImpl(
                 coordinates,
@@ -69,19 +77,35 @@ public class GameMapTest {
         );
     }
 
-    @Test
-    void testGhostSpawnPoint() {
-        Tile ghostSpawnPoint = instantiateTile(new MatrixCoordinates(5, 5), TileType.GHOST_SPAWN);
-        GameMap map = mapFactory.fromJSON(RESOURCES_PATH + "correct_map.json");
-        assertEquals(ghostSpawnPoint, map.getGhostSpawnPoint());
-    }
-
-    // TODO: fill these parameters
     @ParameterizedTest
     @CsvSource({
-        "0, 0, WALL"
+            "0, 0, WALL",
+            "1, 1, SIMPLE",
+            "1, 3, PACMAN_SPAWN",
+            "5, 5, GHOST_SPAWN",
+            "7, 1, SIMPLE",
+            "4, 5, SIMPLE",
+            "10, 10, WALL",
+            "0, 10, WALL",
+            "10, 0, WALL",
+            "5, 0, SIMPLE"
     })
-    void testTiles(int tileRow, int tileCol, TileType expectedType) {
-        // TODO: write test
+    void testGetTile(int tileRow, int tileCol, TileType expectedType) {
+        GameMap map = mapFactory.fromJSON(RESOURCES_PATH + "correct_map.json");
+        assertEquals(expectedType, map.getTile(new MatrixCoordinates(tileRow, tileCol)).getTileType());
     }
+
+    @ParameterizedTest
+    @CsvSource({
+            "-1, -1",
+            "13, 0",
+            "0, 100",
+            "30, 30"
+    })
+    void testOutOfBoundsTile(int tileRow, int tileCol) {
+        GameMap map = mapFactory.fromJSON(RESOURCES_PATH + "correct_map.json");
+        assertThrows(IndexOutOfBoundsException.class, () -> map.getTile(new MatrixCoordinates(tileRow, tileCol)));
+    }
+
+    // TODO: also implement tests on the Tiles' Dots (present/not present) and their types (is Special or not)
 }

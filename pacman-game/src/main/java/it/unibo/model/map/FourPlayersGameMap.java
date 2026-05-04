@@ -58,23 +58,20 @@ public class FourPlayersGameMap implements GameMap {
 
     @Override
     public Set<Tile> getPacmanSpawnPoints() {
-//        return tilesGrid.stream()
-//                .filter(x -> x.getTileType() == TileType.PACMAN_SPAWN)
-//                .collect(Collectors.toSet());
         return this.pacmanSpawnPoints;
     }
 
-    // TODO: Can it be reasonable?
     @Override
     public Tile getGhostSpawnPoint() {
-//        return tilesGrid.stream()
-//                .filter(x -> x.getTileType() == TileType.GHOST_SPAWN)
-//                .findFirst().get();
         return this.ghostsSpawnPoint;
     }
 
     @Override
     public Tile getTile(MatrixCoordinates matrixPosition) {
-        return null;
+        Tile tile = this.tilesGrid.get(matrixPosition);
+        if (tile == null) {
+            throw new IndexOutOfBoundsException("Specified position is out of bounds for the GameMap matrix.");
+        }
+        return tile;
     }
 }
