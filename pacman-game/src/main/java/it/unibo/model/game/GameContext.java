@@ -2,7 +2,7 @@ package it.unibo.model.game;
 
 import it.unibo.model.collisions.Collision;
 import it.unibo.model.entities.*;
-import it.unibo.model.map.Map;
+import it.unibo.model.map.GameMap;
 
 import java.util.Set;
 
@@ -31,7 +31,7 @@ public interface GameContext {
     /**
      * Returns the current map.
      */
-    Map getMap();
+    GameMap getMap();
 
     /**
      * Returns the dots on the map.

@@ -1,0 +1,33 @@
+package it.unibo.model.map;
+
+import java.util.Optional;
+
+/**
+ * A factory for instantiating a Map.
+ */
+public interface GameMapFactory {
+    /**
+     * Creates a GameMap based on a JSON file.</br>
+     * The file must have the following structure:
+     * <ul>
+     *     <li>A {@code rows} field specifying the number of rows in the GameMap grid</li>
+     *     <li>A {@code columns} field specifying the number of columns in the GameMap grid</li>
+     *     <li>A {@code tiles} field with the list of Tiles (which must be of size {@code height * width})</li>
+     * </ul>
+     * Each Tile is represented by a character, according to its type:
+     * <ul>
+     *     <li>{@code E} An empty Tile.</li>
+     *     <li>{@code D} A Tile containing a Dot.</li>
+     *     <li>{@code S} A Tile containing a Special Dot.</li>
+     *     <li>{@code W} A wall Tile.</li>
+     *     <li>{@code G} The ghosts' spawn point.</li>
+     *     <li>{@code P} A Pacman's spawn point.</li>
+     * </ul>
+     * @param path the classpath resource name of the JSON file to read.
+     * @return the GameMap created according to the specified file.
+     * @throws IllegalArgumentException in case the JSON file is not valid.
+     * The file is considered invalid if it does not adhere to the specification (missing fields,
+     * invalid map characters, wrong number of tiles in the grid, etc.).
+     */
+    GameMap fromJSON(String path);
+}

@@ -1,5 +1,6 @@
 package it.unibo.model.map;
 
+import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.Dot;
 
@@ -13,11 +14,10 @@ public interface Tile {
     /**
      * @return a boolean true if the Tile is a Wall or false otherwise.
      */
-    boolean isWall();
+    boolean isWall(); // TODO: keep?
 
     /**
-     * This method let you get the dot ì, if present, inside the tile.
-     * @return an Optional of Dot.
+     * @return the Dot contained in the Tile, if present, an empty Optional otherwise.
      */
     Optional<Dot> getDot();
 
@@ -28,13 +28,13 @@ public interface Tile {
     Vector2D getCenterPosition();
 
     /**
-     * Gives the position of the Tile inside the matrix (Map).
-     * @return a Vector2D corresponding to the coordinates of the Tile.
+     * Gives the position of the Tile inside the Map matrix.
+     * @return a Vector2D corresponding to the matrix coordinates of the Tile.
      */
-    Vector2D getMatrixPosition();
+    MatrixCoordinates getMatrixPosition();
 
     /**
      * @return the TileType of the corresponding Tile.
      */
-    TileType getTileType();
+    TileType getTileType(); //TODO: keep? In that case, isWall() is not needed.
 }
