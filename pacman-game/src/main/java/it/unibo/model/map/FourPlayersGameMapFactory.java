@@ -23,7 +23,7 @@ public class FourPlayersGameMapFactory implements GameMapFactory {
     public GameMap fromJSON(String path) {
         try {
             InputStream JSONStream = ClassLoader.getSystemResourceAsStream(path);
-            GameMapJSON gameMapJSON = new ObjectMapper().readValue(JSONStream, new TypeReference<GameMapJSON>() {});
+            GameMapJSON gameMapJSON = new ObjectMapper().readValue(JSONStream, new TypeReference<>() {});
             if (gameMapJSON.rows * gameMapJSON.columns == gameMapJSON.tiles.size()) {
                 Map<MatrixCoordinates, Tile> tilesMap = new HashMap<>();
                 IntStream.range(0, gameMapJSON.rows).forEach(i ->
