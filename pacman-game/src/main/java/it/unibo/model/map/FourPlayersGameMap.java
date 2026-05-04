@@ -2,6 +2,7 @@ package it.unibo.model.map;
 
 import it.unibo.model.common.MatrixCoordinates;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,12 +17,16 @@ public class FourPlayersGameMap implements GameMap {
 
     private static final int PLAYERS_NUM = 4;
 
-    private final Map<MatrixCoordinates, Tile> tilesGrid;
+    private final Map<MatrixCoordinates, Tile> tilesGrid = new HashMap<>();
     private final Set<Tile> pacmanSpawnPoints;
     private final Tile ghostsSpawnPoint;
 
     // TODO: this class could be generalized by specifying the number of ghost and Pacman spawn points.
     //  In that case, the Factory could be turned into a builder that progressively accepts the map's parameters.
+    /**
+     * @param tilesGrid the grid containing all the Tiles in the GameMap.
+     * @param gridSize the dimensions of the GameMap's matrix.
+     */
     public FourPlayersGameMap(Map<MatrixCoordinates, Tile> tilesGrid, MatrixCoordinates gridSize) {
         IntStream.range(0, gridSize.row()).forEach(i ->
                 IntStream.range(0, gridSize.column()).forEach(j -> {
@@ -38,16 +43,16 @@ public class FourPlayersGameMap implements GameMap {
                                 tile.getMatrixPosition().column() + ")." +
                                 " Position in the matrix: (" + coordinates.row() + ", " + coordinates.column() + ").");
                     }
+                    this.tilesGrid.put(coordinates, tile);
                 }));
-        this.tilesGrid = tilesGrid;
-        this.pacmanSpawnPoints = tilesGrid.values().stream()
+        this.pacmanSpawnPoints = this.tilesGrid.values().stream()
                 .filter(t -> t.getTileType() == TileType.PACMAN_SPAWN)
                 .collect(Collectors.toSet());
         if (this.pacmanSpawnPoints.size() != PLAYERS_NUM) {
             throw new IllegalArgumentException("Wrong number of Pacman spawn points in the given map. " +
                     "There must be exactly " + PLAYERS_NUM + "spawn points.");
         }
-        List<Tile> ghostSpawnPoints = tilesGrid.values().stream()
+        List<Tile> ghostSpawnPoints = this.tilesGrid.values().stream()
                 .filter(t -> t.getTileType() == TileType.GHOST_SPAWN).toList();
         if (ghostSpawnPoints.size() == 1) {
             this.ghostsSpawnPoint = ghostSpawnPoints.getFirst();
@@ -73,5 +78,10 @@ public class FourPlayersGameMap implements GameMap {
             throw new IndexOutOfBoundsException("Specified position is out of bounds for the GameMap matrix.");
         }
         return tile;
+    }
+
+    @Override
+    public Set<Tile> getTiles() {
+        return this.tilesGrid.values().stream().collect(Collectors.toUnmodifiableSet());
     }
 }

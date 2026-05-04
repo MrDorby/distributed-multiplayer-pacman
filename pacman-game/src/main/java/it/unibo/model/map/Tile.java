@@ -10,12 +10,6 @@ import java.util.Optional;
  * Models the concept of a cell inside the map.
  */
 public interface Tile {
-
-    /**
-     * @return a boolean true if the Tile is a Wall or false otherwise.
-     */
-    boolean isWall(); // TODO: keep?
-
     /**
      * @return the Dot contained in the Tile, if present, an empty Optional otherwise.
      */
@@ -36,5 +30,5 @@ public interface Tile {
     /**
      * @return the TileType of the corresponding Tile.
      */
-    TileType getTileType(); //TODO: keep? In that case, isWall() is not needed.
+    TileType getTileType();
 }
