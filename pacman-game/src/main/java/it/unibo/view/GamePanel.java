@@ -15,7 +15,7 @@ import java.util.Objects;
 public class GamePanel extends JPanel {
 
     private final static int PLAYER_NAME_LENGTH = 12;
-    private final static String FONT_NAME = "S2P.ttf";
+    private final static String FONT_NAME = FontName.S2P.getFontName();
     private GameContext gameContext;
     private JPanel scoreboard;
     private JPanel mapContainer;
@@ -31,7 +31,8 @@ public class GamePanel extends JPanel {
 
         // Creates the panel for the map of the game.
         this.mapContainer = new JPanel(new GridBagLayout());
-        mapContainer.setBackground(Color.YELLOW);
+        //mapContainer.setBackground(Color.YELLOW);
+        mapContainer.setBackground(Color.GREEN);
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;
         constraints.gridy = 1;
@@ -53,13 +54,15 @@ public class GamePanel extends JPanel {
         constraints.weightx = 0.1;
         constraints.weighty = 0.2;
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.RED);
+        //panel.setBackground(Color.RED);
+        panel.setBackground(Color.GREEN);
         panel.add(scoreboard, BorderLayout.NORTH);
         this.add(panel, constraints);
 
         // Creates the upper panel.
         this.menu = new MenuPanel(gameContext);
         menu.setBackground(Color.CYAN);
+        //menu.setBackground(Color.BLACK);
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 1;
         constraints.gridy = 0;
@@ -70,12 +73,29 @@ public class GamePanel extends JPanel {
         // Creates the bottom panel for the lives of the player.
         this.life = new LifePanel(gameContext);
         life.setBackground(Color.GREEN);
+        JPanel lifeContainer = new JPanel(new GridBagLayout());
+        GridBagConstraints lifeConstraint = new GridBagConstraints();
+        lifeConstraint.fill = GridBagConstraints.BOTH;
+        lifeConstraint.gridwidth = 2;
+        lifeConstraint.weightx = 0.705;
+        lifeConstraint.weighty = 0.2;
+        lifeContainer.add(life, lifeConstraint);
+
+        // Inner panel used to define the configuration.
+        JPanel support = new JPanel();
+        support.setBackground(Color.GREEN);
+        lifeConstraint.fill = GridBagConstraints.BOTH;
+        lifeConstraint.gridwidth = 1;
+        lifeConstraint.weightx = 0.295;
+        lifeConstraint.weighty = 0.2;
+        lifeContainer.add(support, lifeConstraint);
+
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;
         constraints.gridy = 2;
         constraints.gridwidth = 3;
         constraints.weighty = 0.08;
-        this.add(life, constraints);
+        this.add(lifeContainer, constraints);
     }
 
     private static class LifePanel extends JPanel {
@@ -102,10 +122,11 @@ public class GamePanel extends JPanel {
                     .ifPresent(x -> {
                         int radius = 26;
                         int space = 20;
+                        int start = (this.getWidth() / 2) - (3 * radius) + space;
                         for (int i = 0; i < x.getLives(); i++) {
                             g.setColor(Color.RED);
                             g.fillOval(
-                                    space + (radius + space) * i,
+                                    start + (radius + space) * i,
                                     -(radius / 2) + (this.getHeight() / 2),
                                     radius,
                                     radius
@@ -125,21 +146,22 @@ public class GamePanel extends JPanel {
         MenuPanel(GameContext gameContext) {
             this.gameContext = gameContext;
             this.setLayout(new BorderLayout());
+            this.setBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, Color.BLACK));
             //this.timeContainer = new JPanel();
             timeLeft = new JLabel("Time left: " + gameContext.getGameState().getTimeLeft().getSeconds() + "s");
-            timeLeft.setFont(FontManager.addingFont(15f, FONT_NAME));
+            timeLeft.setFont(FontManager.addingFont(18f, FONT_NAME));
             timeLeft.setForeground(Color.BLACK);
-            timeLeft.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+            timeLeft.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 10));
             //timeContainer.add(timeLeft);
             this.add(timeLeft, BorderLayout.LINE_START);
 
             JPanel exitContainer = new JPanel(new GridBagLayout());
             exitContainer.setOpaque(false);
             JButton exit = new JButton("X");
-            exit.setFont(FontManager.addingFont(15f, FONT_NAME));
+            exit.setFont(FontManager.addingFont(18f, FONT_NAME));
             exit.setForeground(Color.BLACK);
             exit.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-            //exit.setContentAreaFilled(false);
+            exit.setContentAreaFilled(false);
             exit.setBorderPainted(false);
             exit.addMouseListener(new MouseAdapter() {
                 @Override
@@ -171,16 +193,24 @@ public class GamePanel extends JPanel {
     private void scoreboardPanel() {
         this.scoreboard = new JPanel(new GridLayout(0,2));
         this.scoreboard.setOpaque(false);
-        this.scoreboard.add(new JLabel("Player name", SwingConstants.CENTER));
-        this.scoreboard.add(new JLabel("Scores", SwingConstants.CENTER));
+        this.scoreboard.setBorder(BorderFactory.createEmptyBorder(50, 10, 0, 10));
+        float titleScoreboardFontSize = 18f;
+        JLabel playerName = new JLabel("Player name", SwingConstants.CENTER);
+        playerName.setFont(FontManager.addingFont(titleScoreboardFontSize, FONT_NAME));
+        this.scoreboard.add(playerName);
+        JLabel scores = new JLabel("Scores", SwingConstants.CENTER);
+        scores.setFont(FontManager.addingFont(titleScoreboardFontSize, FONT_NAME));
+        this.scoreboard.add(scores);
         this.gameContext.getGameState().getLeaderboard().forEach(this::setScoreboardInfos);
-        float scoreboardFontSize = 13f;
+        float scoreboardFontSize = 14f;
         Arrays.stream(this.scoreboard.getComponents())
                 .filter(x -> x instanceof JLabel)
                 .forEach(x -> {
-                    x.setForeground(Color.WHITE);
+                    x.setForeground(Color.BLACK);
                     ((JLabel) x).setBorder(new EmptyBorder(20, 0, 20, 0));
-                    x.setFont(FontManager.addingFont(scoreboardFontSize, FONT_NAME));
+                    if (x.getFont().getSize2D() < titleScoreboardFontSize) {
+                        x.setFont(FontManager.addingFont(scoreboardFontSize, FONT_NAME));
+                    }
                     //((JLabel) x).setBorder(BorderFactory.createLineBorder(Color.BLACK));
                 });
     }

@@ -1,21 +1,15 @@
 package it.unibo.view;
 
-import it.unibo.model.common.GameConstants;
-import it.unibo.model.entities.GameEntity;
-import it.unibo.model.entities.Pacman;
 import it.unibo.model.game.GameContext;
-import it.unibo.model.map.TileType;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.Arrays;
-import java.util.Objects;
 
 public class GameView {
 
+    // TODO: Propagate the size of the frame from the start view?
     private final static int WIDTH_FRAME = Toolkit.getDefaultToolkit().getScreenSize().width;
     private final static int HEIGHT_FRAME = Toolkit.getDefaultToolkit().getScreenSize().height;
     private final JFrame frame = new JFrame();

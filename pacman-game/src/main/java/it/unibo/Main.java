@@ -2,6 +2,7 @@ package it.unibo;
 
 import it.unibo.model.game.GameContextFactory;
 import it.unibo.view.GameView;
+import it.unibo.view.StartView;
 
 public class Main {
     static void main() {
@@ -9,6 +10,12 @@ public class Main {
         for (int i = 1; i <= 5; i++) {
             IO.println("i = " + i);
         }
-        new GameView(GameContextFactory.getTestContext()).show();
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new StartView().setVisible();
+                //new GameView(GameContextFactory.getTestContext()).show();
+            }
+        });
     }
 }

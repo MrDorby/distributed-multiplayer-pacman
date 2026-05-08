@@ -13,6 +13,7 @@ public class GameMapPanel extends JPanel {
 
     public GameMapPanel(GameContext gameContext) {
         this.gameContext = gameContext;
+        this.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 255), 5));
     }
 
     public void setGameContext(GameContext gameContext) {
@@ -27,10 +28,10 @@ public class GameMapPanel extends JPanel {
                 .getTiles()
                 .forEach(tile -> {
                     // TODO: Set different colors for every type of Tile
-                    if (tile.getTileType() == TileType.SIMPLE) {
-                        g.setColor(Color.WHITE);
-                    } else {
+                    if (tile.getTileType() == TileType.WALL) {
                         g.setColor(Color.BLACK);
+                    } else {
+                        g.setColor(Color.WHITE);
                     }
                     //g.drawRect(
                     //        tile.getCenterPosition().y(),
@@ -49,15 +50,15 @@ public class GameMapPanel extends JPanel {
                     g.drawOval(
                             dot.getPosition().y(),
                             dot.getPosition().x(),
-                            GameConstants.GameEntityFeatures.DOT.getRadius() - 1,
-                            GameConstants.GameEntityFeatures.DOT.getRadius() - 1
+                            GameConstants.GameEntityFeatures.DOT.getRadius(),
+                            GameConstants.GameEntityFeatures.DOT.getRadius()
                     );
                     g.setColor(Color.YELLOW);
                     g.fillOval(
                             dot.getPosition().y(),
                             dot.getPosition().x(),
-                            GameConstants.GameEntityFeatures.DOT.getRadius(),
-                            GameConstants.GameEntityFeatures.DOT.getRadius()
+                            GameConstants.GameEntityFeatures.DOT.getRadius() - 1,
+                            GameConstants.GameEntityFeatures.DOT.getRadius() - 1
                     );
                 });
 
@@ -67,8 +68,8 @@ public class GameMapPanel extends JPanel {
                     g.drawOval(
                             centreCircles(ghost.getPosition().y(), GameConstants.GameEntityFeatures.GHOST.getRadius()),
                             centreCircles(ghost.getPosition().x(), GameConstants.GameEntityFeatures.GHOST.getRadius()),
-                            GameConstants.GameEntityFeatures.GHOST.getRadius() - 1,
-                            GameConstants.GameEntityFeatures.GHOST.getRadius() - 1
+                            GameConstants.GameEntityFeatures.GHOST.getRadius(),
+                            GameConstants.GameEntityFeatures.GHOST.getRadius()
                     );
                     g.setColor(Color.RED);
                     g.fillOval(
@@ -82,12 +83,14 @@ public class GameMapPanel extends JPanel {
         this.gameContext.getPacmans()
                 .forEach(pacman -> {
                     g.setColor(Color.BLACK);
+                    //((Graphics2D) g).setStroke(new BasicStroke(2));
                     g.drawOval(
                             centreCircles(pacman.getPosition().y(), GameConstants.GameEntityFeatures.PACMAN.getRadius()),
                             centreCircles(pacman.getPosition().x(), GameConstants.GameEntityFeatures.PACMAN.getRadius()),
-                            GameConstants.GameEntityFeatures.PACMAN.getRadius() - 1,
-                            GameConstants.GameEntityFeatures.PACMAN.getRadius() - 1
+                            GameConstants.GameEntityFeatures.PACMAN.getRadius(),
+                            GameConstants.GameEntityFeatures.PACMAN.getRadius()
                     );
+                    //((Graphics2D) g).setStroke(new BasicStroke(1));
                     g.setColor(Color.YELLOW);
                     g.fillOval(
                             centreCircles(pacman.getPosition().y(), GameConstants.GameEntityFeatures.PACMAN.getRadius()),
@@ -96,11 +99,6 @@ public class GameMapPanel extends JPanel {
                             GameConstants.GameEntityFeatures.PACMAN.getRadius() - 1
                     );
                 });
-    }
-
-    // TODO: To remove
-    private int panelCoordinate(int centreCoordinate) {
-        return centreCoordinate;// - (GameConstants.TILE_SIZE / 2);
     }
 
     private int centreCircles(int upperCoordinate, int size) {
