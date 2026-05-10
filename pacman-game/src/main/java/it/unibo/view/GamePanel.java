@@ -163,17 +163,7 @@ public class GamePanel extends JPanel {
             exit.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
             exit.setContentAreaFilled(false);
             exit.setBorderPainted(false);
-            exit.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseEntered(MouseEvent e) {
-                    exit.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                }
-
-                @Override
-                public void mouseExited(MouseEvent e) {
-                    exit.setCursor(Cursor.getDefaultCursor());
-                }
-            });
+            exit.setCursor(new Cursor(Cursor.HAND_CURSOR));
             GridBagConstraints exitC = new GridBagConstraints();
             exitC.insets = new Insets(0, 10, 0, 10);
             exitContainer.add(exit, exitC);
