@@ -13,8 +13,8 @@ public class Main {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new StartView().setVisible();
-                //new GameView(GameContextFactory.getTestContext()).show();
+                //new StartView().setVisible();
+                new GameView(GameContextFactory.getTestContext()).show();
             }
         });
     }

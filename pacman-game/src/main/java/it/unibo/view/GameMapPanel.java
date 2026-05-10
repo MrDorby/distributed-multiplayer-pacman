@@ -13,7 +13,8 @@ public class GameMapPanel extends JPanel {
 
     public GameMapPanel(GameContext gameContext) {
         this.gameContext = gameContext;
-        this.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 255), 5));
+        //this.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 255), 5));
+        this.setBorder(BorderFactory.createLineBorder(Color.BLACK, 5));
     }
 
     public void setGameContext(GameContext gameContext) {
