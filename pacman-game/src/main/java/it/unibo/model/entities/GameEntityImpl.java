@@ -1,6 +1,8 @@
 package it.unibo.model.entities;
 
 import it.unibo.model.collisions.BoundingBox;
+import it.unibo.model.collisions.CircleBoundingBoxImpl;
+import it.unibo.model.common.GameConstants;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.Tile;
@@ -9,12 +11,26 @@ public abstract class GameEntityImpl implements GameEntity {
 
     private BoundingBox boundingBox;
     private Vector2D position;
-    private boolean alive;
+    private boolean alive = true;
 
     public GameEntityImpl(Tile tile) {
-        // TODO: this.boundingBox = new BoundingBoxImpl();
         this.position = tile.getCenterPosition();
-        this.alive = true;
+        this.boundingBox = new CircleBoundingBoxImpl(position, getRadiusFromGameEntity());
+    }
+
+    public GameEntityImpl(Vector2D position) {
+        this.position = position;
+        this.boundingBox = new CircleBoundingBoxImpl(position, getRadiusFromGameEntity());
+    }
+
+    private int getRadiusFromGameEntity() {
+        if (this instanceof Pacman) {
+            return GameConstants.GameEntityFeatures.PACMAN.getRadius();
+        } else if (this instanceof Ghost) {
+            return GameConstants.GameEntityFeatures.GHOST.getRadius();
+        } else {
+            return GameConstants.GameEntityFeatures.DOT.getRadius();
+        }
     }
 
     @Override

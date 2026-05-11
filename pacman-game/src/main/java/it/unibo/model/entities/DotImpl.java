@@ -1,6 +1,7 @@
 package it.unibo.model.entities;
 
 import it.unibo.model.collisions.Collision;
+import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.Tile;
 
@@ -13,8 +14,8 @@ public class DotImpl extends GameEntityImpl implements Dot {
     private boolean isSpecial;
     private long lastTimeDead;
 
-    public DotImpl(Tile tile) {
-        super(tile);
+    public DotImpl(Vector2D position) {
+        super(position);
     }
 
     @Override

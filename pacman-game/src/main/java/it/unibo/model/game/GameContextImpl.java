@@ -5,9 +5,7 @@ import it.unibo.model.entities.*;
 import it.unibo.model.map.GameMap;
 
 import java.time.Duration;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class GameContextImpl implements GameContext {
@@ -16,8 +14,8 @@ public class GameContextImpl implements GameContext {
     private final Set<Ghost> ghosts;
     private final Set<Pacman> pacmans;
     private GameState gameState;
-    private final Duration timeLeft;
-    private Set<Collision> collisions = new HashSet<>();
+    private Duration timeLeft;
+    private Map<GameEntity, Set<Collision>> collisions = new HashMap<>();
 
     public GameContextImpl(GameMap map, Set<Dot> dots, Set<Ghost> ghosts, Set<Pacman> pacmans, Duration timeLeft) {
         this.map = map;
@@ -25,15 +23,16 @@ public class GameContextImpl implements GameContext {
         this.ghosts = ghosts;
         this.pacmans = pacmans;
         this.timeLeft = timeLeft;
+        this.createGameState();
     }
 
     @Override
     public Set<Collision> getCollisions(GameEntity entity) {
-        return this.collisions;
+        return collisions.getOrDefault(entity, Collections.emptySet());
     }
 
     @Override
-    public void setCollisions(Set<Collision> collisions) {
+    public void setCollisions(Map<GameEntity, Set<Collision>> collisions) {
         this.collisions = collisions;
     }
 
@@ -80,6 +79,14 @@ public class GameContextImpl implements GameContext {
     }
 
     @Override
+    public void decrementTime(Duration delta) {
+        this.timeLeft = this.timeLeft.minus(delta);
+        if (this.timeLeft.isNegative()) {
+            this.timeLeft = Duration.ZERO;
+        }
+    }
+
+    @Override
     public void createGameState() {
         this.gameState = new GameStateImpl(
             calculateLeaderboard(),
@@ -89,21 +96,19 @@ public class GameContextImpl implements GameContext {
         );
     }
 
-    private java.util.Map<Pacman, Integer> calculateLeaderboard() {
+    private Map<Pacman, Integer> calculateLeaderboard() {
         return pacmans.stream().collect(Collectors.toMap(pacman -> pacman, Pacman::getScore));
     }
 
     private boolean checkGameOver() {
-        // TODO add whether time is up
-        return pacmans.stream().filter(pacman -> pacman.getLives() > 0).count() == 1;
+        boolean timeIsUp = timeLeft.isZero() || timeLeft.isNegative();
+        boolean onlyOnePacmanLeft = pacmans.stream().filter(pacman -> pacman.getLives() > 0).count() == 1;
+        return timeIsUp || onlyOnePacmanLeft;
     }
 
     private Pacman calculateWinner() {
         if (checkGameOver()) {
-            return pacmans
-                    .stream()
-                    .filter(pacman -> pacman.getLives() > 0)
-                    .max(Comparator.comparingInt(Pacman::getScore)).orElse(null);
+            return pacmans.stream().filter(pacman -> pacman.getLives() > 0).max(Comparator.comparingInt(Pacman::getScore)).orElse(null);
         }
         return null;
     }

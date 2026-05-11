@@ -16,8 +16,8 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     private long lastTimeDead;
     private Direction direction;
 
-    public GhostImpl(Tile tile) {
-        super(tile);
+    public GhostImpl(Vector2D position) {
+        super(position);
     }
 
     @Override

@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-//TODO: Write it better.
+// TODO: Write it better.
 public class GameEntitiesTest {
 
     private static final int NUMBER_LIVES = 3;

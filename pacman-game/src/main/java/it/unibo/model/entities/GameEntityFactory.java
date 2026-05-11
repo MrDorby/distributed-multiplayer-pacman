@@ -1,5 +1,6 @@
 package it.unibo.model.entities;
 
+import it.unibo.model.common.Vector2D;
 import it.unibo.model.map.Tile;
 
 /**
@@ -14,15 +15,16 @@ public interface GameEntityFactory {
     Pacman createPacman(Tile spawnPoint);
 
     /**
-     * @param tile where to insert the dot.
+     * @param position where to insert the dot, a Vector2D.
      * @return a new Dot.
      */
-    Dot createDot(Tile tile);
+    Dot createDot(Vector2D position);
 
     /**
+     * @param spawnPoint Vector2D of the ghosts' spawn point.
      * @return a new Ghost.
      */
-    Ghost createGhost(Tile spawnPoint);
+    Ghost createGhost(Vector2D spawnPoint);
 
     /**
      * @param entity

@@ -1,9 +1,14 @@
 package it.unibo.controller.engine;
 
 import it.unibo.controller.commands.PacmanCommand;
+import it.unibo.model.collisions.CollisionManagerImpl;
 import it.unibo.model.game.Game;
+import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
+import it.unibo.view.GameView;
+import it.unibo.view.HeadlessView;
 
+import java.time.Duration;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -27,6 +32,7 @@ public class GameEngineImpl implements GameEngine {
     private static final int MAX_CATCHUP_TICKS = 5;
 
     private final Game game;
+    private GameView view;
     private final Queue<PacmanCommand> commandQueue = new ConcurrentLinkedQueue<>();
     private volatile boolean running;
     private volatile int currentTps = 0;
@@ -77,6 +83,11 @@ public class GameEngineImpl implements GameEngine {
         this.running = false;
     }
 
+    @Override
+    public void setView(GameView view) {
+        this.view = (view != null) ? view : new HeadlessView();
+    }
+
     private long accumulateLag(long lag, long elapsed) {
         return Math.min(lag + elapsed, NANOS_PER_TICK * MAX_CATCHUP_TICKS);
     }
@@ -125,18 +136,19 @@ public class GameEngineImpl implements GameEngine {
     }
 
     private void update() {
+        Duration tickDuration = Duration.ofNanos(NANOS_PER_TICK);
         while (!commandQueue.isEmpty()) {
             PacmanCommand command = commandQueue.poll();
-            //if (command != null) {
-            //    command.execute(game);
-            //}
+            if (command != null) {
+                command.execute(game);
+            }
         }
-        // game.update(null);
-        // view.render(null);
+        game.update(tickDuration);
+        view.render(game.getContext());
     }
 
     static void main() {
-        Game game = new GameImpl(null);
+        Game game = new GameImpl(GameContextFactory.getTestContext(), new CollisionManagerImpl());
         GameEngineImpl engine = new GameEngineImpl(game);
         new Thread(engine::start).start();
     }
