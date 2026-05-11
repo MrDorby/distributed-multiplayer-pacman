@@ -5,6 +5,8 @@ import it.unibo.model.collisions.CollisionManagerImpl;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
+import it.unibo.view.GameView;
+import it.unibo.view.HeadlessView;
 
 import java.time.Duration;
 import java.util.Queue;
@@ -30,6 +32,7 @@ public class GameEngineImpl implements GameEngine {
     private static final int MAX_CATCHUP_TICKS = 5;
 
     private final Game game;
+    private GameView view;
     private final Queue<PacmanCommand> commandQueue = new ConcurrentLinkedQueue<>();
     private volatile boolean running;
     private volatile int currentTps = 0;
@@ -78,6 +81,11 @@ public class GameEngineImpl implements GameEngine {
     @Override
     public void stop() {
         this.running = false;
+    }
+
+    @Override
+    public void setView(GameView view) {
+        this.view = (view != null) ? view : new HeadlessView();
     }
 
     private long accumulateLag(long lag, long elapsed) {
@@ -136,7 +144,7 @@ public class GameEngineImpl implements GameEngine {
             }
         }
         game.update(tickDuration);
-        // view.render(null);
+        view.render(game.getContext());
     }
 
     static void main() {
