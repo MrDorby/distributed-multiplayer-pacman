@@ -172,13 +172,9 @@ public class GamePanel extends JPanel {
 
         public void setGameContext(GameContext gameContext) {
             this.gameContext = gameContext;
+            this.timeLeft.setText("Time left: " + gameContext.getGameState().getTimeLeft().getSeconds() + "s");
         }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            timeLeft = new JLabel(this.gameContext.getGameState().getTimeLeft().getSeconds() + "s");
-        }}
+    }
 
     private void scoreboardPanel() {
         this.scoreboard = new JPanel(new GridLayout(0,2));
