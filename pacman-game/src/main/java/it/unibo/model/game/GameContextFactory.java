@@ -42,18 +42,21 @@ public class GameContextFactory {
                 .filter(tile -> tile.getMatrixPosition().equals(new MatrixCoordinates(0, 1)))
                 .findFirst().orElseThrow();
 
+        Tile pacmanSpawn2 = tiles.stream()
+                .filter(tile -> tile.getMatrixPosition().equals(new MatrixCoordinates(0, 2)))
+                .findFirst().orElseThrow();
+
         Tile ghostSpawn = tiles.stream()
                 .filter(tile -> tile.getMatrixPosition().equals(new MatrixCoordinates(1, 0)))
                 .findFirst().orElseThrow();
 
         Set<Pacman> pacmans = new HashSet<>();
         pacmans.add(new PacmanImpl(pacmanSpawn));
+        pacmans.add(new PacmanImpl(pacmanSpawn2));
 
         Set<Ghost> ghosts = new HashSet<>();
         ghosts.add(new GhostImpl(ghostSpawn.getCenterPosition()));
 
-        GameContext factory = new GameContextImpl(gameMap, dots, ghosts, pacmans, Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
-        factory.createGameState();
-        return factory;
+        return new GameContextImpl(gameMap, dots, ghosts, pacmans, Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
     }
 }

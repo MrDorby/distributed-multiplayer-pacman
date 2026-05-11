@@ -1,9 +1,12 @@
 package it.unibo.controller.engine;
 
 import it.unibo.controller.commands.PacmanCommand;
+import it.unibo.model.collisions.CollisionManagerImpl;
 import it.unibo.model.game.Game;
+import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
 
+import java.time.Duration;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -125,18 +128,19 @@ public class GameEngineImpl implements GameEngine {
     }
 
     private void update() {
+        Duration tickDuration = Duration.ofNanos(NANOS_PER_TICK);
         while (!commandQueue.isEmpty()) {
             PacmanCommand command = commandQueue.poll();
-            //if (command != null) {
-            //    command.execute(game);
-            //}
+            if (command != null) {
+                command.execute(game);
+            }
         }
-        // game.update(null);
+        game.update(tickDuration);
         // view.render(null);
     }
 
     static void main() {
-        Game game = new GameImpl(null);
+        Game game = new GameImpl(GameContextFactory.getTestContext(), new CollisionManagerImpl());
         GameEngineImpl engine = new GameEngineImpl(game);
         new Thread(engine::start).start();
     }
