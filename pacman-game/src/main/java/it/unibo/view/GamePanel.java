@@ -32,7 +32,7 @@ public class GamePanel extends JPanel {
         // Creates the panel for the map of the game.
         this.mapContainer = new JPanel(new GridBagLayout());
         //mapContainer.setBackground(Color.YELLOW);
-        mapContainer.setBackground(Color.GREEN);
+        mapContainer.setBackground(Color.YELLOW);
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;
         constraints.gridy = 1;
@@ -55,7 +55,7 @@ public class GamePanel extends JPanel {
         constraints.weighty = 0.2;
         JPanel panel = new JPanel(new BorderLayout());
         //panel.setBackground(Color.RED);
-        panel.setBackground(Color.GREEN);
+        panel.setBackground(Color.YELLOW);
         panel.add(scoreboard, BorderLayout.NORTH);
         this.add(panel, constraints);
 
@@ -72,7 +72,7 @@ public class GamePanel extends JPanel {
 
         // Creates the bottom panel for the lives of the player.
         this.life = new LifePanel(gameContext);
-        life.setBackground(Color.GREEN);
+        life.setBackground(Color.YELLOW);
         JPanel lifeContainer = new JPanel(new GridBagLayout());
         GridBagConstraints lifeConstraint = new GridBagConstraints();
         lifeConstraint.fill = GridBagConstraints.BOTH;
@@ -83,7 +83,7 @@ public class GamePanel extends JPanel {
 
         // Inner panel used to define the configuration.
         JPanel support = new JPanel();
-        support.setBackground(Color.GREEN);
+        support.setBackground(Color.YELLOW);
         lifeConstraint.fill = GridBagConstraints.BOTH;
         lifeConstraint.gridwidth = 1;
         lifeConstraint.weightx = 0.295;
@@ -163,17 +163,7 @@ public class GamePanel extends JPanel {
             exit.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
             exit.setContentAreaFilled(false);
             exit.setBorderPainted(false);
-            exit.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseEntered(MouseEvent e) {
-                    exit.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                }
-
-                @Override
-                public void mouseExited(MouseEvent e) {
-                    exit.setCursor(Cursor.getDefaultCursor());
-                }
-            });
+            exit.setCursor(new Cursor(Cursor.HAND_CURSOR));
             GridBagConstraints exitC = new GridBagConstraints();
             exitC.insets = new Insets(0, 10, 0, 10);
             exitContainer.add(exit, exitC);
