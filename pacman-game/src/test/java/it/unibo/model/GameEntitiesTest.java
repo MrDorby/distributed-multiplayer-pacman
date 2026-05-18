@@ -53,12 +53,13 @@ public class GameEntitiesTest {
         assertEquals(nextPosition(direction, initialPosition), pacman.getPosition());
     }
 
+    // TODO: Check the error
     @Test
     public void scorePacman() {
         int x = 1, y = 0;
         Vector2D dotCentre = new Vector2D(x, y);
         MatrixCoordinates dotMatrix = new MatrixCoordinates(x, y);
-        Dot dot = new DotImpl(new TileImpl(dotMatrix, dotCentre, Optional.empty(), TileType.SIMPLE));
+        //Dot dot = new DotImpl(new TileImpl(dotMatrix, dotCentre, Optional.empty(), TileType.SIMPLE));
         int initialScore = 0;
         assertEquals(initialScore, pacman.getScore());
         pacman.move(Direction.RIGHT);

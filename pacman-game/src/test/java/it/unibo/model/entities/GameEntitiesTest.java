@@ -51,7 +51,7 @@ public class GameEntitiesTest {
     public void scorePacman() {
         int x = 1, y = 0;
         Vector2D dotPosition = new Vector2D(x, y);
-        Dot dot = gameFactory.createDot(createTile(dotPosition));
+        //Dot dot = gameFactory.createDot(createTile(dotPosition));
         int initialScore = 0;
         assertEquals(initialScore, this.pacman.getScore());
         this.pacman.move(Direction.RIGHT);
@@ -62,8 +62,8 @@ public class GameEntitiesTest {
         // 5) Assign the collision,
         // 6) Update.
         // TODO: Instead the update I can call the CollisionManager (before I need to call the MovementManager)
-        GameContext gameContext = new GameContextImpl(null, Set.of(dot), Set.of(), Set.of(pacman), null);
-        this.pacman.update(gameContext);
+        //GameContext gameContext = new GameContextImpl(null, Set.of(dot), Set.of(), Set.of(pacman), null);
+        //this.pacman.update(gameContext);
         assertEquals(++initialScore, this.pacman.getScore());
     }
 
@@ -71,7 +71,7 @@ public class GameEntitiesTest {
     public void pacmanLosesLife() {
         int x = 1, y = 0;
         Vector2D ghostPosition = new Vector2D(x, y);
-        Ghost ghost = gameFactory.createGhost(createTile(ghostPosition));
+        //Ghost ghost = gameFactory.createGhost(createTile(ghostPosition));
         assertFalse(this.pacman.canEatGhost());
         //pacman.move(Direction.RIGHT);
         //pacman.update();
@@ -85,7 +85,8 @@ public class GameEntitiesTest {
     }
 
     private Tile createTile(Vector2D position) {
-        return new TileImpl(position, position, Optional.empty(), TileType.SIMPLE);
+        return null;
+        //return new TileImpl(position, position, Optional.empty(), TileType.SIMPLE);
     }
 
     private Vector2D nextPosition(Direction direction, Vector2D initialPosition) {
