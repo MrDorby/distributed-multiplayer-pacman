@@ -7,7 +7,7 @@ import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
 import it.unibo.view.HeadlessView;
 
-public class HeadlessGameMain {
+public class HeadlessPacmanGame {
     static void main() {
         Game game = new GameImpl(GameContextFactory.getTestContext(), new CollisionManagerImpl());
         GameEngineImpl engine = new GameEngineImpl(game);

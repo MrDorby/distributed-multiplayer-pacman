@@ -1,6 +1,6 @@
 package it.unibo.view.navigation;
 
-import it.unibo.view.panels.ScreenController;
+import it.unibo.view.screens.ScreenController;
 
 import javax.swing.*;
 import java.awt.*;

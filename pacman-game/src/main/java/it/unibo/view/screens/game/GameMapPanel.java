@@ -1,4 +1,4 @@
-package it.unibo.view;
+package it.unibo.view.screens.game;
 
 import it.unibo.model.common.GameConstants;
 import it.unibo.model.game.GameContext;

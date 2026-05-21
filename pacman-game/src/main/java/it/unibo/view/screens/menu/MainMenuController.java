@@ -1,7 +1,8 @@
-package it.unibo.view.panels;
+package it.unibo.view.screens.menu;
 
 import it.unibo.view.navigation.AppState;
 import it.unibo.view.navigation.AppNavigator;
+import it.unibo.view.screens.ScreenController;
 
 import javax.swing.*;
 

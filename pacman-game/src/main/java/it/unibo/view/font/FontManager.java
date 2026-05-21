@@ -1,4 +1,4 @@
-package it.unibo.view;
+package it.unibo.view.font;
 
 import java.awt.*;
 import java.io.IOException;

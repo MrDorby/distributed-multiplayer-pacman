@@ -1,4 +1,4 @@
-package it.unibo.view.panels;
+package it.unibo.view.screens;
 
 import javax.swing.*;
 

@@ -1,15 +1,15 @@
-package it.unibo.view;
+package it.unibo.view.screens.game;
 
 import it.unibo.model.common.GameConstants;
 import it.unibo.model.entities.Pacman;
 import it.unibo.model.game.GameContext;
+import it.unibo.view.font.FontManager;
+import it.unibo.view.font.FontName;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;import javax.swing.border.LineBorder;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.time.Duration;import java.util.Arrays;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class GamePanel extends JPanel {
@@ -22,6 +22,8 @@ public class GamePanel extends JPanel {
     private JPanel gameMapView;
     private JPanel menu;
     private JPanel life;
+
+    private Runnable onEscapePressed;
 
     public GamePanel(GameContext gameContext) {
         this.gameContext = gameContext;
@@ -60,7 +62,10 @@ public class GamePanel extends JPanel {
         this.add(panel, constraints);
 
         // Creates the upper panel.
-        this.menu = new MenuPanel(gameContext);
+        this.menu = new MenuPanel(gameContext, () -> {
+            if (onEscapePressed != null) onEscapePressed.run();
+        });
+
         menu.setBackground(Color.CYAN);
         //menu.setBackground(Color.BLACK);
         constraints.fill = GridBagConstraints.BOTH;
@@ -96,6 +101,10 @@ public class GamePanel extends JPanel {
         constraints.gridwidth = 3;
         constraints.weighty = 0.08;
         this.add(lifeContainer, constraints);
+    }
+
+    public void onEscape(Runnable action) {
+        this.onEscapePressed = action;
     }
 
     private static class LifePanel extends JPanel {
@@ -143,7 +152,7 @@ public class GamePanel extends JPanel {
         private JLabel timeLeft;
         private GameContext gameContext;
 
-        MenuPanel(GameContext gameContext) {
+        MenuPanel(GameContext gameContext, Runnable onExitAction) {
             this.gameContext = gameContext;
             this.setLayout(new BorderLayout());
             this.setBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, Color.BLACK));
@@ -164,6 +173,7 @@ public class GamePanel extends JPanel {
             exit.setContentAreaFilled(false);
             exit.setBorderPainted(false);
             exit.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            exit.addActionListener(e -> onExitAction.run());
             GridBagConstraints exitC = new GridBagConstraints();
             exitC.insets = new Insets(0, 10, 0, 10);
             exitContainer.add(exit, exitC);

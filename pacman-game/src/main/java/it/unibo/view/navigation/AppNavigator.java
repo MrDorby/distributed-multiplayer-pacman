@@ -1,6 +1,6 @@
 package it.unibo.view.navigation;
 
-import it.unibo.view.panels.ScreenController;
+import it.unibo.view.screens.ScreenController;
 
 /**
  * This provides a decoupled way for individual {@link ScreenController}s to request

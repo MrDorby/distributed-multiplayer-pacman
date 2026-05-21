@@ -1,4 +1,4 @@
-package it.unibo.view;
+package it.unibo.view.font;
 
 public enum FontName {
     S2P("S2P.ttf");

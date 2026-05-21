@@ -1,19 +1,23 @@
-package it.unibo.view;
+package it.unibo;
 
 import it.unibo.view.navigation.AppState;
 import it.unibo.view.navigation.ScreenRouter;
-import it.unibo.view.panels.*;
+import it.unibo.view.screens.game.GameController;
+import it.unibo.view.screens.login.LoginController;
+import it.unibo.view.screens.menu.MainMenuController;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class PacmanClient {
     private final JFrame frame = new JFrame("Pacman");
+    private final static int WIDTH_FRAME = Toolkit.getDefaultToolkit().getScreenSize().width;
+    private final static int HEIGHT_FRAME = Toolkit.getDefaultToolkit().getScreenSize().height;
 
     public PacmanClient() {
+        frame.setSize(WIDTH_FRAME, HEIGHT_FRAME);
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 600);
-        frame.setLayout(new BorderLayout());
         ScreenRouter router = new ScreenRouter(frame);
         router.register(AppState.LOGIN, new LoginController(router));
         router.register(AppState.MAIN_MENU, new MainMenuController(router));
