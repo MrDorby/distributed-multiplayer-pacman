@@ -1,35 +1,46 @@
-package it.unibo;
+package it.unibo.token;
 
-import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
+import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 
+import it.unibo.key.KeyGenerator;
 
 @Service
 public class TokenService {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenService.class);
-    private static final String PATH = "./keys/";
+    private static final int TIME_EXPIRATION = 10; // hours
+    private static final String ZONE_ID = "+1";
 
     public String generateToken(User user) {
         try {
             Algorithm algorithm = Algorithm.RSA512(
-                (RSAPublicKey) KeyGenerator.loadPublicKey(), 
-                (RSAPrivateKey) KeyGenerator.loadPrivatecKey());
+                (RSAPublicKey) KeyGenerator.loadAuthenticatorPublicKey(), 
+                (RSAPrivateKey) KeyGenerator.loadAuthenticatorPrivatecKey());
+            return JWT.create()
+                    .withIssuer("auth-token")
+                    .withSubject(user.getUsername())
+                    .withClaim("Username", user.getUsername())
+                    .withExpiresAt(getExpirationDate())
+                    .sign(algorithm);
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
         }
         return null;
     }
 
-    public String validateToken() {
-        return null;
+    private Instant getExpirationDate() {
+        return LocalDateTime.now().plusHours(TIME_EXPIRATION).toInstant(ZoneOffset.of(ZONE_ID));
     }
 }

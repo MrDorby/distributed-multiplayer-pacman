@@ -1,4 +1,4 @@
-package it.unibo;
+package it.unibo.token;
 
 import java.io.IOException;
 
@@ -10,6 +10,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Filter used to intercept the requests and validate the token.
+ */
 @Component
 public class TokenFilter extends OncePerRequestFilter {
 

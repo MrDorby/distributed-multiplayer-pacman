@@ -1,4 +1,4 @@
-package it.unibo;
+package it.unibo.key;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +20,9 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: We can make the authenticator an unique service that can replicate
+// but the pair key remains the same.
+
 /**
  * Handles the generation of the RSA key pair and save on files, if not done yet, the two keys.
  */
@@ -33,7 +36,9 @@ public class KeyGenerator {
     private static final String KEY_ALGORITHM = "RSA";
     private static final int KEYSIZE = 4096; // 2048
 
-    // TODO: ADD DESCRIPTION
+    /**
+     * Generates the key pair for the RSA algorithm and save them on files.
+     */
     public static void generateKeys() {
         try {
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORITHM);
@@ -53,8 +58,13 @@ public class KeyGenerator {
         }
     }
 
-    // TODO: ADD DESCRIPTION
-    public static PublicKey loadPublicKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+    /**
+     * @return the Public key of the authentication service.
+     * @throws IOException
+     * @throws InvalidKeySpecException
+     * @throws NoSuchAlgorithmException
+     */
+    public static PublicKey loadAuthenticatorPublicKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         try (InputStream inputStream = KeyGenerator.class
                 .getClassLoader()
                 .getResourceAsStream(PATH + PUBLIC_KEY_FILE)) {
@@ -68,8 +78,13 @@ public class KeyGenerator {
         } */
     }
 
-    // TODO: ADD DESCRIPTION
-    public static PrivateKey loadPrivatecKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+    /**
+     * @return the Private key of the authentication service.
+     * @throws IOException
+     * @throws InvalidKeySpecException
+     * @throws NoSuchAlgorithmException
+     */
+    public static PrivateKey loadAuthenticatorPrivatecKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         try (InputStream inputStream = KeyGenerator.class
                 .getClassLoader()
                 .getResourceAsStream(PATH + PRIVATE_KEY_FILE)) {
@@ -84,6 +99,7 @@ public class KeyGenerator {
     }
 
     /*
+    // PEM extension file.
     toPem("PUBLIC KEY", keyPair.getPublic().getEncoded())
     public static String toPem(String type, byte[] der) {
         String b64 = Base64.getMimeEncoder(64, new byte[]{'\n'}).encodeToString(der);

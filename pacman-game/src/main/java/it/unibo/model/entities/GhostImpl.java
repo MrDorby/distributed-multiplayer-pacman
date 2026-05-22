@@ -1,11 +1,9 @@
 package it.unibo.model.entities;
 
-import it.unibo.model.collisions.BoundingBox;
 import it.unibo.model.collisions.Collision;
 import it.unibo.model.common.Direction;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
-import it.unibo.model.map.Tile;
 
 import java.util.Set;
 import java.util.stream.Stream;

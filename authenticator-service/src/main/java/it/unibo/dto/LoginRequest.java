@@ -1,4 +1,4 @@
-package it.unibo;
+package it.unibo.dto;
 
 /**
  * Content of the user's login request.

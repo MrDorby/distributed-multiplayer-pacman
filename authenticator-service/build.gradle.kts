@@ -26,6 +26,11 @@ dependencies {
     implementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
     // Source: https://mvnrepository.com/artifact/com.auth0/java-jwt
     implementation("com.auth0:java-jwt:4.5.2") //TODO: check io.jsonwebtoken
+
+    implementation("org.springframework.boot:spring-boot-starter-mongodb")
+    testImplementation("org.springframework.boot:spring-boot-starter-mongodb-test")
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-mongodb-test")
 }
 
 java {
