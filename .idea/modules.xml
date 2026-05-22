@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/distributed-multiplayer-pacman.iml" filepath="$PROJECT_DIR$/.idea/distributed-multiplayer-pacman.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/pacman-game.test.iml" filepath="$PROJECT_DIR$/.idea/modules/pacman-game.test.iml" />
     </modules>
   </component>
 </project>
