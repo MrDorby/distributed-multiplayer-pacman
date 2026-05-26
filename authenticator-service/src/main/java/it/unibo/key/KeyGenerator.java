@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileAttribute;
+import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -15,7 +17,13 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.Objects;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +67,30 @@ public class KeyGenerator {
     }
 
     /**
+     * Encrypts and decrypts incoming data by choosing the right mode and passing the key.
+     * @param data the content that will be encrypted or decrypted.
+     * @param cipherMode Cipher.ENCRYPT_MODE or Cipher.DECRYPT_MODE
+     * @param key
+     * @return
+     */
+    public static String encryptDecryptDataWithKey(String data, int cipherMode, Key key) {
+        try {
+            Cipher cipher = Cipher.getInstance(KEY_ALGORITHM);
+            //cipher.init(Cipher.ENCRYPT_MODE, key);
+            if (cipherMode != Cipher.ENCRYPT_MODE && cipherMode != Cipher.DECRYPT_MODE) {
+                throw new IllegalArgumentException("Cipher mode accepted only: ENCRYPT and DECRYPT!");
+            }
+            cipher.init(cipherMode, key);
+            byte[] dataBytes = data.getBytes();
+            return Base64.getEncoder().encodeToString(cipher.doFinal(dataBytes));
+
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
+        return null;
+    }
+
+    /**
      * @return the Public key of the authentication service.
      * @throws IOException
      * @throws InvalidKeySpecException
@@ -84,7 +116,7 @@ public class KeyGenerator {
      * @throws InvalidKeySpecException
      * @throws NoSuchAlgorithmException
      */
-    public static PrivateKey loadAuthenticatorPrivatecKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+    public static PrivateKey loadAuthenticatorPrivateKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         try (InputStream inputStream = KeyGenerator.class
                 .getClassLoader()
                 .getResourceAsStream(PATH + PRIVATE_KEY_FILE)) {

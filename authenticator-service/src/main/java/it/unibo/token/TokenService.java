@@ -27,9 +27,9 @@ public class TokenService {
         try {
             Algorithm algorithm = Algorithm.RSA512(
                 (RSAPublicKey) KeyGenerator.loadAuthenticatorPublicKey(), 
-                (RSAPrivateKey) KeyGenerator.loadAuthenticatorPrivatecKey());
+                (RSAPrivateKey) KeyGenerator.loadAuthenticatorPrivateKey());
             return JWT.create()
-                    .withIssuer("auth-token")
+                    .withIssuer("auth-token")   //TODO: how is composed the token?
                     .withSubject(user.getUsername())
                     .withClaim("Username", user.getUsername())
                     .withExpiresAt(getExpirationDate())
