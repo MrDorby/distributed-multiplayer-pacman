@@ -10,10 +10,11 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 
+// TODO: to remove because it's only for local implementation?
 /**
  * Configuration for the MongoClient object for interacting with the MongoDBServer.
  */
-@Configuration
+//@Configuration
 public class MongoConfig {
     
     @Value("${mongodb.uri}")

@@ -5,6 +5,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+//TODO: Needed for the authentication of the user.
 @Service
 public class AuthUserDetailsService implements UserDetailsService {
 

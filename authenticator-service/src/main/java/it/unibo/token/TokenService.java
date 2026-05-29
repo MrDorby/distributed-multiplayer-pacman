@@ -8,13 +8,13 @@ import java.time.ZoneOffset;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 
 import it.unibo.key.KeyGenerator;
+import it.unibo.mongodb.UserMongoDB;
 
 @Service
 public class TokenService {
@@ -23,7 +23,7 @@ public class TokenService {
     private static final int TIME_EXPIRATION = 10; // hours
     private static final String ZONE_ID = "+1";
 
-    public String generateToken(User user) {
+    public String generateToken(UserMongoDB user) {
         try {
             Algorithm algorithm = Algorithm.RSA512(
                 (RSAPublicKey) KeyGenerator.loadAuthenticatorPublicKey(), 
@@ -37,7 +37,7 @@ public class TokenService {
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
         }
-        return null;
+        return null; // TODO: null is good?
     }
 
     private Instant getExpirationDate() {

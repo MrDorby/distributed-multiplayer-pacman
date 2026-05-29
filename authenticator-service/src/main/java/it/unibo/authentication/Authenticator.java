@@ -2,7 +2,7 @@ package it.unibo.authentication;
 
 import org.springframework.http.ResponseEntity;
 
-import it.unibo.dto.LoginRequest;
+import it.unibo.dto.LoginDTO;
 import it.unibo.dto.LoginResponse;
 
 /**
@@ -10,7 +10,7 @@ import it.unibo.dto.LoginResponse;
  */
 public interface Authenticator {
     
-    ResponseEntity<LoginResponse> login(LoginRequest loginRequest);
+    ResponseEntity<LoginResponse> login(LoginDTO loginRequest);
 
     ResponseEntity<Void> register();
 

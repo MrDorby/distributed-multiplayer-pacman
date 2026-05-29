@@ -23,18 +23,18 @@ public class UsersRepository {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public User getUserCredentials(String email) {
+    public UserMongoDB getUserCredentials(String email) {
         try {
             Query query = new Query(Criteria.where("email").is(email));
-            List<User> result = mongoTemplate.find(query, User.class);
+            List<UserMongoDB> result = mongoTemplate.find(query, UserMongoDB.class);
             return result.getFirst();
         } catch (NoSuchElementException e) {
             LOGGER.error(e.getMessage());
         }
-        return null;
+        return null; // TODO: null is good?
     }
 
-    public void addUser(User newUser) {
+    public void addUser(UserMongoDB newUser) {
         if (getUserCredentials(newUser.getUsername()) == null) {
             mongoTemplate.insert(newUser);
         }
