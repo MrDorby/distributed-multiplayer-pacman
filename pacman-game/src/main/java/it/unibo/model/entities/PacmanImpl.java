@@ -13,7 +13,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
 
     private final static int NUMBER_LIVES = 3;
     private final static int TIME_CAN_EAT_GHOSTS = 5;
-    private final UUID id;
+    private final UUID id;  // TODO: remove and use a String 
     private int score;
     private int lives;
     private boolean controlledByPlayer;

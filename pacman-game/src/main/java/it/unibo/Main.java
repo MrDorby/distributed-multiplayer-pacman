@@ -14,7 +14,7 @@ public class Main {
             @Override
             public void run() {
                 //new StartView().setVisible();
-                //new GameView(GameContextFactory.getTestContext()).show();
+                //new GameViewImpl(GameContextFactory.getTestContext()).show();
             }
         });
     }
