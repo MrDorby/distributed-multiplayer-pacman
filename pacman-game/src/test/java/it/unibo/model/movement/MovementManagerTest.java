@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.stream.IntStream;
 
+import static it.unibo.model.common.Direction.*;
 import static it.unibo.model.common.GameConstants.GameEntityFeatures.PACMAN;
 import static it.unibo.model.common.GameConstants.TILE_SIZE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,6 +44,8 @@ public class MovementManagerTest {
         };
     }
 
+    // TODO: check the correctness of every test
+
     @ParameterizedTest
     @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
     void testSpecificDirectionMovement(Direction movementDirection) {
@@ -69,17 +72,61 @@ public class MovementManagerTest {
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, numberOfMovements), movement.move());
     }
 
-    void testInvertDirection() {
-        // TODO: test that the direction of movement can be inverted while moving
+    @ParameterizedTest
+    @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
+    void testInvertDirection(Direction movementDirection) {
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_POSITION);
+        movement.changeDirection(movementDirection);
+        movement.move();
+        Vector2D newPosition = movement.move();
+        assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), newPosition);
+        movement.changeDirection(movementDirection.getOpposite());
+        IntStream.range(0, 3).forEach((e) -> movement.move());
+        assertEquals(getExpectedFinalPosition(newPosition, movementDirection.getOpposite(), 4), movement.move());
     }
 
-    void testInvertDirectionAgainstWall() {
-        // TODO: test that the direction of movement can be inverted even if the tile behind the starting point is a
-        //  wall. Once we are back to the initial position, test that the movement does not move further, because of
-        //  the wall.
+    @ParameterizedTest
+    @CsvSource({
+            "UP, 5, 1",
+            "DOWN, 1, 5",
+            "LEFT, 1, 5",
+            "RIGHT, 5, 1",
+            "NONE, 5, 1"
+    })
+    void testInvertDirectionAgainstWall(Direction movementDirection, int startingRow, int startingColumn) {
+        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(startingRow, startingColumn));
+        movement.changeDirection(movementDirection);
+        movement.move();
+        Vector2D newPosition = movement.move();
+        assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), newPosition);
+        movement.changeDirection(movementDirection.getOpposite());
+        movement.move();
+        assertEquals(initialPosition, movement.move());
+        assertEquals(initialPosition, movement.move());
+        assertEquals(initialPosition, movement.move());
     }
 
-    void testTurn() {
+    private Direction getRightTurn(Direction direction) {
+        return switch (direction) {
+            case UP -> RIGHT;
+            case DOWN -> LEFT;
+            case LEFT -> UP;
+            case RIGHT -> DOWN;
+            case NONE -> NONE;
+        };
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "UP, 4, 3",
+            "DOWN, 2, 3",
+            "LEFT, 3, 4",
+            "RIGHT, 3, 2",
+            "NONE, 3, 3"
+    })
+    void testTurn(Direction movementDirection, int startingRow, int startingColumn) {
         // TODO: write
+        //  Make so that, for each starting position and direction, the test verifies both a left-hand turn and a
+        //  right-hand turn.
     }
 }
