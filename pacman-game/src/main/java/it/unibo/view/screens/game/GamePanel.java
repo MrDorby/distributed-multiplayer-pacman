@@ -9,7 +9,11 @@ import it.unibo.view.font.FontName;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.Arrays;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.time.Duration;import java.util.Arrays;
 import java.util.Objects;
 
 public class GamePanel extends JPanel {
@@ -32,19 +36,26 @@ public class GamePanel extends JPanel {
         GridBagConstraints constraints = new GridBagConstraints();
 
         // Creates the panel for the map of the game.
-        this.mapContainer = new JPanel(new GridBagLayout());
-        //mapContainer.setBackground(Color.YELLOW);
-        mapContainer.setBackground(Color.YELLOW);
+        this.mapContainer = new JPanel(new FlowLayout());
+        mapContainer.setBackground(Color.RED);
+        this.gameMapView = new GameMapPanel(gameContext, mapContainer);
+        //int size = Math.min(this.mapContainer.getHeight(), this.mapContainer.getWidth());
+        //int size = (int) Math.sqrt(gameContext.getMap().getTiles().size()) * GameConstants.TILE_SIZE;
+        //gameMapView.setPreferredSize(new Dimension(size, size));
+        mapContainer.add(gameMapView);
+        this.mapContainer.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(final ComponentEvent e) {
+                int size = Math.min(mapContainer.getHeight(), mapContainer.getWidth());
+                mapContainer.getComponents()[0].setPreferredSize(new Dimension(size, size));
+            }
+        });
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;
         constraints.gridy = 1;
         constraints.gridwidth = 2;
         constraints.weightx = 0.9;
         constraints.weighty = 0.2;
-        this.gameMapView = new GameMapPanel(gameContext);
-        int size = (int) Math.sqrt(gameContext.getMap().getTiles().size()) * GameConstants.TILE_SIZE;
-        gameMapView.setPreferredSize(new Dimension(size, size));
-        mapContainer.add(gameMapView, new GridBagConstraints());
         this.add(mapContainer, constraints);
 
         // Creates the scoreboard panel.

@@ -10,9 +10,14 @@ import java.awt.*;
 public class GameMapPanel extends JPanel {
 
     private GameContext gameContext;
+    private JPanel mapContainer;
+    private int mapSize;
 
-    public GameMapPanel(GameContext gameContext) {
+    public GameMapPanel(GameContext gameContext, JPanel mapContainer) {
         this.gameContext = gameContext;
+        this.mapContainer = mapContainer;
+        this.mapSize = getMapContainerMinimunDimension();
+        this.setPreferredSize(new Dimension(mapSize, mapSize));
         //this.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 255), 5));
         this.setBorder(BorderFactory.createLineBorder(Color.BLACK, 5));
     }
@@ -25,6 +30,8 @@ public class GameMapPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        mapSize = getMapContainerMinimunDimension();
+        int tileSize = getTileSize(this.gameContext.getMap().getTiles().size());
         this.gameContext.getMap()
                 .getTiles()
                 .forEach(tile -> {
@@ -43,8 +50,8 @@ public class GameMapPanel extends JPanel {
                     g.fillRect(
                             tile.getCenterPosition().y(),
                             tile.getCenterPosition().x(),
-                            GameConstants.TILE_SIZE,
-                            GameConstants.TILE_SIZE);
+                            tileSize,
+                            tileSize);
                 });
         this.gameContext.getDots()
                 .forEach(dot -> {
@@ -102,8 +109,27 @@ public class GameMapPanel extends JPanel {
                 });
     }
 
+    /* 
+     * Determines the centre of the circle.
+     */
     private int centreCircles(int upperCoordinate, int size) {
         int diff = (GameConstants.TILE_SIZE / 2) - (size / 2);
         return upperCoordinate + diff;
+    }
+
+    /*
+     * Returns the minimun dimension of the map container.
+     */
+    private int getMapContainerMinimunDimension() {
+        return Math.min(this.mapContainer.getHeight(), this.mapContainer.getWidth());
+    }
+
+    private int getTileSize(int numberTiles) {
+        int square = (int) Math.sqrt(numberTiles);
+        return this.mapSize / square;
+    }
+
+    private int getSizeConvertedToView(float modelSize, int tileSize) {
+        return (int) (tileSize * modelSize);
     }
 }
