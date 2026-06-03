@@ -5,6 +5,7 @@ import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.map.FourPlayersGameMapFactory;
 import it.unibo.model.map.GameMap;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -56,6 +57,20 @@ public class MovementManagerTest {
             case LEFT -> new Vector2D(initialPosition.x() - (MOVEMENT_VELOCITY * numberOfMovements), initialPosition.y());
             case NONE -> initialPosition;
         };
+    }
+
+    @Test
+    void testDoesNotMoveInitially() {
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_POSITION);
+        assertEquals(initialPosition, movement.move());
+        assertEquals(initialPosition, movement.move());
+    }
+
+    @Test
+    void testDoesNotMoveWithNoneDirection() {
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_POSITION);
+        movement.changeDirection(NONE);
+        assertEquals(initialPosition, movement.move());
     }
 
     @ParameterizedTest
@@ -163,5 +178,10 @@ public class MovementManagerTest {
         assertEquals(getExpectedFinalPosition(turningPosition, getRightTurn(movementDirection), 2 * MOVEMENTS_IN_A_TILE), secondTurningPosition);
         // Assert that the second turn was made
         assertEquals(getExpectedFinalPosition(secondTurningPosition, movementDirection, 1), movement.move());
+    }
+
+    void testPacmanEffect() {
+        // TODO: test that if the current position is on the border of the map, the entity is teleported to the other
+        //  side of the map
     }
 }
