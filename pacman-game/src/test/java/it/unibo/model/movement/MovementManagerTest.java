@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MovementManagerTest {
     private static final int MOVEMENT_VELOCITY = PACMAN.getVelocity();
+    private static final int MOVEMENTS_IN_A_TILE = TILE_SIZE / MOVEMENT_VELOCITY;
     private static final MatrixCoordinates INITIAL_MOVEMENT_POSITION = new MatrixCoordinates(3, 3);
     private static final String ROOT = "it/unibo/";
     private static final String MAPS = ROOT + "maps/";
@@ -26,11 +27,24 @@ public class MovementManagerTest {
     private final GameMap map = new FourPlayersGameMapFactory().fromJSON(MAPS + "movement_test_map.json");
     private MovementManager movement;
 
+    /**
+     * Initializes a MovementManager in the specified initial coordinates, returning the corresponding position vector
+     * in the map.
+     * @param coordinates the initial coordinates of the MovementManager.
+     * @return the vector position that corresponds to the given coordinates on the test map.
+     */
     private Vector2D initializeMovement(final MatrixCoordinates coordinates) {
         this.movement = new MovementManagerImpl(map, coordinates, MOVEMENT_VELOCITY);
         return map.getTile(coordinates).getCenterPosition();
     }
 
+    /**
+     * Calculates the expected final vector position after a movement.
+     * @param initialPosition the initial position of the movement.
+     * @param movementDirection the movement direction.
+     * @param numberOfMovements the number of steps in the movement. Each step has the speed of {@code MOVEMENT_VELOCITY}.
+     * @return the expected final position.
+     */
     private Vector2D getExpectedFinalPosition(
             Vector2D initialPosition,
             Direction movementDirection,
@@ -43,8 +57,6 @@ public class MovementManagerTest {
             case NONE -> initialPosition;
         };
     }
-
-    // TODO: check the correctness of every test
 
     @ParameterizedTest
     @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
@@ -62,13 +74,22 @@ public class MovementManagerTest {
         assertEquals(initialPosition, movement.move());
     }
 
+    /**
+     * Performs multiple movement operations ({@code move()} method) on the MovementManager, ignoring the returned
+     * position value of each call.
+     * @param numberOfMovements the number of movements operations that must be performed.
+     */
+    private void moveMultipleTimes(int numberOfMovements) {
+        IntStream.range(0, numberOfMovements).forEach((_) -> movement.move());
+    }
+
     @ParameterizedTest
     @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
     void testMultipleTilesMovement(Direction movementDirection) {
         Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_POSITION);
         movement.changeDirection(movementDirection);
-        int numberOfMovements = (2 * TILE_SIZE) / MOVEMENT_VELOCITY;
-        IntStream.range(0, numberOfMovements - 1).forEach((e) -> movement.move());
+        int numberOfMovements = 2 * MOVEMENTS_IN_A_TILE;
+        moveMultipleTimes(numberOfMovements - 1);
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, numberOfMovements), movement.move());
     }
 
@@ -78,11 +99,10 @@ public class MovementManagerTest {
         Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_POSITION);
         movement.changeDirection(movementDirection);
         movement.move();
-        Vector2D newPosition = movement.move();
-        assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), newPosition);
+        assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), movement.move());
         movement.changeDirection(movementDirection.getOpposite());
-        IntStream.range(0, 3).forEach((e) -> movement.move());
-        assertEquals(getExpectedFinalPosition(newPosition, movementDirection.getOpposite(), 4), movement.move());
+        moveMultipleTimes(3);
+        assertEquals(getExpectedFinalPosition(initialPosition, movementDirection.getOpposite(), 2), movement.move());
     }
 
     @ParameterizedTest
@@ -97,8 +117,7 @@ public class MovementManagerTest {
         Vector2D initialPosition = initializeMovement(new MatrixCoordinates(startingRow, startingColumn));
         movement.changeDirection(movementDirection);
         movement.move();
-        Vector2D newPosition = movement.move();
-        assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), newPosition);
+        assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), movement.move());
         movement.changeDirection(movementDirection.getOpposite());
         movement.move();
         assertEquals(initialPosition, movement.move());
@@ -125,8 +144,24 @@ public class MovementManagerTest {
             "NONE, 3, 3"
     })
     void testTurn(Direction movementDirection, int startingRow, int startingColumn) {
-        // TODO: write
-        //  Make so that, for each starting position and direction, the test verifies both a left-hand turn and a
-        //  right-hand turn.
+        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(startingRow, startingColumn));
+        movement.changeDirection(movementDirection);
+        assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 1), movement.move());
+        movement.changeDirection(getRightTurn(movementDirection));
+        // Assert that it keeps moving in the same direction as before, despite specifying a different one
+        assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), movement.move());
+        moveMultipleTimes(MOVEMENTS_IN_A_TILE - 3);
+        Vector2D turningPosition = movement.move();
+        assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, MOVEMENTS_IN_A_TILE), turningPosition);
+        moveMultipleTimes(MOVEMENTS_IN_A_TILE - 1);
+        // Assert that it starts moving in the desired direction, after reaching the junction
+        assertEquals(getExpectedFinalPosition(turningPosition, getRightTurn(movementDirection), MOVEMENTS_IN_A_TILE), movement.move());
+        movement.changeDirection(movementDirection);
+        moveMultipleTimes(MOVEMENTS_IN_A_TILE - 1);
+        Vector2D secondTurningPosition = movement.move();
+        // Assert that it keeps moving in the same direction as before, despite specifying a different one
+        assertEquals(getExpectedFinalPosition(turningPosition, getRightTurn(movementDirection), 2 * MOVEMENTS_IN_A_TILE), secondTurningPosition);
+        // Assert that the second turn was made
+        assertEquals(getExpectedFinalPosition(secondTurningPosition, movementDirection, 1), movement.move());
     }
 }
