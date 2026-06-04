@@ -15,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class GameMapTest {
     private static final String RESOURCES_PATH = "it/unibo/maps/";
+    public static final String CORRECT_MAP_PATH = RESOURCES_PATH + "correct_map.json";
+    private static final MatrixCoordinates CORRECT_MAP_SIZE = new MatrixCoordinates(11, 11);
 
     private GameMapFactory mapFactory;
 
@@ -39,7 +41,19 @@ public class GameMapTest {
 
     @Test
     void testCorrectMap() {
-        assertDoesNotThrow(() -> mapFactory.fromJSON(RESOURCES_PATH + "correct_map.json"));
+        assertDoesNotThrow(() -> mapFactory.fromJSON(CORRECT_MAP_PATH));
+    }
+
+    @Test
+    void testMapGridSize() {
+        assertEquals(CORRECT_MAP_SIZE, mapFactory.fromJSON(CORRECT_MAP_PATH).getGridSize());
+    }
+
+    @Test
+    void testMapSize() {
+        assertEquals(
+                new Vector2D(CORRECT_MAP_SIZE.column() * TILE_SIZE, CORRECT_MAP_SIZE.row() * TILE_SIZE),
+                mapFactory.fromJSON(CORRECT_MAP_PATH).getSize());
     }
 
     @Test
@@ -50,14 +64,14 @@ public class GameMapTest {
                 instantiateTile(new MatrixCoordinates(9, 3), TileType.PACMAN_SPAWN),
                 instantiateTile(new MatrixCoordinates(9, 7), TileType.PACMAN_SPAWN)
         );
-        GameMap map = mapFactory.fromJSON(RESOURCES_PATH + "correct_map.json");
+        GameMap map = mapFactory.fromJSON(CORRECT_MAP_PATH);
         assertEquals(pacmanSpawnPoints, map.getPacmanSpawnPoints());
     }
 
     @Test
     void testGhostSpawnPoint() {
         Tile ghostSpawnPoint = instantiateTile(new MatrixCoordinates(5, 5), TileType.GHOST_SPAWN);
-        GameMap map = mapFactory.fromJSON(RESOURCES_PATH + "correct_map.json");
+        GameMap map = mapFactory.fromJSON(CORRECT_MAP_PATH);
         assertEquals(ghostSpawnPoint, map.getGhostSpawnPoint());
     }
 
@@ -72,8 +86,8 @@ public class GameMapTest {
 
     private Vector2D getCenterPosition(MatrixCoordinates coordinates) {
         return new Vector2D(
-                coordinates.row() * TILE_SIZE + TILE_SIZE / 2,
-                coordinates.column() * TILE_SIZE + TILE_SIZE / 2
+                coordinates.column() * TILE_SIZE + TILE_SIZE / 2,
+                coordinates.row() * TILE_SIZE + TILE_SIZE / 2
         );
     }
 
@@ -91,7 +105,7 @@ public class GameMapTest {
             "5, 0, SIMPLE"
     })
     void testGetTile(int tileRow, int tileCol, TileType expectedType) {
-        GameMap map = mapFactory.fromJSON(RESOURCES_PATH + "correct_map.json");
+        GameMap map = mapFactory.fromJSON(CORRECT_MAP_PATH);
         assertEquals(expectedType, map.getTile(new MatrixCoordinates(tileRow, tileCol)).getTileType());
     }
 
@@ -103,7 +117,7 @@ public class GameMapTest {
             "30, 30"
     })
     void testOutOfBoundsTile(int tileRow, int tileCol) {
-        GameMap map = mapFactory.fromJSON(RESOURCES_PATH + "correct_map.json");
+        GameMap map = mapFactory.fromJSON(CORRECT_MAP_PATH);
         assertThrows(IndexOutOfBoundsException.class, () -> map.getTile(new MatrixCoordinates(tileRow, tileCol)));
     }
 

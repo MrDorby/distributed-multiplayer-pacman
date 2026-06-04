@@ -1,6 +1,7 @@
 package it.unibo.model.map;
 
 import it.unibo.model.common.MatrixCoordinates;
+import it.unibo.model.common.Vector2D;
 
 import java.util.Set;
 
@@ -28,7 +29,17 @@ public interface GameMap {
     Tile getTile(MatrixCoordinates matrixPosition);
 
     /**
-     * @return a Set containing all of the Map's Tiles.
+     * @return a Set containing all the Map's Tiles.
      */
     Set<Tile> getTiles();
+
+    /**
+     * @return the size of the map's grid (number of rows and columns).
+     */
+    MatrixCoordinates getGridSize();
+
+    /**
+     * @return the number of positions in the map (x and y).
+     */
+    Vector2D getSize();
 }
