@@ -10,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.function.UnaryOperator;
 import java.util.stream.IntStream;
 
 import static it.unibo.model.common.Direction.*;
@@ -20,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class MovementManagerTest {
     private static final int MOVEMENT_VELOCITY = PACMAN.getVelocity();
     private static final int MOVEMENTS_IN_A_TILE = TILE_SIZE / MOVEMENT_VELOCITY;
-    private static final MatrixCoordinates INITIAL_MOVEMENT_POSITION = new MatrixCoordinates(3, 3);
+    private static final MatrixCoordinates INITIAL_MOVEMENT_COORDINATES = new MatrixCoordinates(3, 3);
     private static final String ROOT = "it/unibo/";
     private static final String MAPS = ROOT + "maps/";
     private static final String MOVEMENT = "/" + ROOT + "movement/";
@@ -61,14 +62,14 @@ public class MovementManagerTest {
 
     @Test
     void testDoesNotMoveInitially() {
-        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_POSITION);
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
         assertEquals(initialPosition, movement.move());
         assertEquals(initialPosition, movement.move());
     }
 
     @Test
     void testDoesNotMoveWithNoneDirection() {
-        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_POSITION);
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
         movement.changeDirection(NONE);
         assertEquals(initialPosition, movement.move());
     }
@@ -76,9 +77,58 @@ public class MovementManagerTest {
     @ParameterizedTest
     @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
     void testSpecificDirectionMovement(Direction movementDirection) {
-        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_POSITION);
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
         movement.changeDirection(movementDirection);
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 1), movement.move());
+    }
+
+    private void testDirectionChangeWithoutMoving(
+            Direction initialMovementDirection,
+            UnaryOperator<Direction> directionChanger) {
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
+        movement.changeDirection(initialMovementDirection);
+        movement.changeDirection(directionChanger.apply(initialMovementDirection));
+        assertEquals(getExpectedFinalPosition(initialPosition, directionChanger.apply(initialMovementDirection), 1), movement.move());
+    }
+
+    @ParameterizedTest
+    @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
+    void testOppositeDirectionChangeWithoutMoving(Direction initialMovementDirection) {
+        testDirectionChangeWithoutMoving(initialMovementDirection, Direction::getOpposite);
+    }
+
+    @ParameterizedTest
+    @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
+    void testPerpendicularDirectionChangeWithoutMoving(Direction initialMovementDirection) {
+        testDirectionChangeWithoutMoving(initialMovementDirection, this::getRightTurn);
+    }
+
+    @ParameterizedTest
+    @CsvSource ({
+            "UP, 5, 3",
+            "DOWN, 1, 3",
+            "LEFT, 3, 7",
+            "RIGHT, 3, 1"
+    })
+    void testOppositeDirectionChangeWithoutMovingWithWall(Direction initialMovementDirection, int initialRow, int initialColumn) {
+        Vector2D initalPosition = initializeMovement(new MatrixCoordinates(initialRow, initialColumn));
+        movement.changeDirection(initialMovementDirection);
+        movement.changeDirection(initialMovementDirection.getOpposite());
+        assertEquals(getExpectedFinalPosition(initalPosition, initialMovementDirection, 0), movement.move());
+    }
+
+    @ParameterizedTest
+    @CsvSource ({
+            "UP, 5, 5",
+            "DOWN, 1, 1",
+            "LEFT, 1, 5",
+            "RIGHT, 5, 1"
+    })
+    void testPerpendicularDirectionChangeWithoutMovingWithWall(Direction initialMovementDirection, int initialRow, int initialColumn) {
+        Vector2D initalPosition = initializeMovement(new MatrixCoordinates(initialRow, initialColumn));
+        movement.changeDirection(initialMovementDirection);
+        movement.changeDirection(getRightTurn(initialMovementDirection));
+        assertEquals(getExpectedFinalPosition(initalPosition, initialMovementDirection, 1), movement.move());
     }
 
     @ParameterizedTest
@@ -101,7 +151,7 @@ public class MovementManagerTest {
     @ParameterizedTest
     @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
     void testMultipleTilesMovement(Direction movementDirection) {
-        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_POSITION);
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
         movement.changeDirection(movementDirection);
         int numberOfMovements = 2 * MOVEMENTS_IN_A_TILE;
         moveMultipleTimes(numberOfMovements - 1);
@@ -111,7 +161,7 @@ public class MovementManagerTest {
     @ParameterizedTest
     @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
     void testInvertDirection(Direction movementDirection) {
-        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_POSITION);
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
         movement.changeDirection(movementDirection);
         movement.move();
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), movement.move());
