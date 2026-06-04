@@ -72,8 +72,8 @@ public class GameMapTest {
 
     private Vector2D getCenterPosition(MatrixCoordinates coordinates) {
         return new Vector2D(
-                coordinates.row() * TILE_SIZE + TILE_SIZE / 2,
-                coordinates.column() * TILE_SIZE + TILE_SIZE / 2
+                coordinates.column() * TILE_SIZE + TILE_SIZE / 2,
+                coordinates.row() * TILE_SIZE + TILE_SIZE / 2
         );
     }
 

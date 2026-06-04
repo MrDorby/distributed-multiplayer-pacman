@@ -12,14 +12,16 @@ public class MovementManagerImpl implements MovementManager {
     private final GameMap map;
     private MatrixCoordinates targetMatrixPosition;
     private Vector2D position;
-    private Direction movementDirection;
+    private Direction currentDirection;
+    private Direction desiredDirection;
 
     public MovementManagerImpl(final GameMap map, final MatrixCoordinates initialMatrixPosition, final int velocity) {
         this.velocity = velocity;
         this.map = map;
         this.targetMatrixPosition = initialMatrixPosition;
         this.position = this.map.getTile(initialMatrixPosition).getCenterPosition();
-        this.movementDirection = Direction.NONE;
+        this.currentDirection = Direction.NONE;
+        this.desiredDirection = Direction.NONE;
     }
 
     /**
@@ -27,7 +29,7 @@ public class MovementManagerImpl implements MovementManager {
      * @return the new position.
      */
     private Vector2D calculateNewPosition() {
-        return switch (this.movementDirection) {
+        return switch (this.currentDirection) {
             case UP -> new Vector2D(this.position.x(), this.position.y() - this.velocity);
             case DOWN -> new Vector2D(this.position.x(), this.position.y() + this.velocity);
             case LEFT -> new Vector2D(this.position.x() - this.velocity, this.position.y());
@@ -39,9 +41,14 @@ public class MovementManagerImpl implements MovementManager {
     @Override
     public Vector2D move() {
         this.position = calculateNewPosition();
-        if (isCurrentPositionInTileCenter(this.targetMatrixPosition)
-                && !isWalkable(this.targetMatrixPosition.getNeighbour(this.movementDirection))) {
-            setMovementDirection(Direction.NONE);
+        if (isCurrentPositionInTileCenter(this.targetMatrixPosition)) {
+            if (this.desiredDirection != Direction.NONE && isWalkable(this.targetMatrixPosition.getNeighbour(this.desiredDirection))) {
+                setCurrentDirection(this.desiredDirection);
+                this.desiredDirection = Direction.NONE;
+            } else {
+                setCurrentDirection(isWalkable(this.targetMatrixPosition.getNeighbour(this.currentDirection)) ?
+                        currentDirection : Direction.NONE);
+            }
         }
         return this.position;
     }
@@ -74,11 +81,11 @@ public class MovementManagerImpl implements MovementManager {
     }
 
     /**
-     * Sets the movement direction and also modifies the target Tile accordingly.
+     * Modifies the current direction and also modifies the target Tile accordingly.
      * @param direction the desired direction of movement.
      */
-    private void setMovementDirection(Direction direction) {
-        this.movementDirection = direction;
+    private void setCurrentDirection(Direction direction) {
+        this.currentDirection = direction;
         this.targetMatrixPosition = this.targetMatrixPosition.getNeighbour(direction);
     }
 
@@ -88,34 +95,35 @@ public class MovementManagerImpl implements MovementManager {
      * @return the previous matrix position.
      */
     private MatrixCoordinates getPreviousMatrixPosition() {
-        return this.targetMatrixPosition.getNeighbour(this.movementDirection.getOpposite());
+        return this.targetMatrixPosition.getNeighbour(this.currentDirection.getOpposite());
     }
 
     @Override
     public void changeDirection(Direction direction) {
+        this.desiredDirection = Direction.NONE;
         if (isCurrentPositionInTileCenter(this.targetMatrixPosition)) {
             if (isWalkable(this.targetMatrixPosition.getNeighbour(direction))) {
-                setMovementDirection(direction);
+                setCurrentDirection(direction);
             } else {
-                // TODO: record desired direction for later
+                this.desiredDirection = direction;
             }
         } else {
-            if (direction.equals(this.movementDirection.getOpposite())) {
+            if (direction.equals(this.currentDirection.getOpposite())) {
                 if (isCurrentPositionInTileCenter(getPreviousMatrixPosition())) {
                     this.targetMatrixPosition = getPreviousMatrixPosition();
-                    this.movementDirection = Direction.NONE;
+                    this.currentDirection = Direction.NONE;
                     if (isWalkable(this.targetMatrixPosition.getNeighbour(direction))) {
-                        setMovementDirection(direction);
+                        setCurrentDirection(direction);
                     }
                 } else {
-                    setMovementDirection(direction);
+                    setCurrentDirection(direction);
                 }
             } else {
                 if (isCurrentPositionInTileCenter(getPreviousMatrixPosition()) && isWalkable(getPreviousMatrixPosition().getNeighbour(direction))) {
                     this.targetMatrixPosition = getPreviousMatrixPosition();
-                    setMovementDirection(direction);
+                    setCurrentDirection(direction);
                 } else {
-                    // TODO: record desired direction for later
+                    this.desiredDirection = direction;
                 }
             }
         }

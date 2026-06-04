@@ -50,8 +50,8 @@ public class FourPlayersGameMapFactory implements GameMapFactory {
 
     private Optional<Tile> createTile(MatrixCoordinates coordinates, String typeString) {
         Vector2D tileCenterPosition = new Vector2D(
-                computeCenterPosition(coordinates.row()),
-                computeCenterPosition(coordinates.column()));
+                computeCenterPosition(coordinates.column()),
+                computeCenterPosition(coordinates.row()));
         // TODO: refactor
         return switch (typeString) {
             case "E" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.SIMPLE));
