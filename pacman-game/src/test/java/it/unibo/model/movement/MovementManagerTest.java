@@ -25,8 +25,11 @@ public class MovementManagerTest {
     private static final String ROOT = "it/unibo/";
     private static final String MAPS = ROOT + "maps/";
     private static final String MOVEMENT = "/" + ROOT + "movement/";
+    private static final String MOVEMENT_TEST_MAP = MAPS + "movement_test_map.json";
+    private static final String TOROID_TEST_MAP = MAPS + "toroid_test_map.json";
+    private static final String TOROID_WITH_WALLS_TEST_MAP = MAPS + "toroid_with_walls_test_map.json";
 
-    private final GameMap map = new FourPlayersGameMapFactory().fromJSON(MAPS + "movement_test_map.json");
+    private GameMap map;
     private MovementManager movement;
 
     /**
@@ -35,7 +38,8 @@ public class MovementManagerTest {
      * @param coordinates the initial coordinates of the MovementManager.
      * @return the vector position that corresponds to the given coordinates on the test map.
      */
-    private Vector2D initializeMovement(final MatrixCoordinates coordinates) {
+    private Vector2D initializeMovement(final MatrixCoordinates coordinates, String mapPath) {
+        this.map = new FourPlayersGameMapFactory().fromJSON(mapPath);
         this.movement = new MovementManagerImpl(map, coordinates, MOVEMENT_VELOCITY);
         return map.getTile(coordinates).getCenterPosition();
     }
@@ -62,14 +66,14 @@ public class MovementManagerTest {
 
     @Test
     void testDoesNotMoveInitially() {
-        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES, MOVEMENT_TEST_MAP);
         assertEquals(initialPosition, movement.move());
         assertEquals(initialPosition, movement.move());
     }
 
     @Test
     void testDoesNotMoveWithNoneDirection() {
-        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES, MOVEMENT_TEST_MAP);
         movement.changeDirection(NONE);
         assertEquals(initialPosition, movement.move());
     }
@@ -77,7 +81,7 @@ public class MovementManagerTest {
     @ParameterizedTest
     @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
     void testSpecificDirectionMovement(Direction movementDirection) {
-        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES, MOVEMENT_TEST_MAP);
         movement.changeDirection(movementDirection);
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 1), movement.move());
     }
@@ -85,7 +89,7 @@ public class MovementManagerTest {
     private void testDirectionChangeWithoutMoving(
             Direction initialMovementDirection,
             UnaryOperator<Direction> directionChanger) {
-        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES, MOVEMENT_TEST_MAP);
         movement.changeDirection(initialMovementDirection);
         movement.changeDirection(directionChanger.apply(initialMovementDirection));
         assertEquals(getExpectedFinalPosition(initialPosition, directionChanger.apply(initialMovementDirection), 1), movement.move());
@@ -111,7 +115,7 @@ public class MovementManagerTest {
             "RIGHT, 3, 1"
     })
     void testOppositeDirectionChangeWithoutMovingWithWall(Direction initialMovementDirection, int initialRow, int initialColumn) {
-        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(initialRow, initialColumn));
+        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(initialRow, initialColumn), MOVEMENT_TEST_MAP);
         movement.changeDirection(initialMovementDirection);
         movement.changeDirection(initialMovementDirection.getOpposite());
         assertEquals(initialPosition, movement.move());
@@ -125,7 +129,7 @@ public class MovementManagerTest {
             "RIGHT, 5, 1"
     })
     void testPerpendicularDirectionChangeWithoutMovingWithWall(Direction initialMovementDirection, int initialRow, int initialColumn) {
-        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(initialRow, initialColumn));
+        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(initialRow, initialColumn), MOVEMENT_TEST_MAP);
         movement.changeDirection(initialMovementDirection);
         movement.changeDirection(getRightTurn(initialMovementDirection));
         assertEquals(getExpectedFinalPosition(initialPosition, initialMovementDirection, 1), movement.move());
@@ -134,7 +138,7 @@ public class MovementManagerTest {
     @ParameterizedTest
     @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
     void testCannotMove(Direction movementDirection) {
-        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(5, 7));
+        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(5, 7), MOVEMENT_TEST_MAP);
         movement.changeDirection(movementDirection);
         assertEquals(initialPosition, movement.move());
     }
@@ -151,7 +155,7 @@ public class MovementManagerTest {
     @ParameterizedTest
     @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
     void testMultipleTilesMovement(Direction movementDirection) {
-        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES, MOVEMENT_TEST_MAP);
         movement.changeDirection(movementDirection);
         int numberOfMovements = 2 * MOVEMENTS_IN_A_TILE;
         moveMultipleTimes(numberOfMovements - 1);
@@ -161,7 +165,7 @@ public class MovementManagerTest {
     @ParameterizedTest
     @CsvFileSource(resources = MOVEMENT + "all_directions.csv")
     void testInvertDirection(Direction movementDirection) {
-        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES);
+        Vector2D initialPosition = initializeMovement(INITIAL_MOVEMENT_COORDINATES, MOVEMENT_TEST_MAP);
         movement.changeDirection(movementDirection);
         movement.move();
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), movement.move());
@@ -179,7 +183,7 @@ public class MovementManagerTest {
             "NONE, 5, 1"
     })
     void testInvertDirectionAgainstWall(Direction movementDirection, int startingRow, int startingColumn) {
-        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(startingRow, startingColumn));
+        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(startingRow, startingColumn), MOVEMENT_TEST_MAP);
         movement.changeDirection(movementDirection);
         movement.move();
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), movement.move());
@@ -209,7 +213,7 @@ public class MovementManagerTest {
             "NONE, 3, 3"
     })
     void testTurn(Direction movementDirection, int startingRow, int startingColumn) {
-        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(startingRow, startingColumn));
+        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(startingRow, startingColumn), MOVEMENT_TEST_MAP);
         movement.changeDirection(movementDirection);
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 1), movement.move());
         movement.changeDirection(getRightTurn(movementDirection));
@@ -230,8 +234,31 @@ public class MovementManagerTest {
         assertEquals(getExpectedFinalPosition(secondTurningPosition, movementDirection, 1), movement.move());
     }
 
-    void testPacmanEffect() {
-        // TODO: test that if the current position is on the border of the map, the entity is teleported to the other
-        //  side of the map
+    @ParameterizedTest
+    @CsvSource({
+            "UP, 0, 1, 2, 1",
+            "DOWN, 2, 1, 0, 1",
+            "LEFT, 1, 0, 1, 2",
+            "RIGHT, 1, 2, 1, 0"
+    })
+    void testToroid(Direction movementDirection, int initialRow, int initialColumn, int finalRow, int finalColumn) {
+        initializeMovement(new MatrixCoordinates(initialRow, initialColumn), TOROID_TEST_MAP);
+        movement.changeDirection(movementDirection);
+        Vector2D finalPosition = map.getTile(new MatrixCoordinates(finalRow, finalColumn)).getCenterPosition();
+        moveMultipleTimes(MOVEMENTS_IN_A_TILE - 1);
+        assertEquals(finalPosition, movement.move());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "UP, 0, 2",
+            "DOWN, 2, 1",
+            "LEFT, 2, 0",
+            "RIGHT, 1, 2"
+    })
+    void testToroidWithWalls(Direction movementDirection, int initialRow, int initialColumn) {
+        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(initialRow, initialColumn), TOROID_WITH_WALLS_TEST_MAP);
+        movement.changeDirection(movementDirection);
+        assertEquals(initialPosition, movement.move());
     }
 }

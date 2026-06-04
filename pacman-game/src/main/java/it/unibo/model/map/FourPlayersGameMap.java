@@ -1,6 +1,7 @@
 package it.unibo.model.map;
 
 import it.unibo.model.common.MatrixCoordinates;
+import it.unibo.model.common.Vector2D;
 
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static it.unibo.model.common.GameConstants.TILE_SIZE;
 
 /**
  * A GameMap that only accepts four-player maps.
@@ -20,6 +23,7 @@ public class FourPlayersGameMap implements GameMap {
     private final Map<MatrixCoordinates, Tile> tilesGrid = new HashMap<>();
     private final Set<Tile> pacmanSpawnPoints;
     private final Tile ghostsSpawnPoint;
+    private final MatrixCoordinates gridSize;
 
     // TODO: this class could be generalized by specifying the number of ghost and Pacman spawn points.
     //  In that case, the Factory could be turned into a builder that progressively accepts the map's parameters.
@@ -28,6 +32,7 @@ public class FourPlayersGameMap implements GameMap {
      * @param gridSize the dimensions of the GameMap's matrix.
      */
     public FourPlayersGameMap(Map<MatrixCoordinates, Tile> tilesGrid, MatrixCoordinates gridSize) {
+        this.gridSize = gridSize;
         IntStream.range(0, gridSize.row()).forEach(i ->
                 IntStream.range(0, gridSize.column()).forEach(j -> {
                     MatrixCoordinates coordinates = new MatrixCoordinates(i, j);
@@ -50,7 +55,7 @@ public class FourPlayersGameMap implements GameMap {
                 .collect(Collectors.toSet());
         if (this.pacmanSpawnPoints.size() != PLAYERS_NUM) {
             throw new IllegalArgumentException("Wrong number of Pacman spawn points in the given map. " +
-                    "There must be exactly " + PLAYERS_NUM + "spawn points.");
+                    "There must be exactly " + PLAYERS_NUM + " spawn points.");
         }
         List<Tile> ghostSpawnPoints = this.tilesGrid.values().stream()
                 .filter(t -> t.getTileType() == TileType.GHOST_SPAWN).toList();
@@ -83,5 +88,15 @@ public class FourPlayersGameMap implements GameMap {
     @Override
     public Set<Tile> getTiles() {
         return this.tilesGrid.values().stream().collect(Collectors.toUnmodifiableSet());
+    }
+
+    @Override
+    public MatrixCoordinates getGridSize() {
+        return this.gridSize;
+    }
+
+    @Override
+    public Vector2D getSize() {
+        return new Vector2D(this.gridSize.column() * TILE_SIZE, this.gridSize.row() * TILE_SIZE);
     }
 }
