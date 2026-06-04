@@ -39,6 +39,10 @@ public class MovementManagerImpl implements MovementManager {
     @Override
     public Vector2D move() {
         this.position = calculateNewPosition();
+        if (isCurrentPositionInTileCenter(this.targetMatrixPosition)
+                && !isWalkable(this.targetMatrixPosition.getNeighbour(this.movementDirection))) {
+            setMovementDirection(Direction.NONE);
+        }
         return this.position;
     }
 
