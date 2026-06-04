@@ -111,10 +111,10 @@ public class MovementManagerTest {
             "RIGHT, 3, 1"
     })
     void testOppositeDirectionChangeWithoutMovingWithWall(Direction initialMovementDirection, int initialRow, int initialColumn) {
-        Vector2D initalPosition = initializeMovement(new MatrixCoordinates(initialRow, initialColumn));
+        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(initialRow, initialColumn));
         movement.changeDirection(initialMovementDirection);
         movement.changeDirection(initialMovementDirection.getOpposite());
-        assertEquals(getExpectedFinalPosition(initalPosition, initialMovementDirection, 0), movement.move());
+        assertEquals(initialPosition, movement.move());
     }
 
     @ParameterizedTest
@@ -125,10 +125,10 @@ public class MovementManagerTest {
             "RIGHT, 5, 1"
     })
     void testPerpendicularDirectionChangeWithoutMovingWithWall(Direction initialMovementDirection, int initialRow, int initialColumn) {
-        Vector2D initalPosition = initializeMovement(new MatrixCoordinates(initialRow, initialColumn));
+        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(initialRow, initialColumn));
         movement.changeDirection(initialMovementDirection);
         movement.changeDirection(getRightTurn(initialMovementDirection));
-        assertEquals(getExpectedFinalPosition(initalPosition, initialMovementDirection, 1), movement.move());
+        assertEquals(getExpectedFinalPosition(initialPosition, initialMovementDirection, 1), movement.move());
     }
 
     @ParameterizedTest

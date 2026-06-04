@@ -22,6 +22,10 @@ public class MovementManagerImpl implements MovementManager {
         this.movementDirection = Direction.NONE;
     }
 
+    /**
+     * Calculates the new position based on the current direction of movement.
+     * @return the new position.
+     */
     private Vector2D calculateNewPosition() {
         return switch (this.movementDirection) {
             case UP -> new Vector2D(this.position.x(), this.position.y() - this.velocity);
@@ -38,32 +42,78 @@ public class MovementManagerImpl implements MovementManager {
         return this.position;
     }
 
+    /**
+     * Returns the Tile corresponding to the given coordinates in the map.
+     * @param tileCoordinates the Tile's coordinates in the map.
+     * @return the Tile.
+     */
     private Tile getTile(MatrixCoordinates tileCoordinates) {
         return this.map.getTile(tileCoordinates);
     }
 
+    /**
+     * Checks whether the current position of the entity corresponds to the center of the Tile at the given coordinates.
+     * @param tileCoordinates the coordinates of the Tile.
+     * @return true if the current position is in the center of the Tile, false otherwise.
+     */
     private boolean isCurrentPositionInTileCenter(MatrixCoordinates tileCoordinates) {
         return this.position.equals(getTile(tileCoordinates).getCenterPosition());
+    }
+
+    /**
+     * Checks whether the entity can move through the Tile at the given coordinates in the game map. (ex. is not a wall)
+     * @param tileCoordinates the coordinates of the Tile.
+     * @return true if the Tile is walkable, false otherwise.
+     */
+    private boolean isWalkable(MatrixCoordinates tileCoordinates) {
+        return getTile(tileCoordinates).getTileType() != TileType.WALL;
+    }
+
+    /**
+     * Sets the movement direction and also modifies the target Tile accordingly.
+     * @param direction the desired direction of movement.
+     */
+    private void setMovementDirection(Direction direction) {
+        this.movementDirection = direction;
+        this.targetMatrixPosition = this.targetMatrixPosition.getNeighbour(direction);
+    }
+
+    /**
+     * Returns the previous matrix position of the entity, according to the current target position and movement direction.
+     * Such position is the neighbour of the target position, in the opposite direction to the current movement direction.
+     * @return the previous matrix position.
+     */
+    private MatrixCoordinates getPreviousMatrixPosition() {
+        return this.targetMatrixPosition.getNeighbour(this.movementDirection.getOpposite());
     }
 
     @Override
     public void changeDirection(Direction direction) {
         if (isCurrentPositionInTileCenter(this.targetMatrixPosition)) {
-            if (getTile(this.targetMatrixPosition.getNeighbour(direction)).getTileType() != TileType.WALL) {
-                this.movementDirection = direction;
-                this.targetMatrixPosition = this.targetMatrixPosition.getNeighbour(direction);
+            if (isWalkable(this.targetMatrixPosition.getNeighbour(direction))) {
+                setMovementDirection(direction);
             } else {
-                this.movementDirection = Direction.NONE;
+                // TODO: record desired direction for later
             }
         } else {
             if (direction.equals(this.movementDirection.getOpposite())) {
-                // TODO: handle the case in which we change direction while still being in the center of the starting
-                //  point (example: we call changeDirection(RIGHT) and then changeDirection(LEFT).
-                this.movementDirection = direction;
-                this.targetMatrixPosition = this.targetMatrixPosition.getNeighbour(direction);
+                if (isCurrentPositionInTileCenter(getPreviousMatrixPosition())) {
+                    this.targetMatrixPosition = getPreviousMatrixPosition();
+                    this.movementDirection = Direction.NONE;
+                    if (isWalkable(this.targetMatrixPosition.getNeighbour(direction))) {
+                        setMovementDirection(direction);
+                    }
+                } else {
+                    setMovementDirection(direction);
+                }
+            } else {
+                if (isCurrentPositionInTileCenter(getPreviousMatrixPosition()) && isWalkable(getPreviousMatrixPosition().getNeighbour(direction))) {
+                    this.targetMatrixPosition = getPreviousMatrixPosition();
+                    setMovementDirection(direction);
+                } else {
+                    // TODO: record desired direction for later
+                }
             }
-            // TODO: handle the case in which the direction is perpendicular (or the same), by memorizing the desired
-            //  movement direction
         }
     }
 }
