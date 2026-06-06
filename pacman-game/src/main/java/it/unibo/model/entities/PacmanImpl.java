@@ -6,14 +6,13 @@ import it.unibo.model.game.GameContext;
 import it.unibo.model.map.Tile;
 
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 public class PacmanImpl extends GameEntityImpl implements Pacman{
 
     private final static int NUMBER_LIVES = 3;
     private final static int TIME_CAN_EAT_GHOSTS = 5;
-    private final UUID id;  // TODO: remove and use a String 
+    private String id;
     private int score;
     private int lives;
     private boolean controlledByPlayer;
@@ -24,14 +23,22 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
 
     public PacmanImpl(Tile tile) {
         super(tile);
-        this.id = UUID.randomUUID();
         this.lives = NUMBER_LIVES;
         this.controlledByPlayer = true;
     }
 
     @Override
-    public UUID getId() {
+    public String getId() {
         return this.id;
+    }
+
+    @Override
+    public void setId(String id) throws IllegalArgumentException {
+        if (this.id == null) {
+            this.id = id;
+        } else {
+            throw new IllegalArgumentException("ID is already set!");
+        }
     }
 
     @Override

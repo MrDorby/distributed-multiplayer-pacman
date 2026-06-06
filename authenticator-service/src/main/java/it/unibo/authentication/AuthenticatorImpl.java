@@ -33,6 +33,8 @@ public class AuthenticatorImpl {
         KeyGenerator.generateKeys();
     }
 
+    // TODO: Syncronous because it waits the public key of the client, then send its public key and gets the credentials.
+    // Use Future.
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LoginResponse> login(@RequestBody LoginDTO loginRequest) {
         // TODO: decrypt with private key of the server the loginRequest.

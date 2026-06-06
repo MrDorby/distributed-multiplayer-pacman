@@ -4,7 +4,6 @@ import it.unibo.model.common.Direction;
 import it.unibo.model.entities.Pacman;
 
 import java.time.Duration;
-import java.util.UUID;
 
 public interface Game {
 
@@ -19,9 +18,9 @@ public interface Game {
     void update(Duration timeLeft);
 
     /**
-     * Sets the next desired direction of a given pacman identified by its UUID.
+     * Sets the next desired direction of a given pacman identified by the username.
      */
-    void movePacman(UUID pacmanId, Direction direction);
+    void movePacman(String pacmanId, Direction direction);
 
     /**
      * Lets a bot take control of a given pacman in case the player controlling it goes afk.

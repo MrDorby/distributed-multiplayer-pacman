@@ -22,7 +22,7 @@ public class GameViewImpl implements GameView {
             @Override
             public void keyPressed(KeyEvent e) {
                 logger.debug("Key pressed: {}", KeyEvent.getKeyText(e.getKeyCode()));
-                // TODO get the UUID of a pacman
+                // TODO get the username of a pacman
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_W, KeyEvent.VK_UP -> engine.enqueueCommand(new PacmanMoveCommand(null, Direction.UP));
                     case KeyEvent.VK_S, KeyEvent.VK_DOWN -> engine.enqueueCommand(new PacmanMoveCommand(null, Direction.DOWN));

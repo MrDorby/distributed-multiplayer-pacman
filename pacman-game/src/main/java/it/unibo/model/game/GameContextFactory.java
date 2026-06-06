@@ -51,8 +51,12 @@ public class GameContextFactory {
                 .findFirst().orElseThrow();
 
         Set<Pacman> pacmans = new HashSet<>();
-        pacmans.add(new PacmanImpl(pacmanSpawn));
-        pacmans.add(new PacmanImpl(pacmanSpawn2));
+        Pacman pacman1 = new PacmanImpl(pacmanSpawn);
+        Pacman pacman2 = new PacmanImpl(pacmanSpawn2);
+        pacman1.setId("Pacman1");
+        pacman2.setId("Pacman2"); 
+        pacmans.add(pacman1);
+        pacmans.add(pacman2);
 
         Set<Ghost> ghosts = new HashSet<>();
         ghosts.add(new GhostImpl(ghostSpawn.getCenterPosition()));

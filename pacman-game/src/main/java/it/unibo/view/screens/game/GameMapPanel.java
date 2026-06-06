@@ -9,17 +9,19 @@ import java.awt.*;
 
 public class GameMapPanel extends JPanel {
 
+    private final static int SPACE_FROM_TOP = 20;
     private GameContext gameContext;
     private JPanel mapContainer;
     private int mapSize;
+    private int tileSize;
+    private int squareTiles;
 
     public GameMapPanel(GameContext gameContext, JPanel mapContainer) {
         this.gameContext = gameContext;
         this.mapContainer = mapContainer;
         this.mapSize = getMapContainerMinimunDimension();
-        this.setPreferredSize(new Dimension(mapSize, mapSize));
-        //this.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 255), 5));
-        this.setBorder(BorderFactory.createLineBorder(Color.BLACK, 5));
+        this.setOpaque(false);
+        this.setVisible(true);
     }
 
     public void setGameContext(GameContext gameContext) {
@@ -30,81 +32,92 @@ public class GameMapPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        mapSize = getMapContainerMinimunDimension();
-        int tileSize = getTileSize(this.gameContext.getMap().getTiles().size());
+        this.mapSize = getMapContainerMinimunDimension();
+        this.squareTiles = (int) Math.sqrt(this.gameContext.getMap().getTiles().size());
+        this.tileSize = getProportionSize(GameConstants.TILE_SIZE);
+        int startX = startingX();
         this.gameContext.getMap()
                 .getTiles()
                 .forEach(tile -> {
+                    // g.setColor(Color.BLACK);
+                    // Graphics2D g2 = (Graphics2D) g;
+                    // Stroke oldStroke = g2.getStroke();
+                    // g2.setStroke(new BasicStroke(0.2f));
+                    // g.drawRect(
+                    //     getProportionSize(tile.getCenterPosition().y() + startX),
+                    //     getProportionSize(tile.getCenterPosition().x() + SPACE_FROM_TOP),
+                    //     tileSize,
+                    //     tileSize
+                    // );
+                    // g2.setStroke(oldStroke);
                     // TODO: Set different colors for every type of Tile
                     if (tile.getTileType() == TileType.WALL) {
                         g.setColor(Color.BLACK);
                     } else {
                         g.setColor(Color.WHITE);
                     }
-                    //g.drawRect(
-                    //        tile.getCenterPosition().y(),
-                    //        tile.getCenterPosition().x(),
-                    //        GameConstants.TILE_SIZE - 1,
-                    //        GameConstants.TILE_SIZE - 1
-                    //);
                     g.fillRect(
-                            tile.getCenterPosition().y(),
-                            tile.getCenterPosition().x(),
-                            tileSize,
-                            tileSize);
+                        getProportionSize(tile.getCenterPosition().y() + startX),
+                        getProportionSize(tile.getCenterPosition().x() + SPACE_FROM_TOP),
+                        tileSize,
+                        tileSize
+                    );
                 });
+        int dotSize = getProportionSize(GameConstants.GameEntityFeatures.DOT.getRadius());
         this.gameContext.getDots()
                 .forEach(dot -> {
                     g.drawOval(
-                            dot.getPosition().y(),
-                            dot.getPosition().x(),
-                            GameConstants.GameEntityFeatures.DOT.getRadius(),
-                            GameConstants.GameEntityFeatures.DOT.getRadius()
+                        dot.getPosition().y() + startX,
+                        dot.getPosition().x() + SPACE_FROM_TOP,
+                        dotSize,
+                        dotSize
                     );
-                    g.setColor(Color.YELLOW);
+                    g.setColor(Color.GREEN);
                     g.fillOval(
-                            dot.getPosition().y(),
-                            dot.getPosition().x(),
-                            GameConstants.GameEntityFeatures.DOT.getRadius() - 1,
-                            GameConstants.GameEntityFeatures.DOT.getRadius() - 1
+                        dot.getPosition().y() + startX,
+                        dot.getPosition().x() + SPACE_FROM_TOP,
+                        dotSize - 1,
+                        dotSize - 1
                     );
                 });
 
+        int ghostSize = getProportionSize(GameConstants.GameEntityFeatures.GHOST.getRadius());
         this.gameContext.getGhosts()
                 .forEach(ghost -> {
                     g.setColor(Color.BLACK);
                     g.drawOval(
-                            centreCircles(ghost.getPosition().y(), GameConstants.GameEntityFeatures.GHOST.getRadius()),
-                            centreCircles(ghost.getPosition().x(), GameConstants.GameEntityFeatures.GHOST.getRadius()),
-                            GameConstants.GameEntityFeatures.GHOST.getRadius(),
-                            GameConstants.GameEntityFeatures.GHOST.getRadius()
+                        centreCircles(ghost.getPosition().y() + startX, ghostSize),
+                        centreCircles(ghost.getPosition().x() + SPACE_FROM_TOP, ghostSize),
+                        ghostSize,
+                        ghostSize
                     );
                     g.setColor(Color.RED);
                     g.fillOval(
-                            centreCircles(ghost.getPosition().y(), GameConstants.GameEntityFeatures.GHOST.getRadius()),
-                            centreCircles(ghost.getPosition().x(), GameConstants.GameEntityFeatures.GHOST.getRadius()),
-                            GameConstants.GameEntityFeatures.GHOST.getRadius() - 1,
-                            GameConstants.GameEntityFeatures.GHOST.getRadius() - 1
+                        centreCircles(ghost.getPosition().y() + startX, ghostSize),
+                        centreCircles(ghost.getPosition().x() + SPACE_FROM_TOP, ghostSize),
+                        ghostSize - 1,
+                        ghostSize - 1
                     );
                 });
 
+        int pacmanSize = getProportionSize(GameConstants.GameEntityFeatures.PACMAN.getRadius());
         this.gameContext.getPacmans()
                 .forEach(pacman -> {
                     g.setColor(Color.BLACK);
                     //((Graphics2D) g).setStroke(new BasicStroke(2));
                     g.drawOval(
-                            centreCircles(pacman.getPosition().y(), GameConstants.GameEntityFeatures.PACMAN.getRadius()),
-                            centreCircles(pacman.getPosition().x(), GameConstants.GameEntityFeatures.PACMAN.getRadius()),
-                            GameConstants.GameEntityFeatures.PACMAN.getRadius(),
-                            GameConstants.GameEntityFeatures.PACMAN.getRadius()
+                            centreCircles(pacman.getPosition().y() + startX, pacmanSize),
+                            centreCircles(pacman.getPosition().x() + SPACE_FROM_TOP, pacmanSize),
+                            pacmanSize,
+                            pacmanSize
                     );
                     //((Graphics2D) g).setStroke(new BasicStroke(1));
                     g.setColor(Color.YELLOW);
                     g.fillOval(
-                            centreCircles(pacman.getPosition().y(), GameConstants.GameEntityFeatures.PACMAN.getRadius()),
-                            centreCircles(pacman.getPosition().x(), GameConstants.GameEntityFeatures.PACMAN.getRadius()),
-                            GameConstants.GameEntityFeatures.PACMAN.getRadius() - 1,
-                            GameConstants.GameEntityFeatures.PACMAN.getRadius() - 1
+                            centreCircles(pacman.getPosition().y() + startX, pacmanSize),
+                            centreCircles(pacman.getPosition().x() + SPACE_FROM_TOP, pacmanSize),
+                            pacmanSize - 1,
+                            pacmanSize - 1
                     );
                 });
     }
@@ -113,23 +126,29 @@ public class GameMapPanel extends JPanel {
      * Determines the centre of the circle.
      */
     private int centreCircles(int upperCoordinate, int size) {
-        int diff = (GameConstants.TILE_SIZE / 2) - (size / 2);
-        return upperCoordinate + diff;
+        int diff = (this.tileSize / 2) - (size / 2);
+        return getProportionSize(upperCoordinate) + diff;
     }
 
     /*
      * Returns the minimun dimension of the map container.
      */
     private int getMapContainerMinimunDimension() {
-        return Math.min(this.mapContainer.getHeight(), this.mapContainer.getWidth());
+        return Math.min(this.mapContainer.getHeight(), this.mapContainer.getWidth()) - SPACE_FROM_TOP;
     }
 
-    private int getTileSize(int numberTiles) {
-        int square = (int) Math.sqrt(numberTiles);
-        return this.mapSize / square;
+    /*
+     * Adapts the size of the entity from the model to the view.
+     */
+    private int getProportionSize(int size) {
+        //return square * GameConstants.TILE_SIZE / this.mapSize;
+        return size * this.mapSize / (this.squareTiles * GameConstants.TILE_SIZE);
     }
 
-    private int getSizeConvertedToView(float modelSize, int tileSize) {
-        return (int) (tileSize * modelSize);
+    /*
+     * Defines the starting point to draw such that the map is centered.
+     */
+    private int startingX() {
+        return (this.mapContainer.getWidth() / 2) - (this.tileSize * this.squareTiles / 2);
     }
 }

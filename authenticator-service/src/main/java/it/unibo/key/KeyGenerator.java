@@ -20,16 +20,10 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Objects;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-// TODO: We can make the authenticator an unique service that can replicate
-// but the pair key remains the same.
 
 /**
  * Handles the generation of the RSA key pair and save on files, if not done yet, the two keys.

@@ -2,17 +2,22 @@ package it.unibo.model.entities;
 
 import it.unibo.model.common.Direction;
 
-import java.util.UUID;
-
 /**
  * Models the concept of a pacman player.
  */
 public interface Pacman extends MovableEntity {
 
     /**
-     * @return UUID, the identifier of the pacman.
+     * @return String, the identifier of the pacman.
      */
-    UUID getId();
+    String getId();
+
+    /**
+     * Sets the identifier for the pacman. If it's present throws an Exception.
+     * @param id, the pacman id (username of the user).
+     * @throws IllegalArgumentException
+     */
+    void setId(String id) throws IllegalArgumentException;
 
     /**
      * @return the score of the pacman.

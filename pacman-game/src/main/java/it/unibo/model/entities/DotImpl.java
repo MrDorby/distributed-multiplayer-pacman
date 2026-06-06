@@ -11,7 +11,7 @@ public class DotImpl extends GameEntityImpl implements Dot {
     private final static int TIME_TO_RESPAWN = 5;
     private final static int DOT_VALUE = 1;
     private boolean isSpecial;
-    private long lastTimeDead;  //TODO: change with time left in the current context.
+    private long lastTimeDead;
 
     public DotImpl(Vector2D position) {
         super(position);
@@ -40,7 +40,7 @@ public class DotImpl extends GameEntityImpl implements Dot {
             collision.stream().filter(x -> x.getGameEntity() instanceof Pacman)
                     .findFirst().ifPresent(_ -> hideDot());
         } else {
-            if (System.currentTimeMillis() - this.lastTimeDead >= TIME_TO_RESPAWN) {
+            if (currentContext.getGameState().getTimeLeft().getNano() - this.lastTimeDead >= TIME_TO_RESPAWN) {
                 this.setIsAlive(true);
             }
         }
@@ -48,6 +48,6 @@ public class DotImpl extends GameEntityImpl implements Dot {
 
     private void hideDot() {
         this.setIsAlive(false);
-        this.lastTimeDead = System.currentTimeMillis();
+        this.lastTimeDead = System.nanoTime();
     }
 }

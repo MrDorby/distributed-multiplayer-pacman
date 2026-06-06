@@ -7,13 +7,15 @@ import it.unibo.view.font.FontManager;
 import it.unibo.view.font.FontName;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.time.Duration;import java.util.Arrays;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class GamePanel extends JPanel {
@@ -22,7 +24,7 @@ public class GamePanel extends JPanel {
     private final static String FONT_NAME = FontName.S2P.getFontName();
     private GameContext gameContext;
     private JPanel scoreboard;
-    private JPanel mapContainer;
+    private JPanel mapPanel;
     private JPanel gameMapView;
     private JPanel menu;
     private JPanel life;
@@ -36,27 +38,25 @@ public class GamePanel extends JPanel {
         GridBagConstraints constraints = new GridBagConstraints();
 
         // Creates the panel for the map of the game.
-        this.mapContainer = new JPanel(new FlowLayout());
-        mapContainer.setBackground(Color.RED);
-        this.gameMapView = new GameMapPanel(gameContext, mapContainer);
-        //int size = Math.min(this.mapContainer.getHeight(), this.mapContainer.getWidth());
-        //int size = (int) Math.sqrt(gameContext.getMap().getTiles().size()) * GameConstants.TILE_SIZE;
-        //gameMapView.setPreferredSize(new Dimension(size, size));
-        mapContainer.add(gameMapView);
-        this.mapContainer.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(final ComponentEvent e) {
-                int size = Math.min(mapContainer.getHeight(), mapContainer.getWidth());
-                mapContainer.getComponents()[0].setPreferredSize(new Dimension(size, size));
-            }
-        });
+        this.mapPanel = new JPanel(new BorderLayout());
+        mapPanel.setBackground(Color.YELLOW);
+        JPanel mapper = new JPanel(new BorderLayout());
+        mapper.setOpaque(false);
+        this.gameMapView = new GameMapPanel(gameContext, mapper);
+        mapper.add(gameMapView, BorderLayout.CENTER);
+        mapPanel.add(mapper, BorderLayout.CENTER);
+
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;
         constraints.gridy = 1;
         constraints.gridwidth = 2;
         constraints.weightx = 0.9;
-        constraints.weighty = 0.2;
-        this.add(mapContainer, constraints);
+        constraints.weighty = 1;
+        
+        this.life = new LifePanel(gameContext);
+        this.life.setOpaque(false);
+        this.mapPanel.add(life, BorderLayout.SOUTH);
+        this.add(mapPanel, constraints);
 
         // Creates the scoreboard panel.
         scoreboardPanel();
@@ -67,7 +67,6 @@ public class GamePanel extends JPanel {
         constraints.weightx = 0.1;
         constraints.weighty = 0.2;
         JPanel panel = new JPanel(new BorderLayout());
-        //panel.setBackground(Color.RED);
         panel.setBackground(Color.YELLOW);
         panel.add(scoreboard, BorderLayout.NORTH);
         this.add(panel, constraints);
@@ -78,40 +77,40 @@ public class GamePanel extends JPanel {
         });
 
         menu.setBackground(Color.CYAN);
-        //menu.setBackground(Color.BLACK);
         constraints.fill = GridBagConstraints.BOTH;
-        constraints.gridx = 1;
+        constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.gridwidth = 3;
-        constraints.weighty = 0.05;
+        constraints.weighty = 0.1; //0.05
         this.add(menu, constraints);
 
         // Creates the bottom panel for the lives of the player.
-        this.life = new LifePanel(gameContext);
+        /* this.life = new LifePanel(gameContext);
         life.setBackground(Color.YELLOW);
         JPanel lifeContainer = new JPanel(new GridBagLayout());
         GridBagConstraints lifeConstraint = new GridBagConstraints();
         lifeConstraint.fill = GridBagConstraints.BOTH;
         lifeConstraint.gridwidth = 2;
         lifeConstraint.weightx = 0.705;
-        lifeConstraint.weighty = 0.2;
+        lifeConstraint.weighty = 1;  //0.2
         lifeContainer.add(life, lifeConstraint);
 
         // Inner panel used to define the configuration.
         JPanel support = new JPanel();
         support.setBackground(Color.YELLOW);
-        lifeConstraint.fill = GridBagConstraints.BOTH;
-        lifeConstraint.gridwidth = 1;
-        lifeConstraint.weightx = 0.295;
-        lifeConstraint.weighty = 0.2;
-        lifeContainer.add(support, lifeConstraint);
+        GridBagConstraints supportConstraint = new GridBagConstraints();
+        supportConstraint.fill = GridBagConstraints.BOTH;
+        supportConstraint.gridwidth = 1;
+        supportConstraint.weightx = 0.295;
+        supportConstraint.weighty = 1;  //0.2
+        lifeContainer.add(support, supportConstraint);
 
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;
         constraints.gridy = 2;
         constraints.gridwidth = 3;
-        constraints.weighty = 0.08;
-        this.add(lifeContainer, constraints);
+        constraints.weighty = 1; //0.08
+        this.add(lifeContainer, constraints);*/
     }
 
     public void onEscape(Runnable action) {
@@ -129,7 +128,7 @@ public class GamePanel extends JPanel {
 
         void setGameContext(GameContext gameContext) {
             this.gameContext = gameContext;
-            this.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+            this.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         }
 
         // TODO: Change when Pacman ID will be present.
@@ -224,7 +223,7 @@ public class GamePanel extends JPanel {
 
     private void setScoreboardInfos(Pacman player, Integer score) {
         //TODO: Inserting here the setForeground
-        String playerId = player.getId().toString();
+        String playerId = player.getId();
         if (playerId.length() > PLAYER_NAME_LENGTH) {
             playerId = playerId.substring(0, PLAYER_NAME_LENGTH) + "...";
         }
@@ -239,7 +238,7 @@ public class GamePanel extends JPanel {
         ((GameMapPanel) this.gameMapView).setGameContext(this.gameContext);
         ((MenuPanel) this.menu).setGameContext(this.gameContext);
         ((LifePanel) this.life).setGameContext(this.gameContext);
-        this.mapContainer.repaint();
+        this.mapPanel.repaint();
         this.menu.repaint();
         this.life.repaint();
     }

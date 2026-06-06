@@ -5,7 +5,6 @@ import it.unibo.model.common.Direction;
 import it.unibo.model.entities.Pacman;
 
 import java.time.Duration;
-import java.util.UUID;
 
 public class GameImpl implements Game {
     private final GameContext context;
@@ -35,7 +34,7 @@ public class GameImpl implements Game {
     }
 
     @Override
-    public void movePacman(UUID pacmanId, Direction direction) {
+    public void movePacman(String pacmanId, Direction direction) {
         this.context.getPacmans().stream()
                 .filter(pacman -> pacman.getId().equals(pacmanId))
                 .findFirst()
