@@ -2,6 +2,8 @@ package it.unibo.model.map;
 
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
+import it.unibo.model.entities.Dot;
+import it.unibo.model.entities.GameEntityFactoryImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,7 +24,7 @@ public class GameMapTest {
 
     @BeforeEach
     void init() {
-        this.mapFactory = new FourPlayersGameMapFactory();
+        this.mapFactory = new FourPlayersGameMapFactory(new GameEntityFactoryImpl());
     }
 
     @ParameterizedTest
@@ -121,5 +123,35 @@ public class GameMapTest {
         assertThrows(IndexOutOfBoundsException.class, () -> map.getTile(new MatrixCoordinates(tileRow, tileCol)));
     }
 
-    // TODO: also implement tests on the Tiles' Dots (present/not present) and their types (is Special or not)
+    @ParameterizedTest
+    @CsvSource({
+            "1, 1, true",
+            "1, 2, false",
+            "1, 8, true",
+            "8, 1, true",
+            "8, 9, true",
+            "5, 0, false",
+            "7, 6, false"
+    })
+    void testDotIsInstantiatedCorrectly(int tileRow, int tileCol, boolean isSpecial) {
+        GameMap map = mapFactory.fromJSON(CORRECT_MAP_PATH);
+        Tile tile = map.getTile(new MatrixCoordinates(tileRow, tileCol));
+        Optional<Dot> dot = tile.getDot();
+        assertTrue(dot.isPresent());
+        assertEquals(isSpecial, dot.get().isSpecial());
+        assertEquals(tile.getCenterPosition(), dot.get().getPosition());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "0, 0",
+            "1, 3",
+            "1, 5",
+            "4, 5",
+            "5, 5"
+    })
+    void testDoesNotHaveDot(int tileRow, int tileCol) {
+        GameMap map = mapFactory.fromJSON(CORRECT_MAP_PATH);
+        assertTrue(map.getTile(new MatrixCoordinates(tileRow, tileCol)).getDot().isEmpty());
+    }
 }

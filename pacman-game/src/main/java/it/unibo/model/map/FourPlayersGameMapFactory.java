@@ -2,6 +2,7 @@ package it.unibo.model.map;
 
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
+import it.unibo.model.entities.GameEntityFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
@@ -19,6 +20,15 @@ import static it.unibo.model.common.GameConstants.TILE_SIZE;
  * A Factory that creates FourPlayersGameMaps.
  */
 public class FourPlayersGameMapFactory implements GameMapFactory {
+    private final GameEntityFactory gameEntityFactory;
+
+    /**
+     * @param gameEntityFactory the factory that will be used to instantiate the Dots in the GameMap.
+     */
+    public FourPlayersGameMapFactory(final GameEntityFactory gameEntityFactory) {
+        this.gameEntityFactory = gameEntityFactory;
+    }
+
     @Override
     public GameMap fromJSON(String path) {
         try {
@@ -48,15 +58,23 @@ public class FourPlayersGameMapFactory implements GameMapFactory {
         }
     }
 
+    /**
+     * Instantiate a Tile in the given GameMap coordinates based on the given type string.
+     * @param coordinates the coordinates of the Tile in the GameMap.
+     * @param typeString the string that represents the Tile's type.
+     * @return the created Tile, if present. An empty optional will be returned in case the passed {@code typeString}
+     *      is invalid.
+     */
     private Optional<Tile> createTile(MatrixCoordinates coordinates, String typeString) {
         Vector2D tileCenterPosition = new Vector2D(
                 computeCenterPosition(coordinates.column()),
                 computeCenterPosition(coordinates.row()));
-        // TODO: refactor
         return switch (typeString) {
             case "E" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.SIMPLE));
-            case "D" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.SIMPLE)); // TODO: create a Dot here
-            case "S" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.SIMPLE)); // TODO: create a special Dot here
+            case "D" -> Optional.of(new TileImpl(coordinates, tileCenterPosition,
+                    Optional.of(this.gameEntityFactory.createDot(tileCenterPosition, false)), TileType.SIMPLE));
+            case "S" -> Optional.of(new TileImpl(coordinates, tileCenterPosition,
+                    Optional.of(this.gameEntityFactory.createDot(tileCenterPosition, true)), TileType.SIMPLE));
             case "W" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.WALL));
             case "G" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.GHOST_SPAWN));
             case "P" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.PACMAN_SPAWN));
@@ -64,9 +82,20 @@ public class FourPlayersGameMapFactory implements GameMapFactory {
         };
     }
 
+    /**
+     * Calculates the center position component of a Tile, based on its coordinate.
+     * @param coordinate the coordinate.
+     * @return the position component.
+     */
     private int computeCenterPosition(int coordinate) {
         return (coordinate * TILE_SIZE) + (TILE_SIZE / 2);
     }
 
+    /**
+     * A representation of the GameMap's JSON file.
+     * @param rows the number of rows.
+     * @param columns the number of columns.
+     * @param tiles the array containing the type strings of each Tile in the map.
+     */
     private record GameMapJSON(int rows, int columns, List<String> tiles) {}
 }
