@@ -16,9 +16,10 @@ public interface GameEntityFactory {
 
     /**
      * @param position where to insert the dot, a Vector2D.
+     * @param isSpecial whether the dot must be special or not.
      * @return a new Dot.
      */
-    Dot createDot(Vector2D position);
+    Dot createDot(Vector2D position, boolean isSpecial);
 
     /**
      * @param spawnPoint Vector2D of the ghosts' spawn point.
