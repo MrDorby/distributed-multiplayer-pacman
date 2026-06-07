@@ -2,20 +2,35 @@ package it.unibo.model.entities;
 
 import it.unibo.model.collisions.Collision;
 import it.unibo.model.common.Direction;
+import it.unibo.model.common.GameConstants;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
+import it.unibo.model.map.GameMap;
+import it.unibo.model.movement.MovementManager;
+import it.unibo.model.movement.MovementManagerImpl;
 
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Stream;
 
 public class GhostImpl extends GameEntityImpl implements Ghost {
 
-    private final static int TIME_TO_RESPAWN = 5;
+    private final static int TIME_TO_RESPAWN = 5000;  // 5000 millis
+    private final MovementManager movementManager;
     private long lastTimeDead;
     private Direction direction;
 
-    public GhostImpl(Vector2D position) {
+    public GhostImpl(Vector2D position, GameMap map) {
         super(position);
+        this.movementManager = new MovementManagerImpl(map, 
+            map.getTiles()
+                .stream()
+                .filter(x -> x.getCenterPosition() == position)
+                .findFirst()
+                .get()
+                .getMatrixPosition(), 
+            GameConstants.GameEntityFeatures.GHOST.getVelocity());
+        this.direction = MovableEntity.getRandomDirection();
     }
 
     @Override
@@ -27,18 +42,23 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     public void update(GameContext currentContext) {
         Set<Collision> collision = currentContext.getCollisions(this);
         Stream<Pacman> pacman = collision.stream().filter(x -> x.getGameEntity() instanceof Pacman).map(x -> (Pacman) x.getGameEntity());
-        pacman.findFirst().ifPresent(this::checkGhostCanBeEaten);
-        if (System.currentTimeMillis() - this.lastTimeDead >= TIME_TO_RESPAWN) {
-            this.setIsAlive(true);
+        pacman.findFirst().ifPresent(x -> checkGhostCanBeEaten(x, currentContext));
+        if (this.isAlive()) {
+            if (currentContext.getGameState().getTimeLeft().toMillis() - this.lastTimeDead >= TIME_TO_RESPAWN) {
+                this.setIsAlive(true);
+            }
+            Vector2D nextPosition = this.movementManager.move();
+            if (getPosition() == nextPosition) {
+                this.direction = MovableEntity.getRandomDirection();
+            }
+            setPosition(nextPosition);
         }
-        //move();
     }
 
-    private void checkGhostCanBeEaten(Pacman pacman) {
+    private void checkGhostCanBeEaten(Pacman pacman, GameContext context) {
         if (pacman.canEatGhost()) {
             this.setIsAlive(false);
-            this.lastTimeDead = System.currentTimeMillis();
+            this.lastTimeDead = context.getGameState().getTimeLeft().toMillis();
         }
     }
-
 }

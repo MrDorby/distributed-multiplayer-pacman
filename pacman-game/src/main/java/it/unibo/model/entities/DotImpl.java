@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class DotImpl extends GameEntityImpl implements Dot {
 
-    private final static int TIME_TO_RESPAWN = 5;
+    private final static int TIME_TO_RESPAWN = 5000;  // 5000 millis
     private final static int DOT_VALUE = 1;
     private boolean isSpecial;
     private long lastTimeDead;
@@ -34,20 +34,19 @@ public class DotImpl extends GameEntityImpl implements Dot {
 
     @Override
     public void update(GameContext currentContext) {
-        //currentContext.getGameState().getTimeLeft();
         if (this.isAlive()) {
             Set<Collision> collision = currentContext.getCollisions(this);
             collision.stream().filter(x -> x.getGameEntity() instanceof Pacman)
-                    .findFirst().ifPresent(_ -> hideDot());
+                    .findFirst().ifPresent(_ -> hideDot(currentContext));
         } else {
-            if (currentContext.getGameState().getTimeLeft().getNano() - this.lastTimeDead >= TIME_TO_RESPAWN) {
+            if (currentContext.getGameState().getTimeLeft().toMillis() - this.lastTimeDead >= TIME_TO_RESPAWN) {
                 this.setIsAlive(true);
             }
         }
     }
 
-    private void hideDot() {
+    private void hideDot(GameContext context) {
         this.setIsAlive(false);
-        this.lastTimeDead = System.nanoTime();
+        this.lastTimeDead = context.getGameState().getTimeLeft().toMillis();
     }
 }

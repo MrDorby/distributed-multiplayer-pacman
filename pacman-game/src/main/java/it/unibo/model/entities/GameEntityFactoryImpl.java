@@ -1,13 +1,14 @@
 package it.unibo.model.entities;
 
 import it.unibo.model.common.Vector2D;
+import it.unibo.model.map.GameMap;
 import it.unibo.model.map.Tile;
 
 public class GameEntityFactoryImpl implements GameEntityFactory {
 
     @Override
-    public Pacman createPacman(Tile spawnPoint) {
-        return new PacmanImpl(spawnPoint);
+    public Pacman createPacman(Tile spawnPoint, GameMap map) {
+        return new PacmanImpl(spawnPoint, map);
     }
 
     @Override
@@ -18,8 +19,8 @@ public class GameEntityFactoryImpl implements GameEntityFactory {
     }
 
     @Override
-    public Ghost createGhost(Vector2D spawnPoint) {
-        return new GhostImpl(spawnPoint);
+    public Ghost createGhost(Vector2D spawnPoint, GameMap map) {
+        return new GhostImpl(spawnPoint, map);
     }
 
     @Override

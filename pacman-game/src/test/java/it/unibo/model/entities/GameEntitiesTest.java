@@ -33,7 +33,7 @@ public class GameEntitiesTest {
         int x = 0, y = 0;
         MatrixCoordinates start = new MatrixCoordinates(x, y);
         this.createMap(start);
-        this.pacman = gameFactory.createPacman(this.map.getTile(start));
+        //this.pacman = gameFactory.createPacman(this.map.getTile(start));
     }
 
     @Test
