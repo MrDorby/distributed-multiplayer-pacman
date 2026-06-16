@@ -1,6 +1,7 @@
 package it.unibo.model.movement;
 
 import it.unibo.model.common.Direction;
+import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
 
 /**
@@ -19,4 +20,10 @@ public interface MovementManager {
      * @param direction the next direction.
      */
     void changeDirection(Direction direction);
+
+    /**
+     * Shows the current matrix coordinates of the entity.
+     * @return a MatrixCoordinates.
+     */
+    MatrixCoordinates currentMatrixCoordinates();
 }

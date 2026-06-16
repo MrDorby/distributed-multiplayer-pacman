@@ -1,17 +1,19 @@
 package it.unibo.model.entities;
 
+import it.unibo.model.collisions.CollisionManager;
+import it.unibo.model.collisions.CollisionManagerImpl;
 import it.unibo.model.common.Direction;
+import it.unibo.model.common.GameConstants;
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
-import it.unibo.model.entities.Dot;
-import it.unibo.model.entities.DotImpl;
-import it.unibo.model.entities.GameEntityFactory;
-import it.unibo.model.entities.Pacman;
+import it.unibo.model.game.GameContextImpl;
 import it.unibo.model.map.GameMap;
 import it.unibo.model.map.FourPlayersGameMap;
 import it.unibo.model.map.Tile;
 
+import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import it.unibo.model.map.TileImpl;
 import it.unibo.model.map.TileType;
@@ -20,20 +22,24 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// TODO: Write it better.
 public class GameEntitiesTest {
 
     private static final int NUMBER_LIVES = 3;
+    private static final MatrixCoordinates PACMAN_INIT_COORDINATES = new MatrixCoordinates(0, 0);
+    private static final int GAME_DURATION_SECONDS = 30;
     private GameEntityFactory gameFactory;
     private GameMap map;
     private Pacman pacman;
+    private GameContextImpl context;
+    private CollisionManager collisionManager;
 
     @BeforeEach
     public void start() {
-        int x = 0, y = 0;
-        MatrixCoordinates start = new MatrixCoordinates(x, y);
-        this.createMap(start);
-        //this.pacman = gameFactory.createPacman(this.map.getTile(start));
+        this.gameFactory = new GameEntityFactoryImpl();
+        this.createMap();
+        this.pacman = this.gameFactory.createPacman(
+            this.map.getTile(PACMAN_INIT_COORDINATES), this.map);
+        this.collisionManager = new CollisionManagerImpl();
     }
 
     @Test
@@ -48,54 +54,82 @@ public class GameEntitiesTest {
         Vector2D initialPosition = new Vector2D(x, y);
         assertEquals(initialPosition, pacman.getPosition());
         Direction direction = Direction.RIGHT;
+        createGameContext(Set.of(), Set.of(), Set.of(pacman));
         pacman.move(direction);
-        //pacman.update();
+        pacman.update(context);
         assertEquals(nextPosition(direction, initialPosition), pacman.getPosition());
     }
 
-    // TODO: Check the error
     @Test
     public void scorePacman() {
-        int x = 1, y = 0;
-        Vector2D dotCentre = new Vector2D(x, y);
-        MatrixCoordinates dotMatrix = new MatrixCoordinates(x, y);
-        //Dot dot = new DotImpl(new TileImpl(dotMatrix, dotCentre, Optional.empty(), TileType.SIMPLE));
         int initialScore = 0;
         assertEquals(initialScore, pacman.getScore());
-        pacman.move(Direction.RIGHT);
-        //GameContext gameContext = new GameContextImpl();
-        //pacman.update();
+        int x = 1, y = 0;
+        Vector2D dotCentre = new Vector2D(x, y);
+        Dot dot = new DotImpl(dotCentre);
+        int dotValue = 1;
+        assertEquals(dotValue, dot.dotValue());
+        Direction direction = Direction.RIGHT;
+        pacman.move(direction);
+        createGameContext(Set.of(dot), Set.of(), Set.of(pacman));
+        pacman.update(context);
+        context.setCollisions(collisionManager.computeCollisions(context));
+        pacman.update(context);     // Check the collisions.
         assertEquals(++initialScore, pacman.getScore());
     }
 
     @Test
-    public void hungryPacman() {
-        int x = 1, y = 0;
+    public void GhostDamagesPacman() {
+        assertFalse(pacman.canEatGhost());
+        int initialLives = 3;
+        assertEquals(initialLives, pacman.getLives());
+        int x = 0, y = 2;
         Vector2D ghostCentre = new Vector2D(x, y);
-        //Ghost ghost = new GhostImpl(new Tile(ghostCentre));
-        //assertFalse(pacman.canEatGhost());
-        //pacman.move(Direction.RIGHT);
-        //pacman.update();
+        Ghost ghost = new GhostImpl(ghostCentre, map);
+        pacman.move(Direction.RIGHT);
+        createGameContext(Set.of(), Set.of(ghost), Set.of(pacman));
+        pacman.update(context);
+        pacman.update(context);     // We move again the pacman because after that will collide to the ghost.
+        context.setCollisions(collisionManager.computeCollisions(context));
+        pacman.update(context);     // Check the collisions.
+        assertEquals(--initialLives, pacman.getLives());
     }
 
-    private void createMap(MatrixCoordinates start) {
-        int x = start.row(), y = start.column(), numberTiles = 2;
+    /* Creation of a simple game map. */
+    private void createMap() {
+        int row = 2, column = 3;
         Map<MatrixCoordinates, Tile> tiles = new HashMap<>();
-        for (int i = 0; i < numberTiles; i++, x++) {
-            MatrixCoordinates matrixPosition = new MatrixCoordinates(x, y);
-            Vector2D centrePosition = new Vector2D(x, y);
-            tiles.put(matrixPosition, new TileImpl(matrixPosition, centrePosition, Optional.empty(), TileType.SIMPLE));
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < column; j++) {
+                MatrixCoordinates matrixPosition = new MatrixCoordinates(i, j);
+                Vector2D centrePosition = new Vector2D(i, j);
+                TileType type = j % 2 == 0 ? TileType.PACMAN_SPAWN : TileType.SIMPLE;
+                if (i == 0 && j == 1) {
+                    type = TileType.GHOST_SPAWN;
+                }
+                tiles.put(matrixPosition, new TileImpl(matrixPosition, centrePosition, Optional.empty(), type));
+            }
         }
-        map = new FourPlayersGameMap(tiles, new MatrixCoordinates(2, 1));
+        map = new FourPlayersGameMap(tiles, new MatrixCoordinates(row, column));
     }
 
+    /* Simple computation of the next position. */
     private Vector2D nextPosition(Direction direction, Vector2D initialPosition) {
+        int move = GameConstants.GameEntityFeatures.PACMAN.getVelocity();
         return switch (direction) {
-            case UP -> new Vector2D(initialPosition.x(), initialPosition.y() - 1);
-            case DOWN -> new Vector2D(initialPosition.x(), initialPosition.y() + 1);
-            case LEFT -> new Vector2D(initialPosition.x() - 1, initialPosition.y());
-            case RIGHT -> new Vector2D(initialPosition.x() + 1, initialPosition.y());
+            case UP -> new Vector2D(initialPosition.x(), initialPosition.y() - move);
+            case DOWN -> new Vector2D(initialPosition.x(), initialPosition.y() + move);
+            case LEFT -> new Vector2D(initialPosition.x() - move, initialPosition.y());
+            case RIGHT -> new Vector2D(initialPosition.x() + move, initialPosition.y());
             default -> initialPosition;
         };
+    }
+
+    /* Provides fast implementation of the game context. */
+    private void createGameContext(Set<Dot> dots, Set<Ghost> ghosts, Set<Pacman> pacmans) {
+        this.context = new GameContextImpl(map, dots, 
+                        ghosts, 
+                        pacmans, 
+                        Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
     }
 }

@@ -138,4 +138,9 @@ public class MovementManagerImpl implements MovementManager {
             }
         }
     }
+
+    @Override
+    public MatrixCoordinates currentMatrixCoordinates() {
+        return this.targetMatrixCoordinates;
+    }
 }

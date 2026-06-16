@@ -4,18 +4,16 @@ import it.unibo.model.collisions.Collision;
 import it.unibo.model.common.Direction;
 import it.unibo.model.common.GameConstants;
 import it.unibo.model.common.MatrixCoordinates;
-import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.GameMap;
 import it.unibo.model.map.Tile;
 import it.unibo.model.movement.MovementManager;
 import it.unibo.model.movement.MovementManagerImpl;
 
-import java.util.Comparator;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class PacmanImpl extends GameEntityImpl implements Pacman{
+public class PacmanImpl extends GameEntityImpl implements Pacman {
 
     private final static int NUMBER_LIVES = 3;
     private final static int TIME_CAN_EAT_GHOSTS = 5000;  // 5000 millis
@@ -27,7 +25,6 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
     private boolean canEatGhosts;
     private long whenSpecialDotEat;
     private Direction direction;
-    private Direction actualDirection;
 
     public PacmanImpl(Tile tile, GameMap map) {
         super(tile);
@@ -94,17 +91,38 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
         Stream<Ghost> ghosts = collision.stream().filter(x -> x.getGameEntity() instanceof Ghost).map(x -> (Ghost) x.getGameEntity());
         ghosts.findFirst().ifPresent(_ -> checkPlayerIsAlive());
         if (this.isAlive()) {
-            Stream<Dot> dots = collision.stream().filter(x -> x.getGameEntity() instanceof Dot).map(x -> (Dot) x.getGameEntity());
-            dots.findFirst().ifPresent(x -> checkSpecialDot(x, currentContext));
+            collision.stream()
+                .filter(x -> x.getGameEntity() instanceof Dot)
+                .map(x -> (Dot) x.getGameEntity())
+                .findFirst()
+                .ifPresent(x -> checkSpecialDot(x, currentContext));
             if (currentContext.getGameState().getTimeLeft().toMillis() - this.whenSpecialDotEat >= TIME_CAN_EAT_GHOSTS) {
                 this.canEatGhosts = false;
             }
             if (!this.controlledByPlayer) {
-                Vector2D position = getPosition();
-                // TODO: get the tile that contains the pacman to choose the next direction based on dot and neighbor.
-                this.movementManager.changeDirection(MovableEntity.getRandomDirection());
+                movementBehaviour(currentContext);
             }
             super.setPosition(this.movementManager.move());
+        }
+    }
+
+    /* Chooses how to move the pacman if no user command it, 
+    by checking its neighbours or otherwise gets random direction. */
+    private void movementBehaviour(GameContext context) {
+        GameMap map = context.getMap();
+        Direction direction;
+        boolean found = false;
+        for (int i = 0; i < Direction.values().length - 1 && !found; i++) {
+            MatrixCoordinates tile = this.movementManager.currentMatrixCoordinates()
+                .getNeighbour(Direction.values()[i], map.getGridSize());
+            direction = Direction.values()[i];
+            if (!map.getTile(tile).getDot().isEmpty()) {
+                found = true;
+                this.movementManager.changeDirection(direction);
+            }
+        }
+        if (!found) {
+            this.movementManager.changeDirection(MovableEntity.getRandomDirection());
         }
     }
 
@@ -118,6 +136,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
         }
     }
 
+    /* Checks if the collision made with a dot and if the dot is special. */
     private void checkSpecialDot(Dot dot, GameContext context) {
         if (dot.isSpecial()) {
             this.canEatGhosts = true;
@@ -130,4 +149,5 @@ public class PacmanImpl extends GameEntityImpl implements Pacman{
     public boolean isAlive() {
         return this.lives > 0;
     }
+
 }
