@@ -1,6 +1,5 @@
 package it.unibo.controller.engine;
 
-import it.unibo.model.collisions.CollisionManagerImpl;
 import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,11 +10,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GameEngineImplTest {
 
-    GameEngineImpl engine;
+    AbstractFixedTimeStepGameEngine engine;
 
     @BeforeEach
     void setUp() {
-        engine = new GameEngineImpl(new GameImpl(GameContextFactory.getTestContext(), new CollisionManagerImpl()));
+        engine = new LocalGameEngine(new GameImpl(GameContextFactory.getTestContext()));
     }
 
     @Test

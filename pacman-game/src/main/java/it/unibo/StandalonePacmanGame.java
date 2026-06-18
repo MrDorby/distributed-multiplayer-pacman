@@ -1,8 +1,7 @@
 package it.unibo;
 
 import it.unibo.controller.engine.GameEngine;
-import it.unibo.controller.engine.GameEngineImpl;
-import it.unibo.model.collisions.CollisionManagerImpl;
+import it.unibo.controller.engine.LocalGameEngine;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextFactory;
@@ -15,8 +14,8 @@ public class StandalonePacmanGame {
     static void main() {
         SwingUtilities.invokeLater(() -> {
             GameContext context = GameContextFactory.getTestContext();
-            Game game = new GameImpl(context, new CollisionManagerImpl());
-            GameEngine engine = new GameEngineImpl(game);
+            Game game = new GameImpl(context);
+            GameEngine engine = new LocalGameEngine(game);
             GameViewImpl view = new GameViewImpl(engine, game.getContext());
             engine.setView(view);
             JFrame testFrame = new JFrame("Pacman Standalone Test");
