@@ -1,6 +1,7 @@
 package it.unibo.model.game;
 
 import it.unibo.model.collisions.CollisionManager;
+import it.unibo.model.collisions.CollisionManagerImpl;
 import it.unibo.model.common.Direction;
 import it.unibo.model.entities.Pacman;
 
@@ -10,9 +11,9 @@ public class GameImpl implements Game {
     private final GameContext context;
     private final CollisionManager collisionManager;
 
-    public GameImpl(GameContext initial, CollisionManager collisionManager) {
+    public GameImpl(GameContext initial) {
         this.context = initial;
-        this.collisionManager = collisionManager;
+        this.collisionManager = new CollisionManagerImpl();
     }
 
     @Override

@@ -1,8 +1,7 @@
 package it.unibo.view.screens.game;
 
+import it.unibo.controller.engine.ClientGameEngine;
 import it.unibo.controller.engine.GameEngine;
-import it.unibo.controller.engine.GameEngineImpl;
-import it.unibo.model.collisions.CollisionManagerImpl;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextFactory;
@@ -26,8 +25,8 @@ public class GameController implements ScreenController {
     @Override
     public void onEnter() {
         GameContext context = GameContextFactory.getTestContext();
-        Game game = new GameImpl(context, new CollisionManagerImpl());
-        this.engine = new GameEngineImpl(game);
+        Game game = new GameImpl(context);
+        this.engine = new ClientGameEngine(game, null, null);
         this.gameView = new GameViewImpl(engine, context);
         this.engine.setView(gameView);
         ((GamePanel) this.gameView.getGamePanel()).onEscape(() -> navigator.goTo(AppState.MAIN_MENU));
