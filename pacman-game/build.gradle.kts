@@ -17,6 +17,8 @@ dependencies {
     implementation("tools.jackson.core:jackson-databind:3.1.2")
     // Source: https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     implementation("ch.qos.logback:logback-classic:1.5.32")
+    // Source: https://mvnrepository.com/artifact/com.esotericsoftware/kryonet
+    implementation("com.esotericsoftware:kryonet:2.22.0-RC1")
 }
 
 java {
