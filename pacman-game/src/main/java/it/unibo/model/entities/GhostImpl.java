@@ -9,7 +9,6 @@ import it.unibo.model.map.GameMap;
 import it.unibo.model.movement.MovementManager;
 import it.unibo.model.movement.MovementManagerImpl;
 
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -25,7 +24,7 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
         this.movementManager = new MovementManagerImpl(map, 
             map.getTiles()
                 .stream()
-                .filter(x -> x.getCenterPosition() == position)
+                .filter(x -> x.getMatrixPosition().row() == position.x() && x.getMatrixPosition().column() == position.y())
                 .findFirst()
                 .get()
                 .getMatrixPosition(), 

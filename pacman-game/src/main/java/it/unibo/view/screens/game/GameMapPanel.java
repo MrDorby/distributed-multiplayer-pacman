@@ -125,7 +125,7 @@ public class GameMapPanel extends JPanel {
     /* 
      * Determines the centre of the circle.
      */
-    private int centreCircles(int upperCoordinate, int size) {
+    private int centreCircles(int upperCoordinate, int size) { //TODO: maybe do TOP==BOTTOM || LEFT==RIGHT
         int diff = (this.tileSize / 2) - (size / 2);
         return getProportionSize(upperCoordinate) + diff;
     }

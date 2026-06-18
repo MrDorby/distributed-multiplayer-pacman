@@ -1,20 +1,13 @@
 package it.unibo.view.screens.game;
 
-import it.unibo.model.common.GameConstants;
 import it.unibo.model.entities.Pacman;
 import it.unibo.model.game.GameContext;
 import it.unibo.view.font.FontManager;
 import it.unibo.view.font.FontName;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -160,10 +153,8 @@ public class GamePanel extends JPanel {
 
         //private final JPanel timeContainer;
         private JLabel timeLeft;
-        private GameContext gameContext;
 
         MenuPanel(GameContext gameContext, Runnable onExitAction) {
-            this.gameContext = gameContext;
             this.setLayout(new BorderLayout());
             this.setBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, Color.BLACK));
             //this.timeContainer = new JPanel();
@@ -191,7 +182,6 @@ public class GamePanel extends JPanel {
         }
 
         public void setGameContext(GameContext gameContext) {
-            this.gameContext = gameContext;
             this.timeLeft.setText("Time left: " + gameContext.getGameState().getTimeLeft().getSeconds() + "s");
         }
     }
