@@ -1,6 +1,7 @@
 package it.unibo.controller.engine;
 
 import it.unibo.controller.commands.PacmanCommand;
+import it.unibo.model.game.GameContext;
 import it.unibo.view.GameView;
 
 public interface GameEngine {
@@ -28,6 +29,8 @@ public interface GameEngine {
      * Stops the game loop.
      */
     void stop();
+
+    GameContext getCurrentContext();
 
     void setView(GameView view);
 }

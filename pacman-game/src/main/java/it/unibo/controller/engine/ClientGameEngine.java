@@ -1,21 +1,22 @@
 package it.unibo.controller.engine;
 
 import it.unibo.controller.commands.PacmanCommand;
-import it.unibo.controller.network.NetworkClient;
-import it.unibo.controller.network.SnapshotMailbox;
+import it.unibo.controller.network.game.GameNetworkClient;
+import it.unibo.controller.network.game.SnapshotMailbox;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameImpl;
 
 public class ClientGameEngine extends AbstractFixedTimeStepGameEngine {
-    private final NetworkClient networkClient;
+    private final GameNetworkClient client;
     private final SnapshotMailbox snapshotMailbox;
 
-    public ClientGameEngine(Game game, NetworkClient networkClient, SnapshotMailbox snapshotMailbox) {
+    public ClientGameEngine(Game game, GameNetworkClient client, SnapshotMailbox snapshotMailbox) {
         super(game);
-        this.networkClient = networkClient;
+        this.client = client;
         this.snapshotMailbox = snapshotMailbox;
     }
+
 
     @Override
     protected void beforeTick() {
@@ -27,7 +28,7 @@ public class ClientGameEngine extends AbstractFixedTimeStepGameEngine {
 
     @Override
     protected void afterCommandExecuted(PacmanCommand command) {
-        networkClient.send(command);
+        client.send(command);
     }
 
     @Override

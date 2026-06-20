@@ -1,17 +1,17 @@
 package it.unibo.controller.engine;
 
 import it.unibo.controller.commands.PacmanCommand;
-import it.unibo.controller.network.NetworkServer;
+import it.unibo.controller.network.game.GameNetworkServer;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.view.HeadlessView;
 
 public class ServerGameEngine extends AbstractFixedTimeStepGameEngine {
-    private final NetworkServer networkServer;
+    private final GameNetworkServer server;
 
-    public ServerGameEngine(Game game, NetworkServer networkServer) {
+    public ServerGameEngine(Game game, GameNetworkServer server) {
         super(game);
-        this.networkServer = networkServer;
+        this.server = server;
         this.setView(new HeadlessView());
     }
 
@@ -28,6 +28,6 @@ public class ServerGameEngine extends AbstractFixedTimeStepGameEngine {
     @Override
     protected void afterTick() {
         GameContext context = this.game.getContext();
-        networkServer.broadcast(context);
+        server.broadcast(context);
     }
 }

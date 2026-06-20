@@ -1,8 +1,8 @@
-package it.unibo.controller.network;
+package it.unibo.controller.network.game;
 
 import it.unibo.controller.commands.PacmanCommand;
 
-public interface NetworkClient {
+public interface GameNetworkClient {
     void send(PacmanCommand command);
 
     void sendReliable(Object packet);

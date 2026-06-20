@@ -2,6 +2,7 @@ package it.unibo.controller.engine;
 
 import it.unibo.controller.commands.PacmanCommand;
 import it.unibo.model.game.Game;
+import it.unibo.model.game.GameContext;
 import it.unibo.view.GameView;
 import it.unibo.view.HeadlessView;
 
@@ -48,6 +49,11 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
     @Override
     public void enqueueCommand(PacmanCommand command) {
         commandQueue.add(command);
+    }
+
+    @Override
+    public GameContext getCurrentContext() {
+        return this.game.getContext();
     }
 
     @Override
