@@ -1,4 +1,4 @@
-package it.unibo.controller.commands;
+package it.unibo.controller.input;
 
 import it.unibo.model.common.Direction;
 import it.unibo.model.game.Game;

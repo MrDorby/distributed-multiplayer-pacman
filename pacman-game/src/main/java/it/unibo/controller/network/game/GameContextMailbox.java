@@ -4,7 +4,7 @@ import it.unibo.model.game.GameContext;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class SnapshotMailbox {
+public class GameContextMailbox {
     private final AtomicReference<GameContext> box = new AtomicReference<>();
 
     public void deliver(GameContext snapshot) {

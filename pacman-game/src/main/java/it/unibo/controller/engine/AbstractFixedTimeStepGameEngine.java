@@ -1,8 +1,7 @@
 package it.unibo.controller.engine;
 
-import it.unibo.controller.commands.PacmanCommand;
+import it.unibo.controller.input.PacmanCommand;
 import it.unibo.model.game.Game;
-import it.unibo.model.game.GameContext;
 import it.unibo.view.GameView;
 import it.unibo.view.HeadlessView;
 
@@ -52,8 +51,8 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
     }
 
     @Override
-    public GameContext getCurrentContext() {
-        return this.game.getContext();
+    public Game getGame() {
+        return this.game;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package it.unibo.controller.network.game;
 
-import it.unibo.controller.commands.PacmanCommand;
+import it.unibo.controller.input.PacmanCommand;
 
 public interface GameNetworkClient {
     void send(PacmanCommand command);

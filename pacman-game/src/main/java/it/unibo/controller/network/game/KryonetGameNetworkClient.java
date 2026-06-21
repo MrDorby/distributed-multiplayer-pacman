@@ -3,8 +3,8 @@ package it.unibo.controller.network.game;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
-import it.unibo.controller.commands.PacmanCommand;
-import it.unibo.controller.commands.PacmanMoveCommand;
+import it.unibo.controller.input.PacmanCommand;
+import it.unibo.controller.input.PacmanMoveCommand;
 import it.unibo.controller.network.packets.*;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextImpl;
@@ -17,7 +17,7 @@ public class KryonetGameNetworkClient implements GameNetworkClient {
     private final Client client;
     private final String localUsername;
 
-    public KryonetGameNetworkClient(String host, int port, String localUsername, SnapshotMailbox mailbox) throws IOException {
+    public KryonetGameNetworkClient(String host, int port, String localUsername, GameContextMailbox mailbox) throws IOException {
         this.client = new Client();
         this.localUsername = localUsername;
 

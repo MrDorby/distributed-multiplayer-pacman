@@ -14,7 +14,7 @@ class GameEngineImplTest {
 
     @BeforeEach
     void setUp() {
-        engine = new LocalGameEngine(new GameImpl(GameContextFactory.getTestContext()));
+        engine = new LocalGameEngine(new GameImpl(GameContextFactory.getTestContext()), "LocalPlayer");
     }
 
     @Test

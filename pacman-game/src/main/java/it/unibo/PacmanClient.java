@@ -21,7 +21,7 @@ public class PacmanClient {
         ScreenRouter router = new ScreenRouter(frame);
         router.register(AppState.LOGIN, new LoginController(router));
         router.register(AppState.MAIN_MENU, new MainMenuController(router));
-        router.register(AppState.IN_GAME, new GameController(router));
+        router.register(AppState.IN_GAME, new GameController(router, "LocalPlayer"));
         router.goTo(AppState.LOGIN);
     }
 

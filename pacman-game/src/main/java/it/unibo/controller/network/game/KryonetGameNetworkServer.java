@@ -3,10 +3,9 @@ package it.unibo.controller.network.game;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
-import it.unibo.controller.commands.PacmanMoveCommand;
+import it.unibo.controller.input.PacmanMoveCommand;
 import it.unibo.controller.engine.GameEngine;
 import it.unibo.controller.network.packets.*;
-import it.unibo.model.entities.Pacman;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextImpl;
 
@@ -65,15 +64,9 @@ public class KryonetGameNetworkServer implements GameNetworkServer {
         connectionToUsername.put(connection, username);
         if (connectionToUsername.size() == 4 && !gameStarted) {
             gameStarted = true;
-            GameContext initialContext = gameEngine.getCurrentContext();
-            List<Pacman> pacmans = new ArrayList<>(initialContext.getPacmans());
             List<String> usernames = new ArrayList<>(connectionToUsername.values());
-            for (int i = 0; i < pacmans.size(); i++) {
-                if (i < usernames.size()) {
-                    pacmans.get(i).setId(usernames.get(i));
-                }
-            }
-            server.sendToAllTCP(initialContext);
+            gameEngine.getGame().setPacmanNames(usernames);
+            server.sendToAllTCP(gameEngine.getGame().getContext());
             server.sendToAllTCP(new GameStartPacket());
             gameEngine.start();
         }
