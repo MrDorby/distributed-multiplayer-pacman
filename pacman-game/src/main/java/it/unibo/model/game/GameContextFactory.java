@@ -54,7 +54,7 @@ public class GameContextFactory {
         Pacman pacman1 = new PacmanImpl(pacmanSpawn, gameMap);
         Pacman pacman2 = new PacmanImpl(pacmanSpawn2, gameMap);
         pacman1.setId("Pacman1");
-        pacman2.setId("Pacman2"); 
+        pacman2.setId("Pacman2");
         pacmans.add(pacman1);
         pacmans.add(pacman2);
 
@@ -62,5 +62,56 @@ public class GameContextFactory {
         ghosts.add(new GhostImpl(ghostSpawn.getCenterPosition(), gameMap));
 
         return new GameContextImpl(gameMap, dots, ghosts, pacmans, Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
+    }
+
+    public static GameContext getSandboxContext() {
+        Set<Tile> tiles = new HashSet<>();
+        Set<Dot> dots = new HashSet<>();
+        Set<MatrixCoordinates> spawnCoords = Set.of(
+                new MatrixCoordinates(2, 2),
+                new MatrixCoordinates(2, 13),
+                new MatrixCoordinates(13, 2),
+                new MatrixCoordinates(13, 13)
+        );
+        MatrixCoordinates ghostSpawnCoord = new MatrixCoordinates(0, 0);
+        for (int i = 0; i < 16; i++) {
+            for (int j = 0; j < 16; j++) {
+                MatrixCoordinates currentCoord = new MatrixCoordinates(i, j);
+                TileType type;
+                if (spawnCoords.contains(currentCoord)) {
+                    type = TileType.PACMAN_SPAWN;
+                } else if (currentCoord.equals(ghostSpawnCoord)) {
+                    type = TileType.GHOST_SPAWN;
+                } else {
+                    type = TileType.SIMPLE;
+                }
+                tiles.add(new TileImpl(
+                        currentCoord,
+                        new Vector2D(j * TILE_SIZE, i * TILE_SIZE),
+                        Optional.empty(),
+                        type
+                ));
+            }
+        }
+        Map<MatrixCoordinates, Tile> tilesMap = new HashMap<>();
+        tiles.forEach(t -> tilesMap.put(t.getMatrixPosition(), t));
+        GameMap gameMap = new FourPlayersGameMap(tilesMap, new MatrixCoordinates(16, 16));
+        Tile spawn1 = tilesMap.get(new MatrixCoordinates(2, 2));
+        Tile spawn2 = tilesMap.get(new MatrixCoordinates(2, 13));
+        Tile spawn3 = tilesMap.get(new MatrixCoordinates(13, 2));
+        Tile spawn4 = tilesMap.get(new MatrixCoordinates(13, 13));
+        Set<Pacman> pacmans = new HashSet<>();
+        pacmans.add(new PacmanImpl(spawn1, gameMap));
+        pacmans.add(new PacmanImpl(spawn2, gameMap));
+        pacmans.add(new PacmanImpl(spawn3, gameMap));
+        pacmans.add(new PacmanImpl(spawn4, gameMap));
+        Set<Ghost> emptyGhosts = new HashSet<>();
+        return new GameContextImpl(
+                gameMap,
+                dots,
+                emptyGhosts,
+                pacmans,
+                Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit())
+        );
     }
 }
