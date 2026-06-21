@@ -11,15 +11,11 @@ public class GameMapPanel extends JPanel {
 
     private final static int SPACE_FROM_TOP = 20;
     private GameContext gameContext;
-    private JPanel mapContainer;
     private int mapSize;
     private int tileSize;
     private int squareTiles;
 
-    public GameMapPanel(GameContext gameContext, JPanel mapContainer) {
-        this.gameContext = gameContext;
-        this.mapContainer = mapContainer;
-        this.mapSize = getMapContainerMinimunDimension();
+    public GameMapPanel() {
         this.setOpaque(false);
         this.setVisible(true);
     }
@@ -32,10 +28,19 @@ public class GameMapPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        this.mapSize = getMapContainerMinimunDimension();
+
+        if (this.gameContext == null || this.gameContext.getMap() == null) {
+            return;
+        }
+
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        this.mapSize = getMapContainerMinimumDimension();
         this.squareTiles = (int) Math.sqrt(this.gameContext.getMap().getTiles().size());
         this.tileSize = getProportionSize(GameConstants.TILE_SIZE);
         int startX = startingX();
+
         this.gameContext.getMap()
                 .getTiles()
                 .forEach(tile -> {
@@ -106,16 +111,16 @@ public class GameMapPanel extends JPanel {
                     g.setColor(Color.BLACK);
                     //((Graphics2D) g).setStroke(new BasicStroke(2));
                     g.drawOval(
-                            centreCircles(pacman.getPosition().y() + startX, pacmanSize),
-                            centreCircles(pacman.getPosition().x() + SPACE_FROM_TOP, pacmanSize),
+                            centreCircles(pacman.getPosition().x() + startX, pacmanSize),
+                            centreCircles(pacman.getPosition().y() + SPACE_FROM_TOP, pacmanSize),
                             pacmanSize,
                             pacmanSize
                     );
                     //((Graphics2D) g).setStroke(new BasicStroke(1));
                     g.setColor(Color.YELLOW);
                     g.fillOval(
-                            centreCircles(pacman.getPosition().y() + startX, pacmanSize),
-                            centreCircles(pacman.getPosition().x() + SPACE_FROM_TOP, pacmanSize),
+                            centreCircles(pacman.getPosition().x() + startX, pacmanSize),
+                            centreCircles(pacman.getPosition().y() + SPACE_FROM_TOP, pacmanSize),
                             pacmanSize - 1,
                             pacmanSize - 1
                     );
@@ -133,8 +138,8 @@ public class GameMapPanel extends JPanel {
     /*
      * Returns the minimun dimension of the map container.
      */
-    private int getMapContainerMinimunDimension() {
-        return Math.min(this.mapContainer.getHeight(), this.mapContainer.getWidth()) - SPACE_FROM_TOP;
+    private int getMapContainerMinimumDimension() {
+        return Math.min(this.getHeight(), this.getWidth()) - SPACE_FROM_TOP;
     }
 
     /*
@@ -149,6 +154,6 @@ public class GameMapPanel extends JPanel {
      * Defines the starting point to draw such that the map is centered.
      */
     private int startingX() {
-        return (this.mapContainer.getWidth() / 2) - (this.tileSize * this.squareTiles / 2);
+        return (this.getWidth() / 2) - (this.tileSize * this.squareTiles / 2);
     }
 }

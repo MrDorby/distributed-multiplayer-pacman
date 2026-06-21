@@ -1,6 +1,8 @@
 package it.unibo.view.screens.game;
 
-import it.unibo.controller.engine.ClientGameEngine;
+import it.unibo.controller.input.InputHandler;
+import it.unibo.controller.input.PlayerInputHandler;
+import it.unibo.controller.engine.PredictiveClientGameEngine;
 import it.unibo.controller.engine.GameEngine;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
@@ -16,18 +18,21 @@ import javax.swing.*;
 public class GameController implements ScreenController {
     private GameViewImpl gameView;
     private final AppNavigator navigator;
+    private final String localPlayerUsername;
     private GameEngine engine;
 
-    public GameController(AppNavigator navigator) {
+    public GameController(AppNavigator navigator, String localPlayerUsername) {
         this.navigator = navigator;
+        this.localPlayerUsername = localPlayerUsername;
     }
 
     @Override
     public void onEnter() {
         GameContext context = GameContextFactory.getTestContext();
         Game game = new GameImpl(context);
-        this.engine = new ClientGameEngine(game, null, null);
-        this.gameView = new GameViewImpl(engine, context);
+        this.engine = new PredictiveClientGameEngine(game, null, null);
+        InputHandler inputHandler = new PlayerInputHandler(engine, localPlayerUsername);
+        this.gameView = new GameViewImpl(inputHandler);
         this.engine.setView(gameView);
         ((GamePanel) this.gameView.getGamePanel()).onEscape(() -> navigator.goTo(AppState.MAIN_MENU));
         new Thread(engine::start).start();
