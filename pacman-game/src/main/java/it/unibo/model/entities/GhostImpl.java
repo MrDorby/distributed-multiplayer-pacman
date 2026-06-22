@@ -28,6 +28,7 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
                 GameConstants.GameEntityFeatures.GHOST.getVelocity()
         );
         this.direction = MovableEntity.getRandomDirection();
+        this.movementManager.changeDirection(this.direction);
     }
 
     @Override
@@ -38,15 +39,21 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     @Override
     public void update(GameContext currentContext) {
         Set<Collision> collision = currentContext.getCollisions(this);
-        Stream<Pacman> pacman = collision.stream().filter(x -> x.getGameEntity() instanceof Pacman).map(x -> (Pacman) x.getGameEntity());
+        Stream<Pacman> pacman = collision.stream()
+                .filter(x -> x.getGameEntity() instanceof Pacman)
+                .map(x -> (Pacman) x.getGameEntity());
         pacman.findFirst().ifPresent(x -> checkGhostCanBeEaten(x, currentContext));
-        if (this.isAlive()) {
-            if (currentContext.getGameState().getTimeLeft().toMillis() - this.lastTimeDead >= TIME_TO_RESPAWN) {
+        if (!this.isAlive()) {
+            long timeLeft = currentContext.getGameState().getTimeLeft().toMillis();
+            if (this.lastTimeDead - timeLeft >= TIME_TO_RESPAWN) {
                 this.setIsAlive(true);
             }
+        }
+        if (this.isAlive()) {
             Vector2D nextPosition = this.movementManager.move();
-            if (getPosition() == nextPosition) {
+            if (getPosition().equals(nextPosition)) {
                 this.direction = MovableEntity.getRandomDirection();
+                this.movementManager.changeDirection(this.direction);
             }
             setPosition(nextPosition);
         }

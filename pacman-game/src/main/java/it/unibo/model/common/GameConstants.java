@@ -11,7 +11,7 @@ public class GameConstants {
 
         PACMAN(16, 3000, 6),
 
-        GHOST(16, 3000, 8),
+        GHOST(16, 3000, 6),
 
         DOT(8, 3000, 0);
 

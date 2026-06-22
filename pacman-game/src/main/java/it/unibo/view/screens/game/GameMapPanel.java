@@ -57,8 +57,12 @@ public class GameMapPanel extends JPanel {
                 });
 
         this.gameContext.getDots().forEach(dot -> {
-            int size = getProportionalSize(GameConstants.GameEntityFeatures.DOT.getRadius()) * 2;
-            drawGameEntity(g2d, dot.getPosition(), size, Color.GREEN, startX, startY);
+            if (dot.isAlive()) {
+                boolean isSpecial = dot.isSpecial();
+                int size = getProportionalSize(GameConstants.GameEntityFeatures.DOT.getRadius()) * 2;
+                Color dotColor = isSpecial ? Color.ORANGE : Color.GREEN;
+                drawGameEntity(g2d, dot.getPosition(), size, dotColor, startX, startY);
+            }
         });
 
         this.gameContext.getGhosts().forEach(ghost -> {
@@ -67,7 +71,9 @@ public class GameMapPanel extends JPanel {
         });
 
         this.gameContext.getPacmans().forEach(pacman -> {
-            int size = getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2;
+            int size = (int) (pacman.canEatGhost()
+                    ? getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2.5
+                    : getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2);
             drawGameEntity(g2d, pacman.getPosition(), size, Color.YELLOW, startX, startY);
         });
     }
