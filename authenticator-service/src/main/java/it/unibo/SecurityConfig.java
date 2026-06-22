@@ -13,13 +13,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import it.unibo.token.TokenFilter;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    
-    private TokenFilter tokenFilter;
 
     /*UsernamePasswordAuthenticationFilter: 
     Tries to find a username/password request parameter/POST body and if found, 
@@ -28,12 +24,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFIlterChain(HttpSecurity http) throws Exception {
         return http
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilter(new UsernamePasswordAuthenticationFilter())
             //.addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/auth/syn").permitAll()
                 .anyRequest().authenticated())
             //.formLogin(null)
             .build();
