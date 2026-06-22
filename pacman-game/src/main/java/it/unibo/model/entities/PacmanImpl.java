@@ -10,14 +10,16 @@ import it.unibo.model.map.Tile;
 import it.unibo.model.movement.MovementManager;
 import it.unibo.model.movement.MovementManagerImpl;
 
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class PacmanImpl extends GameEntityImpl implements Pacman {
 
     private final static int NUMBER_LIVES = 3;
-    private final static int TIME_CAN_EAT_GHOSTS = 5000;  // 5000 millis
+    private final static int TIME_CAN_EAT_GHOSTS = 3000;  // 5000 millis
     private final MovementManager movementManager;
     private String id;
     private int score;
@@ -90,14 +92,16 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     public void update(GameContext currentContext) {
         Set<Collision> collision = currentContext.getCollisions(this);
         Stream<Ghost> ghosts = collision.stream().filter(x -> x.getGameEntity() instanceof Ghost).map(x -> (Ghost) x.getGameEntity());
-        ghosts.findFirst().ifPresent(_ -> checkPlayerIsAlive(currentContext));
+        ghosts.findFirst().ifPresent(x -> checkPlayerIsAlive(x, currentContext));
         if (this.isAlive()) {
             collision.stream()
                 .filter(x -> x.getGameEntity() instanceof Dot)
                 .map(x -> (Dot) x.getGameEntity())
                 .findFirst()
                 .ifPresent(x -> checkSpecialDot(x, currentContext));
-            if (currentContext.getGameState().getTimeLeft().toMillis() - this.whenSpecialDotEat >= TIME_CAN_EAT_GHOSTS) {
+            long currentTime = currentContext.getGameState().getTimeLeft().toMillis();
+            if (this.canEatGhosts && currentTime <= this.whenSpecialDotEat - TIME_CAN_EAT_GHOSTS) {
+                System.out.println(whenSpecialDotEat);
                 this.canEatGhosts = false;
             }
             if (!this.controlledByPlayer) {
@@ -127,15 +131,17 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
         }
     }
 
-    private void checkPlayerIsAlive(GameContext context) {
+    private void checkPlayerIsAlive(Ghost ghost, GameContext context) {
         if (!this.canEatGhosts) {
             if (this.lives > 0) {
                 this.lives = this.lives - 1;
-                Tile[] tiles = (Tile[]) context.getMap().getPacmanSpawnPoints().toArray();
-                super.setPosition(tiles[new Random().nextInt(0, tiles.length)].getCenterPosition());
+                List<Tile> tiles = context.getMap().getPacmanSpawnPoints().stream().collect(Collectors.toList());
+                super.setPosition(tiles.get(new Random().nextInt(0, tiles.size())).getCenterPosition());
             } else {
                 super.setIsAlive(false);
             }
+        } else {
+            this.score = this.score + ghost.getGhostValue();
         }
     }
 

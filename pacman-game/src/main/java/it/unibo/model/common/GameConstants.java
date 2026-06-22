@@ -9,9 +9,9 @@ public class GameConstants {
 
     public enum GameEntityFeatures {
 
-        PACMAN(16, 3000, 6),
+        PACMAN(16, 3000, 2),
 
-        GHOST(16, 3000, 6),
+        GHOST(16, 3000, 2),
 
         DOT(8, 3000, 0);
 

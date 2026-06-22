@@ -3,6 +3,7 @@ package it.unibo.model.entities;
 import it.unibo.model.collisions.Collision;
 import it.unibo.model.common.Direction;
 import it.unibo.model.common.GameConstants;
+import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.GameMap;
@@ -16,6 +17,7 @@ import java.util.stream.Stream;
 public class GhostImpl extends GameEntityImpl implements Ghost {
 
     private final static int TIME_TO_RESPAWN = 5000;  // 5000 millis
+    private final static int GHOST_VALUE = 1;
     private final MovementManager movementManager;
     private long lastTimeDead;
     private Direction direction;
@@ -48,8 +50,7 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
             if (this.lastTimeDead - timeLeft >= TIME_TO_RESPAWN) {
                 this.setIsAlive(true);
             }
-        }
-        if (this.isAlive()) {
+        } else {
             Vector2D nextPosition = this.movementManager.move();
             if (getPosition().equals(nextPosition)) {
                 this.direction = MovableEntity.getRandomDirection();
@@ -64,5 +65,10 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
             this.setIsAlive(false);
             this.lastTimeDead = context.getGameState().getTimeLeft().toMillis();
         }
+    }
+
+    @Override
+    public int getGhostValue() {
+        return GHOST_VALUE;
     }
 }
