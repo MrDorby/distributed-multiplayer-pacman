@@ -10,6 +10,7 @@ import it.unibo.model.map.Tile;
 import it.unibo.model.movement.MovementManager;
 import it.unibo.model.movement.MovementManagerImpl;
 
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -89,7 +90,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     public void update(GameContext currentContext) {
         Set<Collision> collision = currentContext.getCollisions(this);
         Stream<Ghost> ghosts = collision.stream().filter(x -> x.getGameEntity() instanceof Ghost).map(x -> (Ghost) x.getGameEntity());
-        ghosts.findFirst().ifPresent(_ -> checkPlayerIsAlive());
+        ghosts.findFirst().ifPresent(_ -> checkPlayerIsAlive(currentContext));
         if (this.isAlive()) {
             collision.stream()
                 .filter(x -> x.getGameEntity() instanceof Dot)
@@ -126,10 +127,12 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
         }
     }
 
-    private void checkPlayerIsAlive() {
+    private void checkPlayerIsAlive(GameContext context) {
         if (!this.canEatGhosts) {
             if (this.lives > 0) {
                 this.lives = this.lives - 1;
+                Tile[] tiles = (Tile[]) context.getMap().getPacmanSpawnPoints().toArray();
+                super.setPosition(tiles[new Random().nextInt(0, tiles.length)].getCenterPosition());
             } else {
                 super.setIsAlive(false);
             }

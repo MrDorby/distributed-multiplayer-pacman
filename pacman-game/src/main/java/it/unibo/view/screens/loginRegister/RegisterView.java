@@ -2,12 +2,12 @@ package it.unibo.view.screens.loginRegister;
 
 public class RegisterView {
 
-    private final static String LOGIN_TEXT = "Register";
-    private final static String REGISTER_TEXT = "Home";
+    private final static String REGISTER_TEXT = "Register";
+    private final static String HOME_TEXT = "Home";
     private final LoginRegisterPanel registerPanel;
 
     public RegisterView() {
-        registerPanel = new LoginRegisterPanel(LOGIN_TEXT, REGISTER_TEXT);
+        registerPanel = new LoginRegisterPanel(REGISTER_TEXT, REGISTER_TEXT, HOME_TEXT);
     }
 
     public LoginRegisterPanel getPanel() {

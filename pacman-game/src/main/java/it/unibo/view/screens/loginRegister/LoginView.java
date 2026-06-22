@@ -7,7 +7,7 @@ public class LoginView {
     private final LoginRegisterPanel loginPanel;
 
     public LoginView() {
-        loginPanel = new LoginRegisterPanel(LOGIN_TEXT, REGISTER_TEXT);
+        loginPanel = new LoginRegisterPanel(LOGIN_TEXT, LOGIN_TEXT, REGISTER_TEXT);
     }
 
     public LoginRegisterPanel getPanel() {

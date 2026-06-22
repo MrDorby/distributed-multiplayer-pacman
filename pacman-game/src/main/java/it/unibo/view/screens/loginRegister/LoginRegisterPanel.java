@@ -15,7 +15,6 @@ public class LoginRegisterPanel extends JPanel {
     private final static int THICKNESS_BORDER = 2;
     private final static float BUTTON_FONT_SIZE = 14f;
     private final static String FONT_NAME = FontName.S2P.getFontName();
-    private final static String TITLE = "PACMAN";
     private final static int maxBorder = 20;
     private final static int minBorder = 10;
 
@@ -30,7 +29,7 @@ public class LoginRegisterPanel extends JPanel {
     private final JButton bottomButton = new JButton();
     private Border panelBorder = BorderFactory.createEmptyBorder(maxBorder, maxBorder, maxBorder, maxBorder);
 
-    public LoginRegisterPanel(String textTop, String textBottom) {
+    public LoginRegisterPanel(String textTitle, String textTop, String textBottom) {
         this.setBackground(Color.YELLOW);
         this.setLayout(new GridBagLayout());
         this.addComponentListener(new ComponentListener() {
@@ -70,7 +69,7 @@ public class LoginRegisterPanel extends JPanel {
             
         });
 
-        JLabel title = new JLabel(TITLE);
+        JLabel title = new JLabel(textTitle);
         title.setForeground(Color.BLACK);
         title.setFont(FontManager.addingFont(80f, FONT_NAME));
         title.setBorder(BorderFactory.createEmptyBorder(100, 0, 100, 0));
