@@ -1,6 +1,5 @@
 package it.unibo.view.screens.game;
 
-import it.unibo.model.entities.Pacman;
 import it.unibo.model.game.GameContext;
 import it.unibo.view.font.FontManager;
 import it.unibo.view.font.FontName;
@@ -8,36 +7,32 @@ import it.unibo.view.font.FontName;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class GamePanel extends JPanel {
 
     private final static int PLAYER_NAME_LENGTH = 12;
     private final static String FONT_NAME = FontName.S2P.getFontName();
-    private GameContext gameContext;
-    private JPanel scoreboard;
-    private JPanel mapPanel;
-    private JPanel gameMapView;
-    private JPanel menu;
-    private JPanel life;
+    private final ScoreboardPanel scoreboardPanel;
+    private final GameMapPanel gameMapPanel;
+    private final MenuPanel menuPanel;
+    private final LifePanel lifePanel;
 
     private Runnable onEscapePressed;
 
-    public GamePanel(GameContext gameContext) {
-        this.gameContext = gameContext;
+    public GamePanel() {
         this.setBackground(Color.BLACK);
         this.setLayout(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
 
         // Creates the panel for the map of the game.
-        this.mapPanel = new JPanel(new BorderLayout());
+        JPanel mapPanel = new JPanel(new BorderLayout());
         mapPanel.setBackground(Color.YELLOW);
-        JPanel mapper = new JPanel(new BorderLayout());
-        mapper.setOpaque(false);
-        this.gameMapView = new GameMapPanel(gameContext, mapper);
-        mapper.add(gameMapView, BorderLayout.CENTER);
-        mapPanel.add(mapper, BorderLayout.CENTER);
+
+        this.gameMapPanel = new GameMapPanel();
+        mapPanel.add(gameMapPanel, BorderLayout.CENTER);
 
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;
@@ -46,13 +41,14 @@ public class GamePanel extends JPanel {
         constraints.weightx = 0.9;
         constraints.weighty = 1;
         
-        this.life = new LifePanel(gameContext);
-        this.life.setOpaque(false);
-        this.mapPanel.add(life, BorderLayout.SOUTH);
+        this.lifePanel = new LifePanel();
+        this.lifePanel.setOpaque(false);
+        mapPanel.add(lifePanel, BorderLayout.SOUTH);
         this.add(mapPanel, constraints);
 
         // Creates the scoreboard panel.
-        scoreboardPanel();
+        this.scoreboardPanel = new ScoreboardPanel();
+
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 2;
         constraints.gridy = 1;
@@ -61,21 +57,21 @@ public class GamePanel extends JPanel {
         constraints.weighty = 0.2;
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.YELLOW);
-        panel.add(scoreboard, BorderLayout.NORTH);
+        panel.add(scoreboardPanel, BorderLayout.NORTH);
         this.add(panel, constraints);
 
         // Creates the upper panel.
-        this.menu = new MenuPanel(gameContext, () -> {
+        this.menuPanel = new MenuPanel(() -> {
             if (onEscapePressed != null) onEscapePressed.run();
         });
 
-        menu.setBackground(Color.CYAN);
+        menuPanel.setBackground(Color.CYAN);
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.gridwidth = 3;
         constraints.weighty = 0.1; //0.05
-        this.add(menu, constraints);
+        this.add(menuPanel, constraints);
 
         // Creates the bottom panel for the lives of the player.
         /* this.life = new LifePanel(gameContext);
@@ -111,13 +107,7 @@ public class GamePanel extends JPanel {
     }
 
     private static class LifePanel extends JPanel {
-
         private GameContext gameContext;
-
-        // TODO: Get Pacman ID
-        LifePanel(GameContext gameContext) {
-            this.gameContext = gameContext;
-        }
 
         void setGameContext(GameContext gameContext) {
             this.gameContext = gameContext;
@@ -128,6 +118,7 @@ public class GamePanel extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
+            if (this.gameContext == null) return;
             this.gameContext.getPacmans()
                     .stream()
                     .findFirst()
@@ -150,19 +141,15 @@ public class GamePanel extends JPanel {
     }
 
     private static class MenuPanel extends JPanel {
+        private final JLabel timeLeft;
 
-        //private final JPanel timeContainer;
-        private JLabel timeLeft;
-
-        MenuPanel(GameContext gameContext, Runnable onExitAction) {
+        MenuPanel(Runnable onExitAction) {
             this.setLayout(new BorderLayout());
             this.setBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, Color.BLACK));
-            //this.timeContainer = new JPanel();
-            timeLeft = new JLabel("Time left: " + gameContext.getGameState().getTimeLeft().getSeconds() + "s");
+            timeLeft = new JLabel("Time left: --");
             timeLeft.setFont(FontManager.addingFont(18f, FONT_NAME));
             timeLeft.setForeground(Color.BLACK);
             timeLeft.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 10));
-            //timeContainer.add(timeLeft);
             this.add(timeLeft, BorderLayout.LINE_START);
 
             JPanel exitContainer = new JPanel(new GridBagLayout());
@@ -182,58 +169,73 @@ public class GamePanel extends JPanel {
         }
 
         public void setGameContext(GameContext gameContext) {
+            if (gameContext == null || gameContext.getGameState() == null) {
+                this.timeLeft.setText("Time left: --");
+                return;
+            }
             this.timeLeft.setText("Time left: " + gameContext.getGameState().getTimeLeft().getSeconds() + "s");
         }
     }
 
-    private void scoreboardPanel() {
-        this.scoreboard = new JPanel(new GridLayout(0,2));
-        this.scoreboard.setOpaque(false);
-        this.scoreboard.setBorder(BorderFactory.createEmptyBorder(50, 10, 0, 10));
-        float titleScoreboardFontSize = 18f;
-        JLabel playerName = new JLabel("Player name", SwingConstants.CENTER);
-        playerName.setFont(FontManager.addingFont(titleScoreboardFontSize, FONT_NAME));
-        this.scoreboard.add(playerName);
-        JLabel scores = new JLabel("Scores", SwingConstants.CENTER);
-        scores.setFont(FontManager.addingFont(titleScoreboardFontSize, FONT_NAME));
-        this.scoreboard.add(scores);
-        this.gameContext.getGameState().getLeaderboard().forEach(this::setScoreboardInfos);
-        float scoreboardFontSize = 14f;
-        Arrays.stream(this.scoreboard.getComponents())
-                .filter(x -> x instanceof JLabel)
-                .forEach(x -> {
-                    x.setForeground(Color.BLACK);
-                    ((JLabel) x).setBorder(new EmptyBorder(20, 0, 20, 0));
-                    if (x.getFont().getSize2D() < titleScoreboardFontSize) {
-                        x.setFont(FontManager.addingFont(scoreboardFontSize, FONT_NAME));
-                    }
-                    //((JLabel) x).setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                });
-    }
+    private static class ScoreboardPanel extends JPanel {
+        private final Map<String, JLabel> scoreLabels = new HashMap<>();
 
-    private void setScoreboardInfos(Pacman player, Integer score) {
-        //TODO: Inserting here the setForeground
-        String playerId = player.getId();
-        if (playerId.length() > PLAYER_NAME_LENGTH) {
-            playerId = playerId.substring(0, PLAYER_NAME_LENGTH) + "...";
+        ScoreboardPanel() {
+            this.setLayout(new GridLayout(0, 2));
+            this.setOpaque(false);
+            this.setBorder(BorderFactory.createEmptyBorder(50, 10, 0, 10));
+
+            float titleScoreboardFontSize = 18f;
+            JLabel playerName = new JLabel("Player name", SwingConstants.CENTER);
+            playerName.setFont(FontManager.addingFont(titleScoreboardFontSize, FONT_NAME));
+            playerName.setForeground(Color.BLACK);
+            playerName.setBorder(new EmptyBorder(20, 0, 20, 0));
+            this.add(playerName);
+
+            JLabel scores = new JLabel("Scores", SwingConstants.CENTER);
+            scores.setFont(FontManager.addingFont(titleScoreboardFontSize, FONT_NAME));
+            scores.setForeground(Color.BLACK);
+            scores.setBorder(new EmptyBorder(20, 0, 20, 0));
+            this.add(scores);
         }
-        this.scoreboard.add(new JLabel(playerId, SwingConstants.CENTER));
-        this.scoreboard.add(new JLabel(String.valueOf(score), SwingConstants.CENTER));
-    }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        scoreboardPanel();
-        ((GameMapPanel) this.gameMapView).setGameContext(this.gameContext);
-        ((MenuPanel) this.menu).setGameContext(this.gameContext);
-        ((LifePanel) this.life).setGameContext(this.gameContext);
-        this.mapPanel.repaint();
-        this.menu.repaint();
-        this.life.repaint();
+        public void setGameContext(GameContext gameContext) {
+            if (gameContext == null || gameContext.getGameState() == null) {
+                return;
+            }
+
+            gameContext.getGameState().getLeaderboard().forEach((player, score) -> {
+                String playerId = player.getId();
+                JLabel scoreLabel = scoreLabels.get(playerId);
+
+                if (scoreLabel == null) {
+                    if (playerId.length() > PLAYER_NAME_LENGTH) {
+                        playerId = playerId.substring(0, PLAYER_NAME_LENGTH) + "...";
+                    }
+                    JLabel nameLabel = new JLabel(playerId, SwingConstants.CENTER);
+                    nameLabel.setFont(FontManager.addingFont(14f, FONT_NAME));
+                    nameLabel.setForeground(Color.BLACK);
+                    nameLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
+                    scoreLabel = new JLabel(String.valueOf(score), SwingConstants.CENTER);
+                    scoreLabel.setFont(FontManager.addingFont(14f, FONT_NAME));
+                    scoreLabel.setForeground(Color.BLACK);
+                    scoreLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
+                    this.add(nameLabel);
+                    this.add(scoreLabel);
+                    scoreLabels.put(player.getId(), scoreLabel);
+                } else {
+                    scoreLabel.setText(String.valueOf(score));
+                }
+            });
+        }
     }
 
     public void setGameContext(GameContext gameContext) {
-        this.gameContext = Objects.requireNonNull(gameContext);
+        Objects.requireNonNull(gameContext);
+        this.gameMapPanel.setGameContext(gameContext);
+        this.menuPanel.setGameContext(gameContext);
+        this.lifePanel.setGameContext(gameContext);
+        this.scoreboardPanel.setGameContext(gameContext);
+        this.repaint();
     }
 }

@@ -1,6 +1,7 @@
 package it.unibo.controller.engine;
 
-import it.unibo.controller.commands.PacmanCommand;
+import it.unibo.controller.input.PacmanCommand;
+import it.unibo.model.game.Game;
 import it.unibo.view.GameView;
 
 public interface GameEngine {
@@ -18,6 +19,8 @@ public interface GameEngine {
      * Returns whether the loop is still running.
      */
     boolean isRunning();
+
+    Game getGame();
 
     /**
      * Starts the game loop.
