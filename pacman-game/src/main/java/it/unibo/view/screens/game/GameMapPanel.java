@@ -1,6 +1,7 @@
 package it.unibo.view.screens.game;
 
 import it.unibo.model.common.GameConstants;
+import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.TileType;
 
@@ -8,12 +9,13 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GameMapPanel extends JPanel {
+    private final static int TOP_PADDING = 20;
+    private final static int BOTTOM_PADDING = 20;
 
-    private final static int SPACE_FROM_TOP = 20;
     private GameContext gameContext;
-    private int mapSize;
-    private int tileSize;
-    private int squareTiles;
+    private int mapPixelWidth;   // Total pixel width of the rendered map
+    private int mapPixelHeight;  // Total pixel height of the rendered map
+    private int tilePixelSize;   // Pixel size of a single tile (tiles are square)
 
     public GameMapPanel() {
         this.setOpaque(false);
@@ -24,136 +26,83 @@ public class GameMapPanel extends JPanel {
         this.gameContext = gameContext;
     }
 
-    //TODO: Make it more efficient (create a method to reduce the duplication)
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
-        if (this.gameContext == null || this.gameContext.getMap() == null) {
-            return;
-        }
-
+        if (this.gameContext == null) return;
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        this.mapSize = getMapContainerMinimumDimension();
-        this.squareTiles = (int) Math.sqrt(this.gameContext.getMap().getTiles().size());
-        this.tileSize = getProportionSize(GameConstants.TILE_SIZE);
+        int columns = this.gameContext.getMap().getGridSize().column();
+        int rows = this.gameContext.getMap().getGridSize().row();
+        int availableWidth = this.getWidth();
+        int availableHeight = this.getHeight() - TOP_PADDING - BOTTOM_PADDING;
+        int maxTileWidth = availableWidth / columns;
+        int maxTileHeight = availableHeight / rows;
+        this.tilePixelSize = Math.min(maxTileWidth, maxTileHeight);
+        this.mapPixelWidth = this.tilePixelSize * columns;
+        this.mapPixelHeight = this.tilePixelSize * rows;
         int startX = startingX();
-
+        int startY = startingY();
         this.gameContext.getMap()
                 .getTiles()
                 .forEach(tile -> {
-                    // g.setColor(Color.BLACK);
-                    // Graphics2D g2 = (Graphics2D) g;
-                    // Stroke oldStroke = g2.getStroke();
-                    // g2.setStroke(new BasicStroke(0.2f));
-                    // g.drawRect(
-                    //     getProportionSize(tile.getCenterPosition().y() + startX),
-                    //     getProportionSize(tile.getCenterPosition().x() + SPACE_FROM_TOP),
-                    //     tileSize,
-                    //     tileSize
-                    // );
-                    // g2.setStroke(oldStroke);
-                    // TODO: Set different colors for every type of Tile
                     if (tile.getTileType() == TileType.WALL) {
-                        g.setColor(Color.BLACK);
+                        g2d.setColor(Color.BLACK);
                     } else {
-                        g.setColor(Color.WHITE);
+                        g2d.setColor(Color.WHITE);
                     }
-                    g.fillRect(
-                        getProportionSize(tile.getCenterPosition().y() + startX),
-                        getProportionSize(tile.getCenterPosition().x() + SPACE_FROM_TOP),
-                        tileSize,
-                        tileSize
-                    );
-                });
-        int dotSize = getProportionSize(GameConstants.GameEntityFeatures.DOT.getRadius());
-        this.gameContext.getDots()
-                .forEach(dot -> {
-                    g.drawOval(
-                        dot.getPosition().y() + startX,
-                        dot.getPosition().x() + SPACE_FROM_TOP,
-                        dotSize,
-                        dotSize
-                    );
-                    g.setColor(Color.GREEN);
-                    g.fillOval(
-                        dot.getPosition().y() + startX,
-                        dot.getPosition().x() + SPACE_FROM_TOP,
-                        dotSize - 1,
-                        dotSize - 1
-                    );
+                    int tileX = startX + (tile.getMatrixPosition().column() * this.tilePixelSize);
+                    int tileY = startY + (tile.getMatrixPosition().row() * this.tilePixelSize);
+                    g2d.fillRect(tileX, tileY, tilePixelSize, tilePixelSize);
                 });
 
-        int ghostSize = getProportionSize(GameConstants.GameEntityFeatures.GHOST.getRadius());
-        this.gameContext.getGhosts()
-                .forEach(ghost -> {
-                    g.setColor(Color.BLACK);
-                    g.drawOval(
-                        centreCircles(ghost.getPosition().y() + startX, ghostSize),
-                        centreCircles(ghost.getPosition().x() + SPACE_FROM_TOP, ghostSize),
-                        ghostSize,
-                        ghostSize
-                    );
-                    g.setColor(Color.RED);
-                    g.fillOval(
-                        centreCircles(ghost.getPosition().y() + startX, ghostSize),
-                        centreCircles(ghost.getPosition().x() + SPACE_FROM_TOP, ghostSize),
-                        ghostSize - 1,
-                        ghostSize - 1
-                    );
-                });
+        this.gameContext.getDots().forEach(dot -> {
+            int size = getProportionalSize(GameConstants.GameEntityFeatures.DOT.getRadius()) * 2;
+            drawGameEntity(g2d, dot.getPosition(), size, Color.GREEN, startX, startY);
+        });
 
-        int pacmanSize = getProportionSize(GameConstants.GameEntityFeatures.PACMAN.getRadius());
-        this.gameContext.getPacmans()
-                .forEach(pacman -> {
-                    g.setColor(Color.BLACK);
-                    //((Graphics2D) g).setStroke(new BasicStroke(2));
-                    g.drawOval(
-                            centreCircles(pacman.getPosition().x() + startX, pacmanSize),
-                            centreCircles(pacman.getPosition().y() + SPACE_FROM_TOP, pacmanSize),
-                            pacmanSize,
-                            pacmanSize
-                    );
-                    //((Graphics2D) g).setStroke(new BasicStroke(1));
-                    g.setColor(Color.YELLOW);
-                    g.fillOval(
-                            centreCircles(pacman.getPosition().x() + startX, pacmanSize),
-                            centreCircles(pacman.getPosition().y() + SPACE_FROM_TOP, pacmanSize),
-                            pacmanSize - 1,
-                            pacmanSize - 1
-                    );
-                });
+        this.gameContext.getGhosts().forEach(ghost -> {
+            int size = getProportionalSize(GameConstants.GameEntityFeatures.GHOST.getRadius()) * 2;
+            drawGameEntity(g2d, ghost.getPosition(), size, Color.RED, startX, startY);
+        });
+
+        this.gameContext.getPacmans().forEach(pacman -> {
+            int size = getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2;
+            drawGameEntity(g2d, pacman.getPosition(), size, Color.YELLOW, startX, startY);
+        });
     }
 
-    /* 
-     * Determines the centre of the circle.
-     */
-    private int centreCircles(int upperCoordinate, int size) { //TODO: maybe do TOP==BOTTOM || LEFT==RIGHT
-        int diff = (this.tileSize / 2) - (size / 2);
-        return getProportionSize(upperCoordinate) + diff;
+    private void drawGameEntity(Graphics2D g2d, Vector2D position, int size, Color color, int startX, int startY) {
+        int screenX = getProportionalSize(position.x()) + startX;
+        int screenY = getProportionalSize(position.y()) + startY;
+        int entityX = screenX - (size / 2);
+        int entityY = screenY - (size / 2);
+        g2d.setColor(Color.BLACK);
+        g2d.drawOval(entityX, entityY, size, size);
+        g2d.setColor(color);
+        g2d.fillOval(entityX, entityY, size, size);
     }
 
-    /*
-     * Returns the minimun dimension of the map container.
-     */
-    private int getMapContainerMinimumDimension() {
-        return Math.min(this.getHeight(), this.getWidth()) - SPACE_FROM_TOP;
-    }
-
-    /*
+    /**
      * Adapts the size of the entity from the model to the view.
      */
-    private int getProportionSize(int size) {
-        //return square * GameConstants.TILE_SIZE / this.mapSize;
-        return size * this.mapSize / (this.squareTiles * GameConstants.TILE_SIZE);
+    private int getProportionalSize(int modelSize) {
+        return modelSize * this.tilePixelSize / GameConstants.TILE_SIZE;
     }
 
-    /*
-     * Defines the starting point to draw such that the map is centered.
+    /**
+     * Defines the x starting point to draw such that the map is centered.
      */
     private int startingX() {
-        return (this.getWidth() / 2) - (this.tileSize * this.squareTiles / 2);
+        int availableWidth = this.getWidth();
+        return (availableWidth - this.mapPixelWidth) / 2;
+    }
+
+    /**
+     * Defines the y starting point to draw such that the map is centered.
+     */
+    private int startingY() {
+        int availableHeight = this.getHeight() - TOP_PADDING - BOTTOM_PADDING;
+        return TOP_PADDING + (availableHeight - this.mapPixelHeight) / 2;
     }
 }

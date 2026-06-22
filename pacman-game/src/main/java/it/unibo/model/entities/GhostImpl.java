@@ -6,6 +6,7 @@ import it.unibo.model.common.GameConstants;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.GameMap;
+import it.unibo.model.map.Tile;
 import it.unibo.model.movement.MovementManager;
 import it.unibo.model.movement.MovementManagerImpl;
 
@@ -19,16 +20,13 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     private long lastTimeDead;
     private Direction direction;
 
-    public GhostImpl(Vector2D position, GameMap map) {
-        super(position);
-        this.movementManager = new MovementManagerImpl(map, 
-            map.getTiles()
-                .stream()
-                .filter(x -> x.getMatrixPosition().row() == position.x() && x.getMatrixPosition().column() == position.y())
-                .findFirst()
-                .get()
-                .getMatrixPosition(), 
-            GameConstants.GameEntityFeatures.GHOST.getVelocity());
+    public GhostImpl(Tile tile, GameMap map) {
+        super(tile);
+        this.movementManager = new MovementManagerImpl(
+                map,
+                tile.getMatrixPosition(),
+                GameConstants.GameEntityFeatures.GHOST.getVelocity()
+        );
         this.direction = MovableEntity.getRandomDirection();
     }
 

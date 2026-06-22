@@ -28,7 +28,7 @@ public interface GameEntityFactory {
      * @param map the game map.
      * @return a new Ghost.
      */
-    Ghost createGhost(Vector2D spawnPoint, GameMap map);
+    Ghost createGhost(Tile spawnPoint, GameMap map);
 
     /**
      * @param entity
