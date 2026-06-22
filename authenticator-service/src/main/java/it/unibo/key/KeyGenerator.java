@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.FileAttribute;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
@@ -20,11 +19,15 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Objects;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: make a general class for both clients and auth?
 /**
  * Handles the generation of the RSA key pair and save on files, if not done yet, the two keys.
  */
@@ -64,8 +67,8 @@ public class KeyGenerator {
      * Encrypts and decrypts incoming data by choosing the right mode and passing the key.
      * @param data the content that will be encrypted or decrypted.
      * @param cipherMode Cipher.ENCRYPT_MODE or Cipher.DECRYPT_MODE
-     * @param key
-     * @return
+     * @param key The key that will be used for the chosen mode.
+     * @return the String (assumption) of the encrypted/decrypted message.
      */
     public static String encryptDecryptDataWithKey(String data, int cipherMode, Key key) {
         try {
@@ -78,10 +81,10 @@ public class KeyGenerator {
             byte[] dataBytes = data.getBytes();
             return Base64.getEncoder().encodeToString(cipher.doFinal(dataBytes));
 
-        } catch (Exception e) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
             LOGGER.error(e.getMessage());
+            return null;
         }
-        return null;
     }
 
     /**
@@ -133,3 +136,27 @@ public class KeyGenerator {
     }
      */
 }
+
+
+// TODO: do for auth and for client
+// PublicKey public_key = CryptographyHelper.ellipticCurveCrypto().getPublic();     
+// System.out.println("PUBLIC KEY::" + public_key);
+
+// //converting public key to byte            
+// byte[] byte_pubkey = public_key.getEncoded();
+// System.out.println("\nBYTE KEY::: " + byte_pubkey);
+
+// //converting byte to String 
+// String str_key = Base64.getEncoder().encodeToString(byte_pubkey);
+// // String str_key = new String(byte_pubkey,Charset.);
+// System.out.println("\nSTRING KEY::" + str_key);
+
+// //converting string to Bytes
+// byte_pubkey  = Base64.getDecoder().decode(str_key);
+// System.out.println("BYTE KEY::" + byte_pubkey);
+
+
+// //converting it back to public key
+// KeyFactory factory = KeyFactory.getInstance("ECDSA", "BC");
+// public_key = (ECPublicKey) factory.generatePublic(new X509EncodedKeySpec(byte_pubkey));
+// System.out.println("FINAL OUTPUT" + public_key);
