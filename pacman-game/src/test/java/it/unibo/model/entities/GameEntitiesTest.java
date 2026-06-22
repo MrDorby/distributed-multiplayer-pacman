@@ -84,8 +84,8 @@ public class GameEntitiesTest {
         int initialLives = 3;
         assertEquals(initialLives, pacman.getLives());
         int x = 0, y = 2;
-        Vector2D ghostCentre = new Vector2D(x, y);
-        Ghost ghost = new GhostImpl(ghostCentre, map);
+        Tile tile = new TileImpl(new MatrixCoordinates(0,0), new Vector2D(x, y), Optional.empty(), TileType.SIMPLE);
+        Ghost ghost = new GhostImpl(tile, map);
         pacman.move(Direction.RIGHT);
         createGameContext(Set.of(), Set.of(ghost), Set.of(pacman));
         pacman.update(context);

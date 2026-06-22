@@ -36,10 +36,13 @@ public class DotImpl extends GameEntityImpl implements Dot {
     public void update(GameContext currentContext) {
         if (this.isAlive()) {
             Set<Collision> collision = currentContext.getCollisions(this);
-            collision.stream().filter(x -> x.getGameEntity() instanceof Pacman)
-                    .findFirst().ifPresent(_ -> hideDot(currentContext));
+            collision.stream()
+                    .filter(x -> x.getGameEntity() instanceof Pacman)
+                    .findFirst()
+                    .ifPresent(_ -> hideDot(currentContext));
         } else {
-            if (currentContext.getGameState().getTimeLeft().toMillis() - this.lastTimeDead >= TIME_TO_RESPAWN) {
+            long currentTime = currentContext.getGameState().getTimeLeft().toMillis();
+            if (currentTime <= this.lastTimeDead - TIME_TO_RESPAWN) {
                 this.setIsAlive(true);
             }
         }

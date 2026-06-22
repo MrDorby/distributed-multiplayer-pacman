@@ -44,6 +44,7 @@ public abstract class GameEntityImpl implements GameEntity {
     @Override
     public void setPosition(Vector2D position) {
         this.position = position;
+        this.boundingBox = new CircleBoundingBoxImpl(position, getRadiusFromGameEntity());
     }
 
     @Override

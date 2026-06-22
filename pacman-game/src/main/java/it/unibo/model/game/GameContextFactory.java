@@ -59,7 +59,7 @@ public class GameContextFactory {
         pacmans.add(pacman2);
 
         Set<Ghost> ghosts = new HashSet<>();
-        ghosts.add(new GhostImpl(ghostSpawn.getCenterPosition(), gameMap));
+        ghosts.add(new GhostImpl(ghostSpawn, gameMap));
 
         return new GameContextImpl(gameMap, dots, ghosts, pacmans, Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
     }
@@ -110,6 +110,30 @@ public class GameContextFactory {
                 gameMap,
                 dots,
                 emptyGhosts,
+                pacmans,
+                Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit())
+        );
+    }
+
+    public static GameContext createFromMap(GameMap gameMap) {
+        Set<Dot> dots = new HashSet<>();
+        Set<Ghost> ghosts = new HashSet<>();
+        Set<Pacman> pacmans = new HashSet<>();
+        gameMap.getTiles().forEach(tile -> {
+            if (tile.getDot().isPresent()) {
+                dots.add(tile.getDot().get());
+            } else if (tile.getTileType() == TileType.PACMAN_SPAWN) {
+                Pacman pacman = new PacmanImpl(tile, gameMap);
+                pacmans.add(pacman);
+            } else if (tile.getTileType() == TileType.GHOST_SPAWN) {
+                Ghost ghost = new GhostImpl(tile, gameMap);
+                ghosts.add(ghost);
+            }
+        });
+        return new GameContextImpl(
+                gameMap,
+                dots,
+                ghosts,
                 pacmans,
                 Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit())
         );

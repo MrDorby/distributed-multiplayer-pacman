@@ -19,7 +19,7 @@ public class GameEntityFactoryImpl implements GameEntityFactory {
     }
 
     @Override
-    public Ghost createGhost(Vector2D spawnPoint, GameMap map) {
+    public Ghost createGhost(Tile spawnPoint, GameMap map) {
         return new GhostImpl(spawnPoint, map);
     }
 

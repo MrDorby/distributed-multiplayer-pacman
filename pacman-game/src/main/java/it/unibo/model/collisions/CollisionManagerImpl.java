@@ -26,6 +26,7 @@ public class CollisionManagerImpl implements CollisionManager {
                 registerCollision(pacman, ghost, collisions);
             }
             for (Dot dot : dots) {
+                if (!dot.isAlive()) continue;
                 registerCollision(pacman, dot, collisions);
             }
         }

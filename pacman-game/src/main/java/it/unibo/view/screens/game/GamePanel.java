@@ -70,36 +70,8 @@ public class GamePanel extends JPanel {
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.gridwidth = 3;
-        constraints.weighty = 0.1; //0.05
+        constraints.weighty = 0;
         this.add(menuPanel, constraints);
-
-        // Creates the bottom panel for the lives of the player.
-        /* this.life = new LifePanel(gameContext);
-        life.setBackground(Color.YELLOW);
-        JPanel lifeContainer = new JPanel(new GridBagLayout());
-        GridBagConstraints lifeConstraint = new GridBagConstraints();
-        lifeConstraint.fill = GridBagConstraints.BOTH;
-        lifeConstraint.gridwidth = 2;
-        lifeConstraint.weightx = 0.705;
-        lifeConstraint.weighty = 1;  //0.2
-        lifeContainer.add(life, lifeConstraint);
-
-        // Inner panel used to define the configuration.
-        JPanel support = new JPanel();
-        support.setBackground(Color.YELLOW);
-        GridBagConstraints supportConstraint = new GridBagConstraints();
-        supportConstraint.fill = GridBagConstraints.BOTH;
-        supportConstraint.gridwidth = 1;
-        supportConstraint.weightx = 0.295;
-        supportConstraint.weighty = 1;  //0.2
-        lifeContainer.add(support, supportConstraint);
-
-        constraints.fill = GridBagConstraints.BOTH;
-        constraints.gridx = 0;
-        constraints.gridy = 2;
-        constraints.gridwidth = 3;
-        constraints.weighty = 1; //0.08
-        this.add(lifeContainer, constraints);*/
     }
 
     public void onEscape(Runnable action) {

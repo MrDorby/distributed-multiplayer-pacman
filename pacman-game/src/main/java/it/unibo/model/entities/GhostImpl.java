@@ -6,6 +6,7 @@ import it.unibo.model.common.GameConstants;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.GameMap;
+import it.unibo.model.map.Tile;
 import it.unibo.model.movement.MovementManager;
 import it.unibo.model.movement.MovementManagerImpl;
 
@@ -19,17 +20,15 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     private long lastTimeDead;
     private Direction direction;
 
-    public GhostImpl(Vector2D position, GameMap map) {
-        super(position);
-        this.movementManager = new MovementManagerImpl(map, 
-            map.getTiles()
-                .stream()
-                .filter(x -> x.getMatrixPosition().row() == position.x() && x.getMatrixPosition().column() == position.y())
-                .findFirst()
-                .get()
-                .getMatrixPosition(), 
-            GameConstants.GameEntityFeatures.GHOST.getVelocity());
+    public GhostImpl(Tile tile, GameMap map) {
+        super(tile);
+        this.movementManager = new MovementManagerImpl(
+                map,
+                tile.getMatrixPosition(),
+                GameConstants.GameEntityFeatures.GHOST.getVelocity()
+        );
         this.direction = MovableEntity.getRandomDirection();
+        this.movementManager.changeDirection(this.direction);
     }
 
     @Override
@@ -40,15 +39,21 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     @Override
     public void update(GameContext currentContext) {
         Set<Collision> collision = currentContext.getCollisions(this);
-        Stream<Pacman> pacman = collision.stream().filter(x -> x.getGameEntity() instanceof Pacman).map(x -> (Pacman) x.getGameEntity());
+        Stream<Pacman> pacman = collision.stream()
+                .filter(x -> x.getGameEntity() instanceof Pacman)
+                .map(x -> (Pacman) x.getGameEntity());
         pacman.findFirst().ifPresent(x -> checkGhostCanBeEaten(x, currentContext));
-        if (this.isAlive()) {
-            if (currentContext.getGameState().getTimeLeft().toMillis() - this.lastTimeDead >= TIME_TO_RESPAWN) {
+        if (!this.isAlive()) {
+            long timeLeft = currentContext.getGameState().getTimeLeft().toMillis();
+            if (this.lastTimeDead - timeLeft >= TIME_TO_RESPAWN) {
                 this.setIsAlive(true);
             }
+        }
+        if (this.isAlive()) {
             Vector2D nextPosition = this.movementManager.move();
-            if (getPosition() == nextPosition) {
+            if (getPosition().equals(nextPosition)) {
                 this.direction = MovableEntity.getRandomDirection();
+                this.movementManager.changeDirection(this.direction);
             }
             setPosition(nextPosition);
         }

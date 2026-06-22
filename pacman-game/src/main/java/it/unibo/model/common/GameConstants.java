@@ -9,11 +9,11 @@ public class GameConstants {
 
     public enum GameEntityFeatures {
 
-        PACMAN(26, 3000, 6),
+        PACMAN(16, 3000, 6),
 
-        GHOST(26, 3000, 8),
+        GHOST(16, 3000, 6),
 
-        DOT(18, 3000, 0);
+        DOT(8, 3000, 0);
 
         private final int radius;
         private final int timeToRespawn;
