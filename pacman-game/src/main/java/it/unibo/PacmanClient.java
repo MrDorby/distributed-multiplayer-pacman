@@ -3,7 +3,8 @@ package it.unibo;
 import it.unibo.view.navigation.AppState;
 import it.unibo.view.navigation.ScreenRouter;
 import it.unibo.view.screens.game.GameController;
-import it.unibo.view.screens.login.LoginController;
+import it.unibo.view.screens.loginRegister.LoginController;
+import it.unibo.view.screens.loginRegister.RegisterController;
 import it.unibo.view.screens.menu.MainMenuController;
 
 import javax.swing.*;
@@ -22,6 +23,7 @@ public class PacmanClient {
         router.register(AppState.LOGIN, new LoginController(router));
         router.register(AppState.MAIN_MENU, new MainMenuController(router));
         router.register(AppState.IN_GAME, new GameController(router, "LocalPlayer"));
+        router.register(AppState.REGISTER, new RegisterController(router));
         router.goTo(AppState.LOGIN);
     }
 

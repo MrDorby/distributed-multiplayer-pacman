@@ -1,4 +1,4 @@
-package it.unibo.view.screens.login;
+package it.unibo.view.screens.loginRegister;
 
 import it.unibo.view.navigation.AppNavigator;
 import it.unibo.view.navigation.AppState;
@@ -7,24 +7,24 @@ import it.unibo.view.screens.ScreenController;
 import javax.swing.*;
 
 public class LoginController implements ScreenController {
-    private final LoginPanel loginPanel = new LoginPanel();
+    private final LoginView loginView = new LoginView();
 
     public LoginController(AppNavigator navigator) {
-        loginPanel.onLogin(() -> {
-            String email = loginPanel.getEmail();
-            String password = loginPanel.getPassword();
+        loginView.onLogin(() -> {
+            String email = loginView.getEmail();
+            String password = loginView.getPassword();
             if (!email.isEmpty() && !password.isEmpty()) {
                 navigator.goTo(AppState.MAIN_MENU);
             } else {
-                JOptionPane.showMessageDialog(loginPanel, "Please fill in all fields");
+                loginView.showMessage("Please fill in all fields");
             }
         });
-        loginPanel.onRegister(() -> navigator.goTo(AppState.REGISTER));
+        loginView.onRegister(() -> navigator.goTo(AppState.REGISTER));
     }
 
     @Override
     public JPanel getPanel() {
-        return loginPanel;
+        return loginView.getPanel();
     }
 
     @Override
@@ -34,7 +34,7 @@ public class LoginController implements ScreenController {
 
     @Override
     public void onExit() {
-        loginPanel.clearFields();
+        loginView.clearFields();
         // Whatever needs to be done once finished
     }
 }
