@@ -131,6 +131,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
         }
     }
 
+    // TODO: modify the way of spawning the pacmans.
     private void checkPlayerIsAlive(Ghost ghost, GameContext context) {
         if (!this.canEatGhosts) {
             if (this.lives > 0) {

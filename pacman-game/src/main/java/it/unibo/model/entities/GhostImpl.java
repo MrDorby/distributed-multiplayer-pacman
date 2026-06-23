@@ -59,6 +59,7 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
             setPosition(nextPosition);
         }
     }
+    // TODO: move the ghosts better.
 
     private void checkGhostCanBeEaten(Pacman pacman, GameContext context) {
         if (pacman.canEatGhost()) {
