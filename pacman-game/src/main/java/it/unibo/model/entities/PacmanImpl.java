@@ -101,7 +101,6 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
                 .ifPresent(x -> checkSpecialDot(x, currentContext));
             long currentTime = currentContext.getGameState().getTimeLeft().toMillis();
             if (this.canEatGhosts && currentTime <= this.whenSpecialDotEat - TIME_CAN_EAT_GHOSTS) {
-                System.out.println(whenSpecialDotEat);
                 this.canEatGhosts = false;
             }
             if (!this.controlledByPlayer) {

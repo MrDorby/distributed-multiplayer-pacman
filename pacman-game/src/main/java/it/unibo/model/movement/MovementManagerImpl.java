@@ -1,5 +1,8 @@
 package it.unibo.model.movement;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import it.unibo.model.common.Direction;
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
@@ -142,5 +145,17 @@ public class MovementManagerImpl implements MovementManager {
     @Override
     public MatrixCoordinates currentMatrixCoordinates() {
         return this.targetMatrixCoordinates;
+    }
+
+    @Override
+    public List<Direction> getWalkableDirection(MatrixCoordinates matrixCoordinates) {
+        List<Direction> list = new ArrayList<>();
+        for (int i = 0; i < Direction.values().length - 1; i++) {
+            Direction dir = Direction.values()[i];
+            if (matrixCoordinates.getNeighbour(dir, map.getGridSize()) != matrixCoordinates) {
+                list.add(dir);
+            }
+        }
+        return list;
     }
 }
