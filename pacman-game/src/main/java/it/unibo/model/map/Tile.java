@@ -10,6 +10,7 @@ import java.util.Optional;
  * Models the concept of a cell inside the map.
  */
 public interface Tile {
+    //TODO: Delete this method. The fact that a Tile contains a Dot comes from the TileType
     /**
      * @return the Dot contained in the Tile, if present, an empty Optional otherwise.
      */

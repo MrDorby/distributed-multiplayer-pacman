@@ -70,6 +70,7 @@ public class FourPlayersGameMapFactory implements GameMapFactory {
                 computeCenterPosition(coordinates.column()),
                 computeCenterPosition(coordinates.row()));
         return switch (typeString) {
+            // TODO: Modify instantiation logic of Tiles
             case "E" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.SIMPLE));
             case "D" -> Optional.of(new TileImpl(coordinates, tileCenterPosition,
                     Optional.of(this.gameEntityFactory.createDot(tileCenterPosition, false)), TileType.SIMPLE));

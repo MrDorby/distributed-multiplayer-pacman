@@ -123,6 +123,7 @@ public class GameMapTest {
         assertThrows(IndexOutOfBoundsException.class, () -> map.getTile(new MatrixCoordinates(tileRow, tileCol)));
     }
 
+    // TODO: Modify Dots tests
     @ParameterizedTest
     @CsvSource({
             "1, 1, true",
