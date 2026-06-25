@@ -24,7 +24,7 @@ public class GameMapTest {
 
     @BeforeEach
     void init() {
-        this.mapFactory = new FourPlayersGameMapFactory(new GameEntityFactoryImpl());
+        this.mapFactory = new FourPlayersGameMapFactory();
     }
 
     @ParameterizedTest
@@ -81,7 +81,6 @@ public class GameMapTest {
         return new TileImpl(
                 coordinates,
                 getCenterPosition(coordinates),
-                Optional.empty(),
                 type
         );
     }
@@ -96,15 +95,21 @@ public class GameMapTest {
     @ParameterizedTest
     @CsvSource({
             "0, 0, WALL",
-            "1, 1, SIMPLE",
+            "1, 1, SPECIAL_DOT",
+            "1, 2, DOT",
+            "1, 8, SPECIAL_DOT",
+            "8, 1, SPECIAL_DOT",
+            "8, 9, SPECIAL_DOT",
+            "5, 0, DOT",
+            "7, 6, DOT",
             "1, 3, PACMAN_SPAWN",
             "5, 5, GHOST_SPAWN",
-            "7, 1, SIMPLE",
-            "4, 5, SIMPLE",
+            "7, 1, DOT",
+            "4, 5, EMPTY",
             "10, 10, WALL",
             "0, 10, WALL",
             "10, 0, WALL",
-            "5, 0, SIMPLE"
+            "5, 0, DOT"
     })
     void testGetTile(int tileRow, int tileCol, TileType expectedType) {
         GameMap map = mapFactory.fromJSON(CORRECT_MAP_PATH);
@@ -121,38 +126,5 @@ public class GameMapTest {
     void testOutOfBoundsTile(int tileRow, int tileCol) {
         GameMap map = mapFactory.fromJSON(CORRECT_MAP_PATH);
         assertThrows(IndexOutOfBoundsException.class, () -> map.getTile(new MatrixCoordinates(tileRow, tileCol)));
-    }
-
-    // TODO: Modify Dots tests
-    @ParameterizedTest
-    @CsvSource({
-            "1, 1, true",
-            "1, 2, false",
-            "1, 8, true",
-            "8, 1, true",
-            "8, 9, true",
-            "5, 0, false",
-            "7, 6, false"
-    })
-    void testDotIsInstantiatedCorrectly(int tileRow, int tileCol, boolean isSpecial) {
-        GameMap map = mapFactory.fromJSON(CORRECT_MAP_PATH);
-        Tile tile = map.getTile(new MatrixCoordinates(tileRow, tileCol));
-        Optional<Dot> dot = tile.getDot();
-        assertTrue(dot.isPresent());
-        assertEquals(isSpecial, dot.get().isSpecial());
-        assertEquals(tile.getCenterPosition(), dot.get().getPosition());
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-            "0, 0",
-            "1, 3",
-            "1, 5",
-            "4, 5",
-            "5, 5"
-    })
-    void testDoesNotHaveDot(int tileRow, int tileCol) {
-        GameMap map = mapFactory.fromJSON(CORRECT_MAP_PATH);
-        assertTrue(map.getTile(new MatrixCoordinates(tileRow, tileCol)).getDot().isEmpty());
     }
 }

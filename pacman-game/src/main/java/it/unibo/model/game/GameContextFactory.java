@@ -21,14 +21,14 @@ public class GameContextFactory {
 
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 16; j++) {
-                TileType type = (counter % 2 == 0) ? TileType.WALL : TileType.SIMPLE;
+                TileType type = (counter % 2 == 0) ? TileType.WALL : TileType.EMPTY;
                 if (i == 0 && j > 0 && j < 5) {
                     type = TileType.PACMAN_SPAWN;
                 }
                 if (i == 1 && j == 0) {
                     type = TileType.GHOST_SPAWN;
                 }
-                tiles.add(new TileImpl(new MatrixCoordinates(i, j), new Vector2D(i * TILE_SIZE, j * TILE_SIZE), Optional.empty(), type));
+                tiles.add(new TileImpl(new MatrixCoordinates(i, j), new Vector2D(i * TILE_SIZE, j * TILE_SIZE), type));
                 counter++;
             }
         }
@@ -63,18 +63,21 @@ public class GameContextFactory {
         return new GameContextImpl(gameMap, null, ghosts, pacmans, Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
     }
 
-    public static GameContext createFromMap(GameMap gameMap) {
+    public static GameContext createFromMap(String mapPath, GameEntityFactory gameEntityFactory) {
+        GameMap gameMap = new FourPlayersGameMapFactory().fromJSON(mapPath);
         Map<MatrixCoordinates, Dot> dotsMap = new HashMap<>();
         Set<Ghost> ghosts = new HashSet<>();
         Set<Pacman> pacmans = new HashSet<>();
         gameMap.getTiles().forEach(tile -> {
-            if (tile.getDot().isPresent()) {
-                dotsMap.put(tile.getMatrixPosition(), tile.getDot().get());
+            if (tile.getTileType() == TileType.DOT || tile.getTileType() == TileType.SPECIAL_DOT) {
+                dotsMap.put(
+                        tile.getMatrixPosition(),
+                        gameEntityFactory.createDot(tile.getCenterPosition(), tile.getTileType().equals(TileType.SPECIAL_DOT)));
             } else if (tile.getTileType() == TileType.PACMAN_SPAWN) {
-                Pacman pacman = new PacmanImpl(tile, gameMap);
+                Pacman pacman = gameEntityFactory.createPacman(tile, gameMap);
                 pacmans.add(pacman);
             } else if (tile.getTileType() == TileType.GHOST_SPAWN) {
-                Ghost ghost = new GhostImpl(tile, gameMap);
+                Ghost ghost = gameEntityFactory.createGhost(tile, gameMap);
                 ghosts.add(ghost);
             }
         });
