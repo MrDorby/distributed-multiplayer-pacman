@@ -1,6 +1,7 @@
 package it.unibo.model.game;
 
 import it.unibo.model.collisions.Collision;
+import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.entities.*;
 import it.unibo.model.map.GameMap;
 
@@ -35,10 +36,7 @@ public interface GameContext {
      */
     GameMap getMap();
 
-    /**
-     * Returns the dots on the map.
-     */
-    Set<Dot> getDots();
+    Map<MatrixCoordinates, Dot> getDotsMap();
 
     /**
      * Returns the ghosts.

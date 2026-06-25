@@ -56,7 +56,7 @@ public class GameMapPanel extends JPanel {
                     g2d.fillRect(tileX, tileY, tilePixelSize, tilePixelSize);
                 });
 
-        this.gameContext.getDots().forEach(dot -> {
+        this.gameContext.getDotsMap().values().forEach(dot -> {
             if (dot.isAlive()) {
                 boolean isSpecial = dot.isSpecial();
                 int size = getProportionalSize(GameConstants.GameEntityFeatures.DOT.getRadius()) * 2;
