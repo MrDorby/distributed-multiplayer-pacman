@@ -84,7 +84,7 @@ public class GameEntitiesTest {
         int initialLives = 3;
         assertEquals(initialLives, pacman.getLives());
         int x = 0, y = 2;
-        Tile tile = new TileImpl(new MatrixCoordinates(0,0), new Vector2D(x, y), Optional.empty(), TileType.SIMPLE);
+        Tile tile = new TileImpl(new MatrixCoordinates(0,0), new Vector2D(x, y), TileType.EMPTY);
         Ghost ghost = new GhostImpl(tile, map);
         pacman.move(Direction.RIGHT);
         createGameContext(Map.of(), Set.of(ghost), Set.of(pacman));
@@ -103,11 +103,11 @@ public class GameEntitiesTest {
             for (int j = 0; j < column; j++) {
                 MatrixCoordinates matrixPosition = new MatrixCoordinates(i, j);
                 Vector2D centrePosition = new Vector2D(i, j);
-                TileType type = j % 2 == 0 ? TileType.PACMAN_SPAWN : TileType.SIMPLE;
+                TileType type = j % 2 == 0 ? TileType.PACMAN_SPAWN : TileType.EMPTY;
                 if (i == 0 && j == 1) {
                     type = TileType.GHOST_SPAWN;
                 }
-                tiles.put(matrixPosition, new TileImpl(matrixPosition, centrePosition, Optional.empty(), type));
+                tiles.put(matrixPosition, new TileImpl(matrixPosition, centrePosition, type));
             }
         }
         map = new FourPlayersGameMap(tiles, new MatrixCoordinates(row, column));

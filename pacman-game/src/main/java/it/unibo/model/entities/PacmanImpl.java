@@ -7,6 +7,7 @@ import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.GameMap;
 import it.unibo.model.map.Tile;
+import it.unibo.model.map.TileType;
 import it.unibo.model.movement.MovementManager;
 import it.unibo.model.movement.MovementManagerImpl;
 
@@ -120,7 +121,8 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
             MatrixCoordinates tile = this.movementManager.currentMatrixCoordinates()
                 .getNeighbour(Direction.values()[i], map.getGridSize());
             direction = Direction.values()[i];
-            if (!map.getTile(tile).getDot().isEmpty()) {
+            Tile mapTile = map.getTile(tile);
+            if (mapTile.getTileType() == TileType.DOT || mapTile.getTileType() == TileType.SPECIAL_DOT) {
                 found = true;
                 this.movementManager.changeDirection(direction);
             }

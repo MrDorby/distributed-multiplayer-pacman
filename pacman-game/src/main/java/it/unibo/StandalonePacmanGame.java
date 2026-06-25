@@ -18,7 +18,7 @@ public class StandalonePacmanGame {
     static void main() {
         SwingUtilities.invokeLater(() -> {
             String playerName = "LocalPlayer";
-            GameContext context = GameContextFactory.createFromMap(new FourPlayersGameMapFactory(new GameEntityFactoryImpl()).fromJSON("maps/map1.json"));
+            GameContext context = GameContextFactory.createFromMap("maps/map1.json", new GameEntityFactoryImpl());
             Game game = new GameImpl(context);
             GameEngine engine = new LocalGameEngine(game, playerName);
             InputHandler inputHandler = new PlayerInputHandler(engine, playerName);

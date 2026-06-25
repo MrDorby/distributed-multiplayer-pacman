@@ -11,11 +11,6 @@ import java.util.Optional;
  */
 public interface Tile {
     /**
-     * @return the Dot contained in the Tile, if present, an empty Optional otherwise.
-     */
-    Optional<Dot> getDot();
-
-    /**
      * Gives the position of the center of the Tile.
      * @return a Vector2D corresponding to the coordinates of the center.
      */
