@@ -142,11 +142,13 @@ public class MovementManagerImpl implements MovementManager {
         }
     }
 
+    // TODO: Fix this by returning the current matrix coordinates instead of the target ones. (and test it)
     @Override
     public MatrixCoordinates currentMatrixCoordinates() {
         return this.targetMatrixCoordinates;
     }
 
+    // TODO: delete this method
     @Override
     public List<Direction> getWalkableDirection(MatrixCoordinates matrixCoordinates) {
         List<Direction> list = new ArrayList<>();

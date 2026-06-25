@@ -262,4 +262,6 @@ public class MovementManagerTest {
         movement.changeDirection(movementDirection);
         assertEquals(initialPosition, movement.move());
     }
+
+    // TODO: test currentMatrixCoordinates()
 }
