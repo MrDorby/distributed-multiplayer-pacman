@@ -1,6 +1,7 @@
 package it.unibo.model.game;
 
 import it.unibo.model.collisions.Collision;
+import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.entities.*;
 import it.unibo.model.map.GameMap;
 
@@ -10,16 +11,16 @@ import java.util.stream.Collectors;
 
 public class GameContextImpl implements GameContext {
     private final GameMap map;
-    private final Set<Dot> dots;
+    private final Map<MatrixCoordinates, Dot> dotsMap;
     private final Set<Ghost> ghosts;
     private final Set<Pacman> pacmans;
     private GameState gameState;
     private Duration timeLeft;
     private Map<GameEntity, Set<Collision>> collisions = new HashMap<>();
 
-    public GameContextImpl(GameMap map, Set<Dot> dots, Set<Ghost> ghosts, Set<Pacman> pacmans, Duration timeLeft) {
+    public GameContextImpl(GameMap map, Map<MatrixCoordinates, Dot> dotsMap, Set<Ghost> ghosts, Set<Pacman> pacmans, Duration timeLeft) {
         this.map = map;
-        this.dots = dots;
+        this.dotsMap = dotsMap;
         this.ghosts = ghosts;
         this.pacmans = pacmans;
         this.timeLeft = timeLeft;
@@ -39,7 +40,7 @@ public class GameContextImpl implements GameContext {
     @Override
     public Set<GameEntity> getGameEntities() {
         Set<GameEntity> gameEntities = new HashSet<>();
-        gameEntities.addAll(dots);
+        gameEntities.addAll(dotsMap.values());
         gameEntities.addAll(ghosts);
         gameEntities.addAll(pacmans);
         return gameEntities;
@@ -59,8 +60,8 @@ public class GameContextImpl implements GameContext {
     }
 
     @Override
-    public Set<Dot> getDots() {
-        return this.dots;
+    public Map<MatrixCoordinates, Dot> getDotsMap() {
+        return this.dotsMap;
     }
 
     @Override

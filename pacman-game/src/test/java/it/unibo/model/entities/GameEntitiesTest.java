@@ -54,7 +54,7 @@ public class GameEntitiesTest {
         Vector2D initialPosition = new Vector2D(x, y);
         assertEquals(initialPosition, pacman.getPosition());
         Direction direction = Direction.RIGHT;
-        createGameContext(Set.of(), Set.of(), Set.of(pacman));
+        createGameContext(Map.of(), Set.of(), Set.of(pacman));
         pacman.move(direction);
         pacman.update(context);
         assertEquals(nextPosition(direction, initialPosition), pacman.getPosition());
@@ -71,7 +71,7 @@ public class GameEntitiesTest {
         assertEquals(dotValue, dot.dotValue());
         Direction direction = Direction.RIGHT;
         pacman.move(direction);
-        createGameContext(Set.of(dot), Set.of(), Set.of(pacman));
+        createGameContext(Map.of(new MatrixCoordinates(0,1), dot), Set.of(), Set.of(pacman));
         pacman.update(context);
         context.setCollisions(collisionManager.computeCollisions(context));
         pacman.update(context);     // Check the collisions.
@@ -87,7 +87,7 @@ public class GameEntitiesTest {
         Tile tile = new TileImpl(new MatrixCoordinates(0,0), new Vector2D(x, y), Optional.empty(), TileType.SIMPLE);
         Ghost ghost = new GhostImpl(tile, map);
         pacman.move(Direction.RIGHT);
-        createGameContext(Set.of(), Set.of(ghost), Set.of(pacman));
+        createGameContext(Map.of(), Set.of(ghost), Set.of(pacman));
         pacman.update(context);
         pacman.update(context);     // We move again the pacman because after that will collide to the ghost.
         context.setCollisions(collisionManager.computeCollisions(context));
@@ -126,7 +126,7 @@ public class GameEntitiesTest {
     }
 
     /* Provides fast implementation of the game context. */
-    private void createGameContext(Set<Dot> dots, Set<Ghost> ghosts, Set<Pacman> pacmans) {
+    private void createGameContext(Map<MatrixCoordinates,Dot> dots, Set<Ghost> ghosts, Set<Pacman> pacmans) {
         this.context = new GameContextImpl(map, dots, 
                         ghosts, 
                         pacmans, 
