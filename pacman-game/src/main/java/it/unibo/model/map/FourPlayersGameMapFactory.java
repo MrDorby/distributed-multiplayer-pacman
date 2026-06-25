@@ -2,7 +2,6 @@ package it.unibo.model.map;
 
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
-import it.unibo.model.entities.GameEntityFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
@@ -20,15 +19,6 @@ import static it.unibo.model.common.GameConstants.TILE_SIZE;
  * A Factory that creates FourPlayersGameMaps.
  */
 public class FourPlayersGameMapFactory implements GameMapFactory {
-    private final GameEntityFactory gameEntityFactory;
-
-    /**
-     * @param gameEntityFactory the factory that will be used to instantiate the Dots in the GameMap.
-     */
-    public FourPlayersGameMapFactory(final GameEntityFactory gameEntityFactory) {
-        this.gameEntityFactory = gameEntityFactory;
-    }
-
     @Override
     public GameMap fromJSON(String path) {
         try {
@@ -69,17 +59,16 @@ public class FourPlayersGameMapFactory implements GameMapFactory {
         Vector2D tileCenterPosition = new Vector2D(
                 computeCenterPosition(coordinates.column()),
                 computeCenterPosition(coordinates.row()));
-        return switch (typeString) {
-            case "E" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.SIMPLE));
-            case "D" -> Optional.of(new TileImpl(coordinates, tileCenterPosition,
-                    Optional.of(this.gameEntityFactory.createDot(tileCenterPosition, false)), TileType.SIMPLE));
-            case "S" -> Optional.of(new TileImpl(coordinates, tileCenterPosition,
-                    Optional.of(this.gameEntityFactory.createDot(tileCenterPosition, true)), TileType.SIMPLE));
-            case "W" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.WALL));
-            case "G" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.GHOST_SPAWN));
-            case "P" -> Optional.of(new TileImpl(coordinates, tileCenterPosition, Optional.empty(), TileType.PACMAN_SPAWN));
+        Optional<TileType> tileType = switch (typeString) {
+            case "E" -> Optional.of(TileType.EMPTY);
+            case "D" -> Optional.of(TileType.DOT);
+            case "S" -> Optional.of(TileType.SPECIAL_DOT);
+            case "W" -> Optional.of(TileType.WALL);
+            case "G" -> Optional.of(TileType.GHOST_SPAWN);
+            case "P" -> Optional.of(TileType.PACMAN_SPAWN);
             default -> Optional.empty();
         };
+        return tileType.map(type -> new TileImpl(coordinates, tileCenterPosition, type));
     }
 
     /**

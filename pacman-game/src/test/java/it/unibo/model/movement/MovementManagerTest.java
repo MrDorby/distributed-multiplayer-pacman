@@ -40,7 +40,7 @@ public class MovementManagerTest {
      * @return the vector position that corresponds to the given coordinates on the test map.
      */
     private Vector2D initializeMovement(final MatrixCoordinates coordinates, String mapPath) {
-        this.map = new FourPlayersGameMapFactory(new GameEntityFactoryImpl()).fromJSON(mapPath);
+        this.map = new FourPlayersGameMapFactory().fromJSON(mapPath);
         this.movement = new MovementManagerImpl(map, coordinates, MOVEMENT_VELOCITY);
         return map.getTile(coordinates).getCenterPosition();
     }
