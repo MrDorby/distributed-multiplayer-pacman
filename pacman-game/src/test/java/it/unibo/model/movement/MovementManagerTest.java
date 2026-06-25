@@ -170,9 +170,11 @@ public class MovementManagerTest {
         movement.changeDirection(movementDirection);
         movement.move();
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), movement.move());
+        assertEquals(INITIAL_MOVEMENT_COORDINATES, movement.currentMatrixCoordinates());
         movement.changeDirection(movementDirection.getOpposite());
         moveMultipleTimes(3);
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection.getOpposite(), 2), movement.move());
+        assertEquals(INITIAL_MOVEMENT_COORDINATES, movement.currentMatrixCoordinates());
     }
 
     @ParameterizedTest
@@ -184,15 +186,18 @@ public class MovementManagerTest {
             "NONE, 5, 1"
     })
     void testInvertDirectionAgainstWall(Direction movementDirection, int startingRow, int startingColumn) {
-        Vector2D initialPosition = initializeMovement(new MatrixCoordinates(startingRow, startingColumn), MOVEMENT_TEST_MAP);
+        MatrixCoordinates initialCoordinates = new MatrixCoordinates(startingRow, startingColumn);
+        Vector2D initialPosition = initializeMovement(initialCoordinates, MOVEMENT_TEST_MAP);
         movement.changeDirection(movementDirection);
         movement.move();
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), movement.move());
+        assertEquals(initialCoordinates, movement.currentMatrixCoordinates());
         movement.changeDirection(movementDirection.getOpposite());
         movement.move();
         assertEquals(initialPosition, movement.move());
         assertEquals(initialPosition, movement.move());
         assertEquals(initialPosition, movement.move());
+        assertEquals(initialCoordinates, movement.currentMatrixCoordinates());
     }
 
     private Direction getRightTurn(Direction direction) {
@@ -214,23 +219,31 @@ public class MovementManagerTest {
             "NONE, 3, 3"
     })
     void testTurn(Direction movementDirection, int startingRow, int startingColumn) {
+        MatrixCoordinates initialCoordinates = new MatrixCoordinates(startingRow, startingColumn);
         Vector2D initialPosition = initializeMovement(new MatrixCoordinates(startingRow, startingColumn), MOVEMENT_TEST_MAP);
         movement.changeDirection(movementDirection);
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 1), movement.move());
         movement.changeDirection(getRightTurn(movementDirection));
         // Assert that it keeps moving in the same direction as before, despite specifying a different one
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, 2), movement.move());
+        assertEquals(initialCoordinates, movement.currentMatrixCoordinates());
         moveMultipleTimes(MOVEMENTS_IN_A_TILE - 3);
         Vector2D turningPosition = movement.move();
+        MatrixCoordinates turningCoordinates = initialCoordinates.getNeighbour(movementDirection, map.getGridSize());
         assertEquals(getExpectedFinalPosition(initialPosition, movementDirection, MOVEMENTS_IN_A_TILE), turningPosition);
+        assertEquals(turningCoordinates, movement.currentMatrixCoordinates());
         moveMultipleTimes(MOVEMENTS_IN_A_TILE - 1);
         // Assert that it starts moving in the desired direction, after reaching the junction
         assertEquals(getExpectedFinalPosition(turningPosition, getRightTurn(movementDirection), MOVEMENTS_IN_A_TILE), movement.move());
         movement.changeDirection(movementDirection);
         moveMultipleTimes(MOVEMENTS_IN_A_TILE - 1);
         Vector2D secondTurningPosition = movement.move();
+        MatrixCoordinates secondTurningCoordinates = turningCoordinates
+                .getNeighbour(getRightTurn(movementDirection), map.getGridSize())
+                .getNeighbour(getRightTurn(movementDirection), map.getGridSize());
         // Assert that it keeps moving in the same direction as before, despite specifying a different one
         assertEquals(getExpectedFinalPosition(turningPosition, getRightTurn(movementDirection), 2 * MOVEMENTS_IN_A_TILE), secondTurningPosition);
+        assertEquals(secondTurningCoordinates, movement.currentMatrixCoordinates());
         // Assert that the second turn was made
         assertEquals(getExpectedFinalPosition(secondTurningPosition, movementDirection, 1), movement.move());
     }
@@ -262,4 +275,6 @@ public class MovementManagerTest {
         movement.changeDirection(movementDirection);
         assertEquals(initialPosition, movement.move());
     }
+
+    // TODO: test currentMatrixCoordinates()
 }

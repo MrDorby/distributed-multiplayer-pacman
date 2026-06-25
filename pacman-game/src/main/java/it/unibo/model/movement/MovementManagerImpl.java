@@ -17,6 +17,7 @@ public class MovementManagerImpl implements MovementManager {
     private final int velocity;
     private final GameMap map;
     private MatrixCoordinates targetMatrixCoordinates;
+    private MatrixCoordinates currentMatrixCoordinates;
     private Vector2D position;
     private Direction currentDirection;
     private Direction desiredDirection;
@@ -30,6 +31,7 @@ public class MovementManagerImpl implements MovementManager {
         this.velocity = velocity;
         this.map = map;
         this.targetMatrixCoordinates = initialMatrixCoordinates;
+        this.currentMatrixCoordinates = initialMatrixCoordinates;
         this.position = this.map.getTile(initialMatrixCoordinates).getCenterPosition();
         this.currentDirection = Direction.NONE;
         this.desiredDirection = Direction.NONE;
@@ -55,9 +57,11 @@ public class MovementManagerImpl implements MovementManager {
         this.position = calculateNewPosition();
         if (isCurrentPositionInTileCenter(this.targetMatrixCoordinates)) {
             if (this.desiredDirection != Direction.NONE && isWalkable(this.targetMatrixCoordinates.getNeighbour(this.desiredDirection, this.map.getGridSize()))) {
+                this.currentMatrixCoordinates = this.targetMatrixCoordinates;
                 setCurrentDirection(this.desiredDirection);
                 this.desiredDirection = Direction.NONE;
             } else {
+                this.currentMatrixCoordinates = this.targetMatrixCoordinates;
                 setCurrentDirection(isWalkable(this.targetMatrixCoordinates.getNeighbour(this.currentDirection, this.map.getGridSize())) ?
                         currentDirection : Direction.NONE);
             }
@@ -144,9 +148,10 @@ public class MovementManagerImpl implements MovementManager {
 
     @Override
     public MatrixCoordinates currentMatrixCoordinates() {
-        return this.targetMatrixCoordinates;
+        return this.currentMatrixCoordinates;
     }
 
+    // TODO: delete this method
     @Override
     public List<Direction> getWalkableDirection(MatrixCoordinates matrixCoordinates) {
         List<Direction> list = new ArrayList<>();

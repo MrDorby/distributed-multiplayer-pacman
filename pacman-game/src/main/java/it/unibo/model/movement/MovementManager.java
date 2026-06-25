@@ -29,6 +29,7 @@ public interface MovementManager {
      */
     MatrixCoordinates currentMatrixCoordinates();
 
+    // TODO: delete this method
     /**
      * Shows the possible directions to move.
      * @param matrixCoordinates the matrix coordinates where the game entity is.
