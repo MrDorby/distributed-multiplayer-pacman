@@ -10,6 +10,9 @@ public class LocalGameEngine extends AbstractFixedTimeStepGameEngine {
         super(game);
         List<String> localNames = List.of(localPlayerUsername, "Bot1", "Bot2", "Bot3");
         this.getGame().setPacmanNames(localNames);
+        this.getGame().getContext().getPacmans().stream()
+                .filter(pacman -> !pacman.getId().equals(localPlayerUsername))
+                .forEach(pacman -> pacman.changeBehaviour(false));
     }
 
     @Override

@@ -54,7 +54,7 @@ public class GameEntitiesTest {
         Vector2D initialPosition = new Vector2D(x, y);
         assertEquals(initialPosition, pacman.getPosition());
         Direction direction = Direction.RIGHT;
-        createGameContext(Set.of(), Set.of(), Set.of(pacman));
+        createGameContext(Map.of(), Set.of(), Set.of(pacman));
         pacman.move(direction);
         pacman.update(context);
         assertEquals(nextPosition(direction, initialPosition), pacman.getPosition());
@@ -71,7 +71,7 @@ public class GameEntitiesTest {
         assertEquals(dotValue, dot.dotValue());
         Direction direction = Direction.RIGHT;
         pacman.move(direction);
-        createGameContext(Set.of(dot), Set.of(), Set.of(pacman));
+        createGameContext(Map.of(new MatrixCoordinates(0,1), dot), Set.of(), Set.of(pacman));
         pacman.update(context);
         context.setCollisions(collisionManager.computeCollisions(context));
         pacman.update(context);     // Check the collisions.
@@ -84,10 +84,10 @@ public class GameEntitiesTest {
         int initialLives = 3;
         assertEquals(initialLives, pacman.getLives());
         int x = 0, y = 2;
-        Tile tile = new TileImpl(new MatrixCoordinates(0,0), new Vector2D(x, y), Optional.empty(), TileType.SIMPLE);
+        Tile tile = new TileImpl(new MatrixCoordinates(0,0), new Vector2D(x, y), TileType.EMPTY);
         Ghost ghost = new GhostImpl(tile, map);
         pacman.move(Direction.RIGHT);
-        createGameContext(Set.of(), Set.of(ghost), Set.of(pacman));
+        createGameContext(Map.of(), Set.of(ghost), Set.of(pacman));
         pacman.update(context);
         pacman.update(context);     // We move again the pacman because after that will collide to the ghost.
         context.setCollisions(collisionManager.computeCollisions(context));
@@ -103,11 +103,11 @@ public class GameEntitiesTest {
             for (int j = 0; j < column; j++) {
                 MatrixCoordinates matrixPosition = new MatrixCoordinates(i, j);
                 Vector2D centrePosition = new Vector2D(i, j);
-                TileType type = j % 2 == 0 ? TileType.PACMAN_SPAWN : TileType.SIMPLE;
+                TileType type = j % 2 == 0 ? TileType.PACMAN_SPAWN : TileType.EMPTY;
                 if (i == 0 && j == 1) {
                     type = TileType.GHOST_SPAWN;
                 }
-                tiles.put(matrixPosition, new TileImpl(matrixPosition, centrePosition, Optional.empty(), type));
+                tiles.put(matrixPosition, new TileImpl(matrixPosition, centrePosition, type));
             }
         }
         map = new FourPlayersGameMap(tiles, new MatrixCoordinates(row, column));
@@ -126,7 +126,7 @@ public class GameEntitiesTest {
     }
 
     /* Provides fast implementation of the game context. */
-    private void createGameContext(Set<Dot> dots, Set<Ghost> ghosts, Set<Pacman> pacmans) {
+    private void createGameContext(Map<MatrixCoordinates,Dot> dots, Set<Ghost> ghosts, Set<Pacman> pacmans) {
         this.context = new GameContextImpl(map, dots, 
                         ghosts, 
                         pacmans, 
