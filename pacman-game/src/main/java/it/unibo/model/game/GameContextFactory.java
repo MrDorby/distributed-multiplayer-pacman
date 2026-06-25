@@ -16,6 +16,7 @@ public class GameContextFactory {
     public static GameContext getTestContext() {
 
         Set<Tile> tiles = new HashSet<>();
+        Map<MatrixCoordinates, Dot> dotsMap = new HashMap<>();
 
         int counter = 0;
 
@@ -52,15 +53,13 @@ public class GameContextFactory {
         Set<Pacman> pacmans = new HashSet<>();
         Pacman pacman1 = new PacmanImpl(pacmanSpawn, gameMap);
         Pacman pacman2 = new PacmanImpl(pacmanSpawn2, gameMap);
-        pacman1.setId("Pacman1");
-        pacman2.setId("Pacman2");
         pacmans.add(pacman1);
         pacmans.add(pacman2);
 
         Set<Ghost> ghosts = new HashSet<>();
         ghosts.add(new GhostImpl(ghostSpawn, gameMap));
 
-        return new GameContextImpl(gameMap, null, ghosts, pacmans, Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
+        return new GameContextImpl(gameMap, dotsMap, ghosts, pacmans, Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
     }
 
     public static GameContext createFromMap(GameMap gameMap) {
