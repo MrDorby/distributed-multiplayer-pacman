@@ -87,7 +87,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
         return this.direction;
     }
 
-    // TODO: Handling the part of the AI pacman.
+    // TODO: Handle time for pacman not controlled
     @Override
     public void update(GameContext currentContext) {
         Set<Collision> collision = currentContext.getCollisions(this);
@@ -130,7 +130,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
         }
     }
 
-    // TODO: modify the way of spawning the pacmans.
+    // TODO: modify the way of spawning the pacmans. Set invincibility for pacman when get eaten.
     private void checkPlayerIsAlive(Ghost ghost, GameContext context) {
         if (!this.canEatGhosts) {
             if (this.lives > 0) {
@@ -158,5 +158,4 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     public boolean isAlive() {
         return this.lives > 0;
     }
-
 }

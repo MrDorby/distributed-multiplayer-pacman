@@ -58,7 +58,7 @@ public class AuthenticatorImpl {
     @PostMapping(value = "/syn", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> syn(@RequestBody PublicKeyClientDTO publicKeyClientDTO) {
         try {
-            ResponseEntity<String> responseEntity = new ResponseEntity<String>("", HttpStatus.BAD_REQUEST);
+            ResponseEntity<String> responseEntity = ResponseEntity.badRequest().build();
             boolean integrity = Hash.checkHash(publicKeyClientDTO);
             if (integrity) {
                 PublicKey authPub = KeyGenerator.loadAuthenticatorPublicKey();
@@ -76,7 +76,7 @@ public class AuthenticatorImpl {
                 // In this case, the auth send a empty response to indicate that something wrong happened and the 
                 // user needs to re-authenticate itself.
                 //return new ResponseEntity<String>("", HttpStatus.BAD_REQUEST);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                return ResponseEntity.badRequest().build();
             }
             // In this case, the server had a problem.
             //return new ResponseEntity<String>("", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -101,7 +101,7 @@ public class AuthenticatorImpl {
             Authentication auth = this.authDetailsService.authenticate(credentials);
             String token = tokenService.generateToken((String) auth.getPrincipal()); // TODO: What does the token contain?
             this.authDetailsService.addToken(loginDTO.username(), token);
-            LoginResponse loginResponse = new LoginResponse(token, KeyGenerator.loadAuthenticatorPublicKey());
+            LoginResponse loginResponse = new LoginResponse(token);
             String json = mapper.writeValueAsString(loginResponse);
             String encryptedJson = KeyGenerator.encryptDecryptDataWithKey(json, Cipher.ENCRYPT_MODE, this.users.get(loginDTO.username()));
             return ResponseEntity.ok(encryptedJson);
