@@ -25,7 +25,7 @@ public class TokenService {
     public String generateToken(String user) {
         try {
             Algorithm algorithm = Algorithm.RSA512(
-                //(RSAPublicKey) KeyGenerator.loadAuthenticatorPublicKey(), 
+                (RSAPublicKey) KeyGenerator.loadAuthenticatorPublicKey(), 
                 (RSAPrivateKey) KeyGenerator.loadAuthenticatorPrivateKey());
             return JWT.create()
                     .withIssuer("auth-token")   //TODO: how is composed the token?

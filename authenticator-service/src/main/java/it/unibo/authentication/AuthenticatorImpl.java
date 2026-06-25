@@ -36,7 +36,7 @@ import it.unibo.mongodb.AuthMongoDB;
 
 @RestController
 @RequestMapping(value = "/auth")
-public class AuthenticatorImpl {
+public class AuthenticatorImpl implements Authenticator {
     
     private final Map<String, PublicKey> users;  // Username/UserID and PublicKey
     private final AuthDetailsService authDetailsService;

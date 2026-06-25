@@ -1,7 +1,5 @@
 package it.unibo.model.movement;
 
-import java.util.List;
-
 import it.unibo.model.common.Direction;
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
@@ -28,12 +26,4 @@ public interface MovementManager {
      * @return a MatrixCoordinates.
      */
     MatrixCoordinates currentMatrixCoordinates();
-
-    // TODO: delete this method
-    /**
-     * Shows the possible directions to move.
-     * @param matrixCoordinates the matrix coordinates where the game entity is.
-     * @return a list of all available directions.
-     */
-    List<Direction> getWalkableDirection(MatrixCoordinates matrixCoordinates);
 }

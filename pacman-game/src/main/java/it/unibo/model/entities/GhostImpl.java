@@ -11,7 +11,6 @@ import it.unibo.model.map.Tile;
 import it.unibo.model.movement.MovementManager;
 import it.unibo.model.movement.MovementManagerImpl;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -75,7 +74,8 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     /* Gets one of the available directions to move for the ghost. */
     private Direction getRandomAvailableDirection(GameMap map) {
         MatrixCoordinates coordinates = this.movementManager.currentMatrixCoordinates();
-        List<Direction> supp = getWalkableDirection(coordinates, map);
+        List<Direction> supp = MovableEntity.getWalkableDirection(coordinates, map)
+            .values().stream().collect(Collectors.toList());
         return supp.stream()
                     .filter(x -> x != this.direction.getOpposite())
                     .collect(Collectors
@@ -102,16 +102,5 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     @Override
     public int getGhostValue() {
         return GHOST_VALUE;
-    }
-
-    private List<Direction> getWalkableDirection(MatrixCoordinates matrixCoordinates, GameMap map) {
-        List<Direction> list = new ArrayList<>();
-        for (int i = 0; i < Direction.values().length - 1; i++) {
-            Direction dir = Direction.values()[i];
-            if (matrixCoordinates.getNeighbour(dir, map.getGridSize()) != matrixCoordinates) {
-                list.add(dir);
-            }
-        }
-        return list;
     }
 }
