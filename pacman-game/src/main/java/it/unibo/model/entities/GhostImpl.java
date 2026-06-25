@@ -3,7 +3,6 @@ package it.unibo.model.entities;
 import it.unibo.model.collisions.Collision;
 import it.unibo.model.common.Direction;
 import it.unibo.model.common.GameConstants;
-import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.GameMap;
@@ -70,5 +69,10 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     @Override
     public int getGhostValue() {
         return GHOST_VALUE;
+    }
+
+    @Override
+    public MovementManager getMovementManager() {
+        return this.movementManager;
     }
 }

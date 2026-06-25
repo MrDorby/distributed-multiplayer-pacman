@@ -7,11 +7,10 @@ import it.unibo.model.game.GameContext;
 import java.util.Set;
 
 public class DotImpl extends GameEntityImpl implements Dot {
-
     private final static int TIME_TO_RESPAWN = 5000;  // 5000 millis
     private final static int DOT_VALUE = 1;
     private boolean isSpecial;
-    private long lastTimeDead;
+    private long lastTimeEaten;
 
     public DotImpl(Vector2D position) {
         super(position);
@@ -20,6 +19,11 @@ public class DotImpl extends GameEntityImpl implements Dot {
     @Override
     public boolean isSpecial() {
         return this.isSpecial;
+    }
+
+    @Override
+    public long getLastTimeEaten() {
+        return this.lastTimeEaten;
     }
 
     @Override
@@ -42,7 +46,7 @@ public class DotImpl extends GameEntityImpl implements Dot {
                     .ifPresent(_ -> hideDot(currentContext));
         } else {
             long currentTime = currentContext.getGameState().getTimeLeft().toMillis();
-            if (currentTime <= this.lastTimeDead - TIME_TO_RESPAWN) {
+            if (currentTime <= this.lastTimeEaten - TIME_TO_RESPAWN) {
                 this.setIsAlive(true);
             }
         }
@@ -50,6 +54,6 @@ public class DotImpl extends GameEntityImpl implements Dot {
 
     private void hideDot(GameContext context) {
         this.setIsAlive(false);
-        this.lastTimeDead = context.getGameState().getTimeLeft().toMillis();
+        this.lastTimeEaten = context.getGameState().getTimeLeft().toMillis();
     }
 }

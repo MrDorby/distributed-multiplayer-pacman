@@ -1,6 +1,7 @@
 package it.unibo.model.entities;
 
 import it.unibo.model.common.Direction;
+import it.unibo.model.movement.MovementManager;
 
 /**
  * Models the concept of a pacman player.
@@ -50,4 +51,8 @@ public interface Pacman extends MovableEntity {
      * @param isPlayer true if controlled by a real-player false otherwise.
      */
     void changeBehaviour(boolean isPlayer);
+
+    long getSpecialDotEatenTime();
+
+    MovementManager getMovementManager();
 }

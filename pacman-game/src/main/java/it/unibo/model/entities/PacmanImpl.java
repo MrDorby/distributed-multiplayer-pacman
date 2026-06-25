@@ -26,7 +26,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     private int lives;
     private boolean controlledByPlayer;
     private boolean canEatGhosts;
-    private long whenSpecialDotEat;
+    private long specialDotEatenTime;
     private Direction direction;
 
     public PacmanImpl(Tile tile, GameMap map) {
@@ -83,8 +83,18 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     }
 
     @Override
+    public long getSpecialDotEatenTime() {
+        return specialDotEatenTime;
+    }
+
+    @Override
     public Direction getDirection() {
         return this.direction;
+    }
+
+    @Override
+    public MovementManager getMovementManager() {
+        return this.movementManager;
     }
 
     // TODO: Handling the part of the AI pacman.
@@ -100,8 +110,8 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
                 .findFirst()
                 .ifPresent(x -> checkSpecialDot(x, currentContext));
             long currentTime = currentContext.getGameState().getTimeLeft().toMillis();
-            if (this.canEatGhosts && currentTime <= this.whenSpecialDotEat - TIME_CAN_EAT_GHOSTS) {
-                System.out.println(whenSpecialDotEat);
+            if (this.canEatGhosts && currentTime <= this.specialDotEatenTime - TIME_CAN_EAT_GHOSTS) {
+                System.out.println(specialDotEatenTime);
                 this.canEatGhosts = false;
             }
             if (!this.controlledByPlayer) {
@@ -149,7 +159,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     private void checkSpecialDot(Dot dot, GameContext context) {
         if (dot.isSpecial()) {
             this.canEatGhosts = true;
-            this.whenSpecialDotEat = context.getGameState().getTimeLeft().toMillis();
+            this.specialDotEatenTime = context.getGameState().getTimeLeft().toMillis();
         }
         this.score = this.score + dot.dotValue();
     }

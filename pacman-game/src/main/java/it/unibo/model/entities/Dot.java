@@ -11,6 +11,8 @@ public interface Dot extends GameEntity {
      */
     boolean isSpecial();
 
+    long getLastTimeEaten();
+
     /**
      * Sets if the dot has the special behaviour or not.
      * @param isSpecial a boolean representing the condition to set.
