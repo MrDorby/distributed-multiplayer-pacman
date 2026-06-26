@@ -2,14 +2,11 @@ package it.unibo.model.map;
 
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
-import it.unibo.model.entities.Dot;
-import it.unibo.model.entities.GameEntityFactoryImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.util.Optional;
 import java.util.Set;
 
 import static it.unibo.model.common.GameConstants.TILE_SIZE;

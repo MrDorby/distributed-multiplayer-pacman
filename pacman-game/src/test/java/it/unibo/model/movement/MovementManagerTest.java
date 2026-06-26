@@ -3,7 +3,6 @@ package it.unibo.model.movement;
 import it.unibo.model.common.Direction;
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
-import it.unibo.model.entities.GameEntityFactoryImpl;
 import it.unibo.model.map.FourPlayersGameMapFactory;
 import it.unibo.model.map.GameMap;
 import org.junit.jupiter.api.Test;

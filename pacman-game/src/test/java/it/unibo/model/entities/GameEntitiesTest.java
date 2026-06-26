@@ -11,9 +11,7 @@ import it.unibo.model.map.GameMap;
 import it.unibo.model.map.FourPlayersGameMap;
 import it.unibo.model.map.Tile;
 
-import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import it.unibo.model.map.TileImpl;
 import it.unibo.model.map.TileType;
@@ -26,7 +24,7 @@ public class GameEntitiesTest {
 
     private static final int NUMBER_LIVES = 3;
     private static final MatrixCoordinates PACMAN_INIT_COORDINATES = new MatrixCoordinates(0, 0);
-    private static final int GAME_DURATION_SECONDS = 30;
+    private static final int GAME_DURATION_IN_MILLIS = 30000;
     private GameEntityFactory gameFactory;
     private GameMap map;
     private Pacman pacman;
@@ -130,6 +128,6 @@ public class GameEntitiesTest {
         this.context = new GameContextImpl(map, dots, 
                         ghosts, 
                         pacmans, 
-                        Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
+                        GAME_DURATION_IN_MILLIS);
     }
 }
