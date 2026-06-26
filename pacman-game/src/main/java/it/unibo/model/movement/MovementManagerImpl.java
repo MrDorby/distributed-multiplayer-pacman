@@ -104,7 +104,7 @@ public class MovementManagerImpl implements MovementManager {
 
     /**
      * Returns the previous matrix coordinates of the entity, according to the current target coordinates and movement direction.
-     * Previous coordinates are the neighbour of the target coordinates, in the opposite direction to the current movement direction
+     * Previous coordinates are the neighbor of the target coordinates, in the opposite direction to the current movement direction
      * of the entity.
      * @return the previous matrix coordinates.
      */

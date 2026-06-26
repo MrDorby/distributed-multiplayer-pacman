@@ -2,9 +2,6 @@ package it.unibo.model.map;
 
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
-import it.unibo.model.entities.Dot;
-
-import java.util.Optional;
 
 public record TileImpl(
         MatrixCoordinates matrixPosition,

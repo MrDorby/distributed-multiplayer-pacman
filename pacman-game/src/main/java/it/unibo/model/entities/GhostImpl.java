@@ -75,7 +75,7 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     private Direction getRandomAvailableDirection(GameMap map) {
         MatrixCoordinates coordinates = this.movementManager.currentMatrixCoordinates();
         List<Direction> supp = MovableEntity.getWalkableDirection(coordinates, map)
-            .values().stream().collect(Collectors.toList());
+            .values().stream().toList();
         return supp.stream()
                     .filter(x -> x != this.direction.getOpposite())
                     .collect(Collectors

@@ -138,7 +138,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     }
 
     /* Chooses how to move the pacman if no user commands it,
-    by checking its neighbours or otherwise gets random direction. */
+    by checking its neighbors or otherwise gets random direction. */
     private void movementBehaviour(GameContext context) {
         GameMap map = context.getMap();
         //boolean found = false;
@@ -186,7 +186,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
                 this.lives = this.lives - 1;
                 this.invincible = true;
                 this.whenInvincible = context.getGameState().getTimeLeft().toMillis();
-                List<Tile> tiles = context.getMap().getPacmanSpawnPoints().stream().collect(Collectors.toList());
+                List<Tile> tiles = context.getMap().getPacmanSpawnPoints().stream().toList();
                 super.setPosition(tiles.get(new Random().nextInt(0, tiles.size())).getCenterPosition());
             } else {
                 super.setIsAlive(false);

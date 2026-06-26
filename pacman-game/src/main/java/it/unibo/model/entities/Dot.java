@@ -11,6 +11,9 @@ public interface Dot extends GameEntity {
      */
     boolean isSpecial();
 
+    /**
+     * Returns the last time the dot was eaten in millis.
+     */
     long getLastTimeEaten();
 
     /**

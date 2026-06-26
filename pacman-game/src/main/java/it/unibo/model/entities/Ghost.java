@@ -12,5 +12,8 @@ public interface Ghost extends MovableEntity {
      */
     int getGhostValue();
 
+    /**
+     * Returns the movement manager of the ghost.
+     */
     MovementManager getMovementManager();
 }

@@ -27,7 +27,7 @@ public class DotImpl extends GameEntityImpl implements Dot {
     }
 
     @Override
-    public void setIsSpecial(boolean isSpecial) {       //TODO: Who sets it?
+    public void setIsSpecial(boolean isSpecial) {
         this.isSpecial = isSpecial;
     }
 

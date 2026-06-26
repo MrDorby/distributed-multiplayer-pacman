@@ -52,7 +52,13 @@ public interface Pacman extends MovableEntity {
      */
     void changeBehaviour(boolean isPlayer);
 
+    /**
+     * Returns the last time the pacman ate a special dot.
+     */
     long getSpecialDotEatenTime();
 
+    /**
+     * Returns the movement manager of the pacman.
+     */
     MovementManager getMovementManager();
 }

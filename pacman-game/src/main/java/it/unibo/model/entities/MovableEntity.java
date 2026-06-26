@@ -14,12 +14,12 @@ import it.unibo.model.map.GameMap;
 public interface MovableEntity extends GameEntity {
     
     /**
-     * @return the direction where the entity want to moves.
+     * @return the direction where the entity wants to move.
      */
     Direction getDirection();
 
     /**
-     * @return a randomic direction.
+     * @return a random direction.
      */
     static Direction getRandomDirection() {
         return Direction.values()[new Random().nextInt(0, 4)];

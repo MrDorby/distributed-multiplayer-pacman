@@ -9,7 +9,6 @@ import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
-import it.unibo.model.map.FourPlayersGameMapFactory;
 import it.unibo.view.GameViewImpl;
 
 import javax.swing.*;
