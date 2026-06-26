@@ -5,7 +5,6 @@ import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.entities.*;
 import it.unibo.model.map.GameMap;
 
-import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,6 +35,9 @@ public interface GameContext {
      */
     GameMap getMap();
 
+    /**
+     * Returns a map from MatrixCoordinates to Dots
+     */
     Map<MatrixCoordinates, Dot> getDotsMap();
 
     /**
@@ -53,7 +55,10 @@ public interface GameContext {
      */
     GameState getGameState();
 
-    void decrementTime(Duration delta);
+    /**
+     * Decreases time from time left.
+     */
+    void decrementTime(long deltaInMillis);
 
     /**
      * Calculates the current game state.

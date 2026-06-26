@@ -5,12 +5,9 @@ import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.*;
 import it.unibo.model.map.*;
 
-import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
-import static it.unibo.model.common.GameConstants.GAME_DURATION_SECONDS;
-import static it.unibo.model.common.GameConstants.TILE_SIZE;
+import static it.unibo.model.common.GameConstants.*;
 
 public class GameContextFactory {
     public static GameContext getTestContext() {
@@ -59,7 +56,7 @@ public class GameContextFactory {
         Set<Ghost> ghosts = new HashSet<>();
         ghosts.add(new GhostImpl(ghostSpawn, gameMap));
 
-        return new GameContextImpl(gameMap, dotsMap, ghosts, pacmans, Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit()));
+        return new GameContextImpl(gameMap, dotsMap, ghosts, pacmans, GAME_DURATION_IN_MILLIS);
     }
 
     public static GameContext createFromMap(String mapPath, GameEntityFactory gameEntityFactory) {
@@ -85,7 +82,7 @@ public class GameContextFactory {
                 dotsMap,
                 ghosts,
                 pacmans,
-                Duration.of(GAME_DURATION_SECONDS, TimeUnit.SECONDS.toChronoUnit())
+                GAME_DURATION_IN_MILLIS
         );
     }
 }

@@ -2,7 +2,6 @@ package it.unibo.model.game;
 
 import it.unibo.model.entities.Pacman;
 
-import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 
@@ -13,9 +12,9 @@ public interface GameState {
     Map<Pacman, Integer> getLeaderboard();
 
     /**
-     * Returns the time left.
+     * Returns the time left in millis.
      */
-    Duration getTimeLeft();
+    long getTimeLeftInMillis();
 
     /**
      * Returns whether the game is considered over.

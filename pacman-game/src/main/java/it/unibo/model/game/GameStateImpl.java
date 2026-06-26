@@ -2,19 +2,18 @@ package it.unibo.model.game;
 
 import it.unibo.model.entities.Pacman;
 
-import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 
 public class GameStateImpl implements GameState {
     private final Map<Pacman, Integer> leaderboard;
-    private final Duration timeLeft;
+    private final long timeLeftInMillis;
     private final boolean isGameOver;
     private final Pacman winner;
 
-    public GameStateImpl(Map<Pacman, Integer> leaderboard, Duration timeLeft, boolean isGameOver, Pacman winner) {
+    public GameStateImpl(Map<Pacman, Integer> leaderboard, long timeLeftInMillis, boolean isGameOver, Pacman winner) {
         this.leaderboard = leaderboard;
-        this.timeLeft = timeLeft;
+        this.timeLeftInMillis = timeLeftInMillis;
         this.isGameOver = isGameOver;
         this.winner = winner;
     }
@@ -25,8 +24,8 @@ public class GameStateImpl implements GameState {
     }
 
     @Override
-    public Duration getTimeLeft() {
-        return timeLeft;
+    public long getTimeLeftInMillis() {
+        return timeLeftInMillis;
     }
 
     @Override

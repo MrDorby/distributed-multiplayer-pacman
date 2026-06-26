@@ -125,7 +125,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
 
     /* Checks if it is necessary to change the pacman state. */
     private void checkPacmanUpdates(GameContext context) {
-        long currentTime = context.getGameState().getTimeLeft().toMillis();
+        long currentTime = context.getGameState().getTimeLeftInMillis();
         if (this.invincible && currentTime <= this.whenInvincible - TIME_INVINCIBILITY) {
             this.invincible = false;
         }
@@ -177,7 +177,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
         // if (!found) {
         //     this.movementManager.changeDirection(MovableEntity.getRandomDirection());
         // }
-        this.lastTimeDirection = context.getGameState().getTimeLeft().toMillis();
+        this.lastTimeDirection = context.getGameState().getTimeLeftInMillis();
     }
 
     private void checkCollisionWithGhost(Ghost ghost, GameContext context) {
@@ -185,7 +185,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
             if (this.lives > 0) {
                 this.lives = this.lives - 1;
                 this.invincible = true;
-                this.whenInvincible = context.getGameState().getTimeLeft().toMillis();
+                this.whenInvincible = context.getGameState().getTimeLeftInMillis();
                 List<Tile> tiles = context.getMap().getPacmanSpawnPoints().stream().toList();
                 super.setPosition(tiles.get(new Random().nextInt(0, tiles.size())).getCenterPosition());
             } else {
@@ -202,7 +202,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     private void checkSpecialDot(Dot dot, GameContext context) {
         if (dot.isSpecial()) {
             this.canEatGhosts = true;
-            this.whenSpecialDotEat = context.getGameState().getTimeLeft().toMillis();
+            this.whenSpecialDotEat = context.getGameState().getTimeLeftInMillis();
         }
         this.score = this.score + dot.dotValue();
     }

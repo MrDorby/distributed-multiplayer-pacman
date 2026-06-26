@@ -1,11 +1,11 @@
 package it.unibo.model.common;
 
 public class GameConstants {
-    // Prevent instantiation
     private GameConstants() {}
 
     public static final int TILE_SIZE = 48;
-    public static final int GAME_DURATION_SECONDS = 180;
+    public static final int GAME_DURATION_IN_SECONDS = 180;
+    public static final int GAME_DURATION_IN_MILLIS = GAME_DURATION_IN_SECONDS * 1000;
 
     public enum GameEntityFeatures {
 

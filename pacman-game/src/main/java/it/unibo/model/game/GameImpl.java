@@ -5,7 +5,6 @@ import it.unibo.model.collisions.CollisionManagerImpl;
 import it.unibo.model.common.Direction;
 import it.unibo.model.entities.Pacman;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,11 +23,11 @@ public class GameImpl implements Game {
     }
 
     @Override
-    public void update(Duration tickDelta) {
+    public void update(long tickDeltaInMillis) {
         if (context.getGameState().isGameOver()) {
             return;
         }
-        context.decrementTime(tickDelta);
+        context.decrementTime(tickDeltaInMillis);
         context.setCollisions(collisionManager.computeCollisions(context));
         context.getGameEntities().forEach(entity -> entity.update(context));
         context.createGameState();

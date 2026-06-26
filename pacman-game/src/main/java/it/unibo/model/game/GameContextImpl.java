@@ -5,7 +5,6 @@ import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.entities.*;
 import it.unibo.model.map.GameMap;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,15 +14,15 @@ public class GameContextImpl implements GameContext {
     private final Set<Ghost> ghosts;
     private final Set<Pacman> pacmans;
     private GameState gameState;
-    private Duration timeLeft;
+    private long timeLeftInMillis;
     private Map<GameEntity, Set<Collision>> collisions = new HashMap<>();
 
-    public GameContextImpl(GameMap map, Map<MatrixCoordinates, Dot> dotsMap, Set<Ghost> ghosts, Set<Pacman> pacmans, Duration timeLeft) {
+    public GameContextImpl(GameMap map, Map<MatrixCoordinates, Dot> dotsMap, Set<Ghost> ghosts, Set<Pacman> pacmans, long timeLeftInMillis) {
         this.map = map;
         this.dotsMap = dotsMap;
         this.ghosts = ghosts;
         this.pacmans = pacmans;
-        this.timeLeft = timeLeft;
+        this.timeLeftInMillis = timeLeftInMillis;
         this.createGameState();
     }
 
@@ -80,10 +79,10 @@ public class GameContextImpl implements GameContext {
     }
 
     @Override
-    public void decrementTime(Duration delta) {
-        this.timeLeft = this.timeLeft.minus(delta);
-        if (this.timeLeft.isNegative()) {
-            this.timeLeft = Duration.ZERO;
+    public void decrementTime(long deltaInMillis) {
+        this.timeLeftInMillis = this.timeLeftInMillis - deltaInMillis;
+        if (this.timeLeftInMillis < 0) {
+            this.timeLeftInMillis = 0;
         }
     }
 
@@ -91,7 +90,7 @@ public class GameContextImpl implements GameContext {
     public void createGameState() {
         this.gameState = new GameStateImpl(
             calculateLeaderboard(),
-            this.timeLeft,
+            this.timeLeftInMillis,
             checkGameOver(),
             calculateWinner()
         );
@@ -102,7 +101,7 @@ public class GameContextImpl implements GameContext {
     }
 
     private boolean checkGameOver() {
-        boolean timeIsUp = timeLeft.isZero() || timeLeft.isNegative();
+        boolean timeIsUp = timeLeftInMillis <= 0;
         boolean onlyOnePacmanLeft = pacmans.stream().filter(pacman -> pacman.getLives() > 0).count() == 1;
         return timeIsUp || onlyOnePacmanLeft;
     }

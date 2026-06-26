@@ -5,7 +5,6 @@ import it.unibo.model.game.Game;
 import it.unibo.view.GameView;
 import it.unibo.view.HeadlessView;
 
-import java.time.Duration;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -23,9 +22,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
     private static final int TICKS_PER_SECOND = 64;
-    private static final long NANOS_PER_TICK = 1_000_000_000L / TICKS_PER_SECOND;
-    private static final long NANOS_PER_SECOND = 1_000_000_000L;
-    private static final long NANOS_PER_MILLI = 1_000_000L;
+    private static final long MILLIS_PER_TICK = 1_000L / TICKS_PER_SECOND;
+    private static final long MILLIS_PER_SECOND = 1_000L;
     private static final int MAX_CATCHUP_TICKS = 5;
 
     protected Game game;
@@ -57,42 +55,41 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
 
     @Override
     public void start() {
-        long previousTime = System.nanoTime();
+        long previousTime = System.currentTimeMillis();
         long lastTpsTime = previousTime;
         long lag = 0;
         int tickCount = 0;
 
         while (running) {
-            long currentTime = System.nanoTime();
+            long currentTime = System.currentTimeMillis();
             long elapsed = currentTime - previousTime;
             previousTime = currentTime;
 
-            lag = Math.min(lag + elapsed, NANOS_PER_TICK * MAX_CATCHUP_TICKS);
+            lag = Math.min(lag + elapsed, MILLIS_PER_TICK * MAX_CATCHUP_TICKS);
 
             int ticksThisFrame = 0;
-            while (lag >= NANOS_PER_TICK && ticksThisFrame < MAX_CATCHUP_TICKS) {
+            while (lag >= MILLIS_PER_TICK && ticksThisFrame < MAX_CATCHUP_TICKS) {
                 tick();
-                lag -= NANOS_PER_TICK;
+                lag -= MILLIS_PER_TICK;
                 tickCount++;
                 ticksThisFrame++;
             }
 
-            if (currentTime - lastTpsTime >= NANOS_PER_SECOND) {
-                currentTps = tickCount;
+            if (currentTime - lastTpsTime >= MILLIS_PER_SECOND) {
+                currentTps = Math.min(tickCount, TICKS_PER_SECOND);
                 tickCount = 0;
                 lastTpsTime = currentTime;
+                System.out.println("TPS: " + currentTps);
             }
 
-            long timeUntilNextTick = NANOS_PER_TICK - lag;
-            if (timeUntilNextTick > NANOS_PER_MILLI) {
+            long timeUntilNextTick = MILLIS_PER_TICK - lag;
+            if (timeUntilNextTick > 0) {
                 try {
-                    Thread.sleep((timeUntilNextTick - NANOS_PER_MILLI) / NANOS_PER_MILLI);
+                    Thread.sleep(timeUntilNextTick);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     running = false;
                 }
-            } else {
-                Thread.onSpinWait();
             }
         }
     }
@@ -106,7 +103,7 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
                 afterCommandExecuted(command);
             }
         }
-        game.update(Duration.ofNanos(NANOS_PER_TICK));
+        game.update(MILLIS_PER_TICK);
         view.render(game.getContext());
         afterTick();
     }

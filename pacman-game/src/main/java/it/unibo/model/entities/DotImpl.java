@@ -45,7 +45,7 @@ public class DotImpl extends GameEntityImpl implements Dot {
                     .findFirst()
                     .ifPresent(_ -> hideDot(currentContext));
         } else {
-            long currentTime = currentContext.getGameState().getTimeLeft().toMillis();
+            long currentTime = currentContext.getGameState().getTimeLeftInMillis();
             if (currentTime <= this.lastTimeEaten - TIME_TO_RESPAWN) {
                 this.setIsAlive(true);
             }
@@ -54,6 +54,6 @@ public class DotImpl extends GameEntityImpl implements Dot {
 
     private void hideDot(GameContext context) {
         this.setIsAlive(false);
-        this.lastTimeEaten = context.getGameState().getTimeLeft().toMillis();
+        this.lastTimeEaten = context.getGameState().getTimeLeftInMillis();
     }
 }

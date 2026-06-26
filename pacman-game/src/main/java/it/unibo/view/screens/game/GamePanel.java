@@ -145,7 +145,7 @@ public class GamePanel extends JPanel {
                 this.timeLeft.setText("Time left: --");
                 return;
             }
-            this.timeLeft.setText("Time left: " + gameContext.getGameState().getTimeLeft().getSeconds() + "s");
+            this.timeLeft.setText("Time left: " + gameContext.getGameState().getTimeLeftInMillis() / 1000 + "s");
         }
     }
 

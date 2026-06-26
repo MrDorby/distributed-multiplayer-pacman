@@ -55,17 +55,17 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
                 .map(x -> (Pacman) x.getGameEntity());
         pacman.findFirst().ifPresent(x -> checkGhostCanBeEaten(x, currentContext));
         if (!this.isAlive()) {
-            long timeLeft = currentContext.getGameState().getTimeLeft().toMillis();
+            long timeLeft = currentContext.getGameState().getTimeLeftInMillis();
             if (this.lastTimeDead - timeLeft >= TIME_TO_RESPAWN) {
                 this.setIsAlive(true);
             }
         } else {
             Vector2D nextPosition = this.movementManager.move();
-            long timeLeft = currentContext.getGameState().getTimeLeft().toMillis();
+            long timeLeft = currentContext.getGameState().getTimeLeftInMillis();
             if (this.lastTimeDirection - timeLeft >= TIME_TO_CHANGE_DIRECTION || getPosition().equals(nextPosition)) {
                 this.direction = getRandomAvailableDirection(currentContext.getMap());
                 this.movementManager.changeDirection(this.direction);
-                this.lastTimeDirection = currentContext.getGameState().getTimeLeft().toMillis();
+                this.lastTimeDirection = currentContext.getGameState().getTimeLeftInMillis();
             }
             setPosition(nextPosition);
         }
@@ -95,7 +95,7 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
             this.setIsAlive(false);
             super.setPosition(context.getMap().getGhostSpawnPoint().getCenterPosition());
             setMovementStart(context.getMap().getGhostSpawnPoint(), context.getMap());
-            this.lastTimeDead = context.getGameState().getTimeLeft().toMillis();
+            this.lastTimeDead = context.getGameState().getTimeLeftInMillis();
         }
     }
 
