@@ -92,12 +92,19 @@ public class GameContextImpl implements GameContext {
             calculateLeaderboard(),
             this.timeLeftInMillis,
             checkGameOver(),
-            calculateWinner()
+            findWinnerId()
         );
     }
 
-    private Map<Pacman, Integer> calculateLeaderboard() {
-        return pacmans.stream().collect(Collectors.toMap(pacman -> pacman, Pacman::getScore));
+    private Map<String, Integer> calculateLeaderboard() {
+        return pacmans.stream()
+                .filter(pacman -> pacman.getId() != null)
+                .sorted(Comparator.comparing(Pacman::getScore).reversed())
+                .collect(Collectors.toMap(
+                        Pacman::getId,
+                        Pacman::getScore,
+                        (a, _) -> a,
+                        LinkedHashMap::new));
     }
 
     private boolean checkGameOver() {
@@ -106,9 +113,12 @@ public class GameContextImpl implements GameContext {
         return timeIsUp || onlyOnePacmanLeft;
     }
 
-    private Pacman calculateWinner() {
+    private String findWinnerId() {
         if (checkGameOver()) {
-            return pacmans.stream().filter(pacman -> pacman.getLives() > 0).max(Comparator.comparingInt(Pacman::getScore)).orElse(null);
+            return pacmans.stream()
+                    .filter(pacman -> pacman.getLives() > 0)
+                    .max(Comparator.comparingInt(Pacman::getScore))
+                    .map(Pacman::getId).orElse(null);
         }
         return null;
     }

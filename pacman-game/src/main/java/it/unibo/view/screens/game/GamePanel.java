@@ -156,14 +156,12 @@ public class GamePanel extends JPanel {
             this.setLayout(new GridLayout(0, 2));
             this.setOpaque(false);
             this.setBorder(BorderFactory.createEmptyBorder(50, 10, 0, 10));
-
             float titleScoreboardFontSize = 18f;
             JLabel playerName = new JLabel("Player name", SwingConstants.CENTER);
             playerName.setFont(FontManager.addingFont(titleScoreboardFontSize, FONT_NAME));
             playerName.setForeground(Color.BLACK);
             playerName.setBorder(new EmptyBorder(20, 0, 20, 0));
             this.add(playerName);
-
             JLabel scores = new JLabel("Scores", SwingConstants.CENTER);
             scores.setFont(FontManager.addingFont(titleScoreboardFontSize, FONT_NAME));
             scores.setForeground(Color.BLACK);
@@ -172,19 +170,14 @@ public class GamePanel extends JPanel {
         }
 
         public void setGameContext(GameContext gameContext) {
-            if (gameContext == null || gameContext.getGameState() == null) {
-                return;
-            }
-
-            gameContext.getGameState().getLeaderboard().forEach((player, score) -> {
-                String playerId = player.getId();
+            if (gameContext == null || gameContext.getGameState() == null) return;
+            gameContext.getGameState().getLeaderboard().forEach((playerId, score) -> {
                 JLabel scoreLabel = scoreLabels.get(playerId);
-
                 if (scoreLabel == null) {
-                    if (playerId.length() > PLAYER_NAME_LENGTH) {
-                        playerId = playerId.substring(0, PLAYER_NAME_LENGTH) + "...";
-                    }
-                    JLabel nameLabel = new JLabel(playerId, SwingConstants.CENTER);
+                    String displayName = playerId.length() > PLAYER_NAME_LENGTH
+                            ? playerId.substring(0, PLAYER_NAME_LENGTH) + "..."
+                            : playerId;
+                    JLabel nameLabel = new JLabel(displayName, SwingConstants.CENTER);
                     nameLabel.setFont(FontManager.addingFont(14f, FONT_NAME));
                     nameLabel.setForeground(Color.BLACK);
                     nameLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
@@ -194,7 +187,7 @@ public class GamePanel extends JPanel {
                     scoreLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
                     this.add(nameLabel);
                     this.add(scoreLabel);
-                    scoreLabels.put(player.getId(), scoreLabel);
+                    scoreLabels.put(playerId, scoreLabel);
                 } else {
                     scoreLabel.setText(String.valueOf(score));
                 }
