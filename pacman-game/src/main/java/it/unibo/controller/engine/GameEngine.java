@@ -32,5 +32,8 @@ public interface GameEngine {
      */
     void stop();
 
+    /**
+     * Attaches view to the engine for rendering purposes.
+     */
     void setView(GameView view);
 }

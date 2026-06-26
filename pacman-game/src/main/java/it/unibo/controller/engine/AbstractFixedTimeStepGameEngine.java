@@ -4,6 +4,8 @@ import it.unibo.controller.input.PacmanCommand;
 import it.unibo.model.game.Game;
 import it.unibo.view.GameView;
 import it.unibo.view.HeadlessView;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -21,6 +23,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * behind than that, such ticks are dropped.
  */
 public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
+    private static final Logger logger = LoggerFactory.getLogger(AbstractFixedTimeStepGameEngine.class);
+
     private static final int TICKS_PER_SECOND = 64;
     private static final long MILLIS_PER_TICK = 1_000L / TICKS_PER_SECOND;
     private static final long MILLIS_PER_SECOND = 1_000L;
@@ -79,7 +83,7 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
                 currentTps = Math.min(tickCount, TICKS_PER_SECOND);
                 tickCount = 0;
                 lastTpsTime = currentTime;
-                System.out.println("TPS: " + currentTps);
+                logger.debug("TPS: {}", currentTps);
             }
 
             long timeUntilNextTick = MILLIS_PER_TICK - lag;
