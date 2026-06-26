@@ -12,7 +12,7 @@ import java.awt.event.ComponentListener;
 
 public class LoginRegisterPanel extends JPanel {
     private static final int MIN_PANEL_SIZE = 800;
-    private final static int THICKNESS_BORDER = 2;
+    private final static int THICKNESS_BORDER = 3;
     private final static float BUTTON_FONT_SIZE = 14f;
     private final static String FONT_NAME = FontName.S2P.getFontName();
     private final static int maxBorder = 20;
@@ -21,8 +21,10 @@ public class LoginRegisterPanel extends JPanel {
     private final JPanel loginRegisterPanel = new JPanel();
     private final JPanel emailPanel = new JPanel();
     private final JPanel passwordPanel = new JPanel();
-    private final JPanel buttonClickTopButtonPanel = new JPanel(new BorderLayout());
-    private final JPanel registerPanel = new JPanel(new BorderLayout());
+    private final JPanel topButtonPanel = new JPanel(new BorderLayout());
+    private final JPanel bottomButtonPanel = new JPanel(new BorderLayout());
+    private final JPanel emailLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    private final JPanel passwordLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     private final JTextField emailField = new JTextField();
     private final JPasswordField passwordField = new JPasswordField();
     private final JButton topButton = new JButton();
@@ -39,13 +41,13 @@ public class LoginRegisterPanel extends JPanel {
                 if (getHeight() < MIN_PANEL_SIZE) {
                     emailPanel.setBorder(BorderFactory.createEmptyBorder(minBorder, minBorder, minBorder, minBorder));
                     passwordPanel.setBorder(BorderFactory.createEmptyBorder(minBorder, minBorder, minBorder, minBorder));
-                    buttonClickTopButtonPanel.setBorder(BorderFactory.createEmptyBorder(minBorder, minBorder, minBorder, minBorder));
-                    registerPanel.setBorder(BorderFactory.createEmptyBorder(minBorder, minBorder, minBorder, minBorder));
+                    topButtonPanel.setBorder(BorderFactory.createEmptyBorder(minBorder, minBorder, minBorder, minBorder));
+                    bottomButtonPanel.setBorder(BorderFactory.createEmptyBorder(minBorder, minBorder, minBorder, minBorder));
                 } else {
                     emailPanel.setBorder(panelBorder);
                     passwordPanel.setBorder(panelBorder);
-                    buttonClickTopButtonPanel.setBorder(panelBorder);
-                    registerPanel.setBorder(panelBorder);
+                    topButtonPanel.setBorder(panelBorder);
+                    bottomButtonPanel.setBorder(panelBorder);
                 }
             }
 
@@ -69,31 +71,46 @@ public class LoginRegisterPanel extends JPanel {
             
         });
 
+        emailPanel.setBackground(Color.ORANGE);
+        passwordPanel.setBackground(Color.ORANGE);
+        topButtonPanel.setBackground(Color.ORANGE);
+        bottomButtonPanel.setBackground(Color.ORANGE);
+        emailLabelPanel.setBackground(Color.ORANGE);
+        passwordLabelPanel.setBackground(Color.ORANGE);
+
+        JPanel titlePanel = new JPanel(new FlowLayout());
+        titlePanel.setOpaque(false);
+        titlePanel.setAlignmentX(SwingConstants.CENTER);
         JLabel title = new JLabel(textTitle);
         title.setForeground(Color.BLACK);
         title.setFont(FontManager.addingFont(80f, FONT_NAME));
-        title.setBorder(BorderFactory.createEmptyBorder(100, 0, 100, 0));
+        title.setBorder(BorderFactory.createEmptyBorder(100, 0, 50, 0));
         GridBagConstraints titleCons = new GridBagConstraints();
         titleCons.fill = GridBagConstraints.HORIZONTAL;
-        titleCons.anchor = GridBagConstraints.PAGE_START;
-        titleCons.gridwidth = 3;
+        //titleCons.anchor = GridBagConstraints.PAGE_START;
+        titleCons.gridx = 1;
+        titleCons.gridy = 0;
+        titleCons.gridwidth = 1;
         titleCons.gridheight = 1;
-        this.add(title, titleCons);
+        titleCons.weightx = 0.5;
+        titlePanel.add(title);
+        this.add(titlePanel, titleCons);
 
         loginRegisterPanel.setLayout(new BoxLayout(loginRegisterPanel, BoxLayout.Y_AXIS));
         loginRegisterPanel.setBorder(BorderFactory.createMatteBorder(THICKNESS_BORDER + 2, 0, THICKNESS_BORDER + 2, 0, Color.BLACK));
+        loginRegisterPanel.setBackground(Color.WHITE);
+        loginRegisterPanel.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 4));
         //login.setBorder(BorderFactory.createLineBorder(Color.BLACK, 4));
 
         emailPanel.setLayout(new BoxLayout(emailPanel, BoxLayout.Y_AXIS));
         emailPanel.setBorder(panelBorder);
-        JPanel emailLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel emailLabel = new JLabel("Email");
         emailLabel.setFont(FontManager.addingFont(15f, FONT_NAME));
         emailLabelPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         emailLabelPanel.add(emailLabel);
         JPanel emailTextFieldPanel = new JPanel(new BorderLayout());
         emailField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK),
+                BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER),
                 BorderFactory.createEmptyBorder(0, 10, 0, 10))
         );
         emailField.setFont(new Font(emailField.getFont().getFontName(), Font.PLAIN, 15));
@@ -105,14 +122,13 @@ public class LoginRegisterPanel extends JPanel {
         passwordPanel.setOpaque(true);
         passwordPanel.setLayout(new BoxLayout(passwordPanel, BoxLayout.Y_AXIS));
         passwordPanel.setBorder(panelBorder);
-        JPanel passwordLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel passwordLabel = new JLabel("Password");
         passwordLabel.setFont(FontManager.addingFont(15f, FONT_NAME));
         passwordLabelPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
         passwordLabelPanel.add(passwordLabel);
         JPanel passwordFieldPanel = new JPanel(new BorderLayout());
         passwordField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK),
+                BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER),
                 BorderFactory.createEmptyBorder(0, 10, 0, 10))
         );
         passwordField.setFont(new Font(emailLabel.getFont().getFontName(), Font.PLAIN, 15));
@@ -121,18 +137,20 @@ public class LoginRegisterPanel extends JPanel {
         passwordPanel.add(passwordFieldPanel);
         loginRegisterPanel.add(passwordPanel);
 
-        buttonClickTopButtonPanel.setBorder(panelBorder);
+        topButtonPanel.setBorder(panelBorder);
         topButton.setText(textTop);
         topButton.setBackground(Color.YELLOW);
+        //topButton.setForeground(Color.WHITE);
         topButton.setBorder(BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER));
         topButton.setFont(FontManager.addingFont(BUTTON_FONT_SIZE, FONT_NAME));
         topButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        buttonClickTopButtonPanel.add(topButton);
-        loginRegisterPanel.add(buttonClickTopButtonPanel);
+        topButtonPanel.add(topButton);
+        loginRegisterPanel.add(topButtonPanel);
 
-        registerPanel.setBorder(panelBorder);
+        bottomButtonPanel.setBorder(panelBorder);
         bottomButton.setText(textBottom);
         bottomButton.setBackground(Color.YELLOW);
+        //bottomButton.setForeground(Color.WHITE);
         bottomButton.setBorder(BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER));
         bottomButton.setFont(FontManager.addingFont(BUTTON_FONT_SIZE, FONT_NAME));
         bottomButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -149,29 +167,54 @@ public class LoginRegisterPanel extends JPanel {
                 registerButton.setBorder(BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER));
             }
         });*/
-        registerPanel.add(bottomButton);
-        loginRegisterPanel.add(registerPanel);
+
+        GridBagConstraints emptyCons = new GridBagConstraints();
+        emptyCons.fill = GridBagConstraints.BOTH;
+        emptyCons.anchor = GridBagConstraints.CENTER;
+        emptyCons.gridx = 0;
+        emptyCons.gridy = 0;
+        emptyCons.gridwidth = 1;
+        emptyCons.gridheight = 2;
+        emptyCons.weighty = 0.1;
+        emptyCons.weightx = 0.5;
+        this.add(Box.createGlue(), emptyCons);
+
+        bottomButtonPanel.add(bottomButton);
+        loginRegisterPanel.add(bottomButtonPanel);
 
         GridBagConstraints loginCons = new GridBagConstraints();
         loginCons.fill = GridBagConstraints.BOTH;
+        loginCons.anchor = GridBagConstraints.CENTER;
         loginCons.gridx = 1;
         loginCons.gridy = 1;
-        loginCons.gridwidth = 2;
+        loginCons.gridwidth = 1;
         loginCons.gridheight = 1;
         loginCons.weighty = 0.1;
+        loginCons.weightx = 0.5;
         this.add(loginRegisterPanel, loginCons);
 
-        JPanel emptyPanel = new JPanel();
-        emptyPanel.setOpaque(false);
-        GridBagConstraints emptyCons = new GridBagConstraints();
+        emptyCons.fill = GridBagConstraints.BOTH;
+        //emptyCons.anchor = GridBagConstraints.CENTER;
+        emptyCons.gridx = 2;
+        emptyCons.gridy = 0;
+        emptyCons.gridwidth = 1;
+        emptyCons.gridheight = 2;
+        emptyCons.weighty = 0.1;
+        emptyCons.weightx = 0.5;
+        this.add(Box.createGlue(), emptyCons);
+
+        // JPanel emptyPanel = new JPanel();
+        // emptyPanel.setOpaque(false);
+        // GridBagConstraints emptyCons = new GridBagConstraints();
         emptyCons.fill = GridBagConstraints.BOTH;
         emptyCons.anchor = GridBagConstraints.PAGE_END;
         emptyCons.gridx = 1;
         emptyCons.gridy = 2;
-        emptyCons.gridwidth = 2;
+        emptyCons.gridwidth = 1;
         emptyCons.gridheight = 1;
         emptyCons.weighty = 0.1;
-        this.add(emptyPanel, emptyCons);
+        emptyCons.weightx = 0.1;
+        this.add(Box.createGlue(), emptyCons);
     }
 
     public void showMessage(String message) {

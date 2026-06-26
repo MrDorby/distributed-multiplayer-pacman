@@ -7,10 +7,13 @@ import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.map.GameMap;
 import it.unibo.model.map.Tile;
+import it.unibo.model.map.TileType;
 import it.unibo.model.movement.MovementManager;
 import it.unibo.model.movement.MovementManagerImpl;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,13 +23,18 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
 
     private final static int NUMBER_LIVES = 3;
     private final static int TIME_CAN_EAT_GHOSTS = 3000;  // 5000 millis
+    private final static int TIME_INVINCIBILITY = 2000;
+    private static final int TIME_CHANGE_DIRECTION = 500;
     private final MovementManager movementManager;
     private String id;
     private int score;
     private int lives;
     private boolean controlledByPlayer;
     private boolean canEatGhosts;
-    private long specialDotEatenTime;
+    private boolean invincible;
+    private long whenSpecialDotEat;
+    private long whenInvincible;
+    private long lastTimeDirection;
     private Direction direction;
 
     public PacmanImpl(Tile tile, GameMap map) {
@@ -84,12 +92,13 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
 
     @Override
     public long getSpecialDotEatenTime() {
-        return specialDotEatenTime;
+        return whenSpecialDotEat;
     }
 
     @Override
     public Direction getDirection() {
         return this.direction;
+        // TODO: movementManager needs to return the actual direction.
     }
 
     @Override
@@ -102,56 +111,90 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     public void update(GameContext currentContext) {
         Set<Collision> collision = currentContext.getCollisions(this);
         Stream<Ghost> ghosts = collision.stream().filter(x -> x.getGameEntity() instanceof Ghost).map(x -> (Ghost) x.getGameEntity());
-        ghosts.findFirst().ifPresent(x -> checkPlayerIsAlive(x, currentContext));
+        ghosts.findFirst().ifPresent(x -> checkCollisionWithGhost(x, currentContext));
         if (this.isAlive()) {
             collision.stream()
                 .filter(x -> x.getGameEntity() instanceof Dot)
                 .map(x -> (Dot) x.getGameEntity())
                 .findFirst()
                 .ifPresent(x -> checkSpecialDot(x, currentContext));
-            long currentTime = currentContext.getGameState().getTimeLeft().toMillis();
-            if (this.canEatGhosts && currentTime <= this.specialDotEatenTime - TIME_CAN_EAT_GHOSTS) {
-                System.out.println(specialDotEatenTime);
-                this.canEatGhosts = false;
-            }
-            if (!this.controlledByPlayer) {
-                movementBehaviour(currentContext);
-            }
+            checkPacmanUpdates(currentContext);
             super.setPosition(this.movementManager.move());
         }
     }
 
-    /* Chooses how to move the pacman if no user command it, 
-    by checking its neighbours or otherwise gets random direction. */
-    private void movementBehaviour(GameContext context) {
-        GameMap map = context.getMap();
-        Direction direction;
-        boolean found = false;
-        for (int i = 0; i < Direction.values().length - 1 && !found; i++) {
-            MatrixCoordinates tile = this.movementManager.currentMatrixCoordinates()
-                .getNeighbour(Direction.values()[i], map.getGridSize());
-            direction = Direction.values()[i];
-            if (!map.getTile(tile).getDot().isEmpty()) {
-                found = true;
-                this.movementManager.changeDirection(direction);
-            }
+    /* Checks if it is necessary to change the pacman state. */
+    private void checkPacmanUpdates(GameContext context) {
+        long currentTime = context.getGameState().getTimeLeft().toMillis();
+        if (this.invincible && currentTime <= this.whenInvincible - TIME_INVINCIBILITY) {
+            this.invincible = false;
         }
-        if (!found) {
-            this.movementManager.changeDirection(MovableEntity.getRandomDirection());
+        if (this.canEatGhosts && currentTime <= this.whenSpecialDotEat - TIME_CAN_EAT_GHOSTS) {
+            this.canEatGhosts = false;
+        }
+        if (!this.controlledByPlayer && currentTime <= this.lastTimeDirection - TIME_CHANGE_DIRECTION) {
+            movementBehaviour(context);
         }
     }
 
-    private void checkPlayerIsAlive(Ghost ghost, GameContext context) {
-        if (!this.canEatGhosts) {
+    /* Chooses how to move the pacman if no user commands it,
+    by checking its neighbours or otherwise gets random direction. */
+    private void movementBehaviour(GameContext context) {
+        GameMap map = context.getMap();
+        //boolean found = false;
+        Map<MatrixCoordinates, Direction> md = MovableEntity
+            .getWalkableDirection(this.movementManager.currentMatrixCoordinates(), map);
+        List<Tile> tiles = md.entrySet()
+            .stream()
+            .map(x -> map.getTile(x.getKey()))
+            .filter(
+                y -> y.getTileType() == TileType.DOT ||
+                y.getTileType() == TileType.SPECIAL_DOT
+            ).collect(
+                Collectors.collectingAndThen(
+                    Collectors.toList(),
+                    collected -> {
+                        Collections.shuffle(collected);
+                        return collected;
+                    }
+                )
+            );
+        if (tiles.isEmpty()) {
+            this.movementManager.changeDirection(MovableEntity.getRandomDirection());
+        } else {
+            this.movementManager.changeDirection(md.get(tiles.getFirst().getMatrixPosition()));
+        }
+        // for (int i = 0; i < Direction.values().length - 1 && !found; i++) {
+        //     Direction direction = Direction.values()[i];
+        //     MatrixCoordinates tile = this.movementManager.currentMatrixCoordinates()
+        //         .getNeighbour(direction, map.getGridSize());
+        //     Tile mapTile = map.getTile(tile);
+        //     if (mapTile.getTileType() == TileType.DOT || mapTile.getTileType() == TileType.SPECIAL_DOT) {
+        //         found = true;
+        //         this.movementManager.changeDirection(direction);
+        //     }
+        // }
+        // if (!found) {
+        //     this.movementManager.changeDirection(MovableEntity.getRandomDirection());
+        // }
+        this.lastTimeDirection = context.getGameState().getTimeLeft().toMillis();
+    }
+
+    private void checkCollisionWithGhost(Ghost ghost, GameContext context) {
+        if (!this.canEatGhosts && !this.invincible) {
             if (this.lives > 0) {
                 this.lives = this.lives - 1;
+                this.invincible = true;
+                this.whenInvincible = context.getGameState().getTimeLeft().toMillis();
                 List<Tile> tiles = context.getMap().getPacmanSpawnPoints().stream().collect(Collectors.toList());
                 super.setPosition(tiles.get(new Random().nextInt(0, tiles.size())).getCenterPosition());
             } else {
                 super.setIsAlive(false);
             }
         } else {
-            this.score = this.score + ghost.getGhostValue();
+            if (isAlive() && this.canEatGhosts) {
+                this.score = this.score + ghost.getGhostValue();
+            }
         }
     }
 
@@ -159,7 +202,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     private void checkSpecialDot(Dot dot, GameContext context) {
         if (dot.isSpecial()) {
             this.canEatGhosts = true;
-            this.specialDotEatenTime = context.getGameState().getTimeLeft().toMillis();
+            this.whenSpecialDotEat = context.getGameState().getTimeLeft().toMillis();
         }
         this.score = this.score + dot.dotValue();
     }
@@ -168,5 +211,4 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     public boolean isAlive() {
         return this.lives > 0;
     }
-
 }

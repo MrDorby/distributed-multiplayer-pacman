@@ -19,7 +19,7 @@ public class CollisionManagerImpl implements CollisionManager {
         Map<GameEntity, Set<Collision>> collisions = new HashMap<>();
         Set<Pacman> pacmans = context.getPacmans();
         Set<Ghost> ghosts = context.getGhosts();
-        Set<Dot> dots = context.getDots();
+        Set<Dot> dots = new HashSet<>(context.getDotsMap().values());
         // We only need to check pacmans against ghosts and dots.
         for (Pacman pacman : pacmans) {
             for (Ghost ghost : ghosts) {
