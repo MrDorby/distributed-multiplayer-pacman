@@ -6,10 +6,15 @@ import it.unibo.view.font.FontName;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import ch.qos.logback.core.joran.sanity.Pair;
+
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class GamePanel extends JPanel {
 
@@ -150,7 +155,11 @@ public class GamePanel extends JPanel {
     }
 
     private static class ScoreboardPanel extends JPanel {
-        private final Map<String, JLabel> scoreLabels = new HashMap<>();
+        private record Pair(JLabel name, JLabel points) {
+            
+        }
+        //private final Map<String, JLabel> scoreLabels = new HashMap<>();
+        private final Map<Integer, Pair> scoreLabels = new HashMap<>();
 
         ScoreboardPanel() {
             this.setLayout(new GridLayout(0, 2));
@@ -167,31 +176,60 @@ public class GamePanel extends JPanel {
             scores.setForeground(Color.BLACK);
             scores.setBorder(new EmptyBorder(20, 0, 20, 0));
             this.add(scores);
+            for (int i = 0; i < 4; i++) {
+                JLabel id = new JLabel("", SwingConstants.CENTER);
+                id.setFont(FontManager.addingFont(14f, FONT_NAME));
+                id.setForeground(Color.BLACK);
+                id.setBorder(new EmptyBorder(20, 0, 20, 0));
+                JLabel points = new JLabel("", SwingConstants.CENTER);
+                points.setFont(FontManager.addingFont(14f, FONT_NAME));
+                points.setForeground(Color.BLACK);
+                points.setBorder(new EmptyBorder(20, 0, 20, 0));
+                scoreLabels.put(i, new Pair(id, points));
+                this.add(id);
+                this.add(points);
+            }
         }
 
+        // TODO: completing with username deleted for players with no more lives.
         public void setGameContext(GameContext gameContext) {
             if (gameContext == null || gameContext.getGameState() == null) return;
-            gameContext.getGameState().getLeaderboard().forEach((playerId, score) -> {
-                JLabel scoreLabel = scoreLabels.get(playerId);
-                if (scoreLabel == null) {
-                    String displayName = playerId.length() > PLAYER_NAME_LENGTH
-                            ? playerId.substring(0, PLAYER_NAME_LENGTH) + "..."
-                            : playerId;
-                    JLabel nameLabel = new JLabel(displayName, SwingConstants.CENTER);
-                    nameLabel.setFont(FontManager.addingFont(14f, FONT_NAME));
-                    nameLabel.setForeground(Color.BLACK);
-                    nameLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
-                    scoreLabel = new JLabel(String.valueOf(score), SwingConstants.CENTER);
-                    scoreLabel.setFont(FontManager.addingFont(14f, FONT_NAME));
-                    scoreLabel.setForeground(Color.BLACK);
-                    scoreLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
-                    this.add(nameLabel);
-                    this.add(scoreLabel);
-                    scoreLabels.put(playerId, scoreLabel);
-                } else {
-                    scoreLabel.setText(String.valueOf(score));
-                }
-            });
+            var list = gameContext.getGameState().getLeaderboard()
+                .entrySet()
+                .stream()
+                .sorted((x, y) -> x.getValue().compareTo(y.getValue()))
+                .collect(Collectors.toList()).reversed();
+            for (int i = 0; i < list.size(); i++) {
+                String playerId = list.get(i).getKey();
+                String points = String.valueOf(list.get(i).getValue());
+                String displayName = playerId.length() > PLAYER_NAME_LENGTH
+                        ? playerId.substring(0, PLAYER_NAME_LENGTH) + "..."
+                        : playerId;
+                scoreLabels.get(i).name.setText(displayName);
+                scoreLabels.get(i).points.setText(points);
+            }
+            /*{
+                    String playerId = x.getKey();
+                    JLabel scoreLabel = scoreLabels.get(playerId);
+                    if (scoreLabel == null) {
+                        String displayName = playerId.length() > PLAYER_NAME_LENGTH
+                                ? playerId.substring(0, PLAYER_NAME_LENGTH) + "..."
+                                : playerId;
+                        JLabel nameLabel = new JLabel(displayName, SwingConstants.CENTER);
+                        nameLabel.setFont(FontManager.addingFont(14f, FONT_NAME));
+                        nameLabel.setForeground(Color.BLACK);
+                        nameLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
+                        scoreLabel = new JLabel(String.valueOf(x.getValue()), SwingConstants.CENTER);
+                        scoreLabel.setFont(FontManager.addingFont(14f, FONT_NAME));
+                        scoreLabel.setForeground(Color.BLACK);
+                        scoreLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
+                        this.add(nameLabel);
+                        this.add(scoreLabel);
+                        scoreLabels.put(playerId, scoreLabel);
+                    } else {
+                        scoreLabel.setText(String.valueOf(x.getValue()));
+                    }
+                } */
         }
     }
 

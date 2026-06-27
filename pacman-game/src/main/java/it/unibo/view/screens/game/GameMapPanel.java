@@ -71,6 +71,8 @@ public class GameMapPanel extends JPanel {
         });
 
         this.gameContext.getPacmans().stream().filter(x -> x.isAlive()).forEach(pacman -> {
+            // TODO: modify the view of pacman when is invincible (different tone of the color or grey)
+            // maybe  wait until the pacman has the color attribute in its class.
             int size = (int) (pacman.canEatGhost()
                     ? getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2.5
                     : getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2);

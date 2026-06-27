@@ -16,4 +16,15 @@ public interface GameView {
      * Displays the game window.
      */
     void show();
+
+    /**
+     * @param onExit the action perfomed ones the user clicks on exit.
+     * Displays the view for the winner of the match.
+     */
+    void displayWinView(Runnable onExit);
+
+    /**
+     * Displays the view of game over.
+     */
+    void displayGameOverView();
 }

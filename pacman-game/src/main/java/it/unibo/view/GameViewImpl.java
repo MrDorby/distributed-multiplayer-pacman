@@ -3,6 +3,7 @@ package it.unibo.view;
 import it.unibo.controller.input.InputHandler;
 import it.unibo.model.common.Direction;
 import it.unibo.model.game.GameContext;
+import it.unibo.view.screens.game.GameOverPanel;
 import it.unibo.view.screens.game.GamePanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,5 +48,16 @@ public class GameViewImpl implements GameView {
     @Override
     public void show() {
         this.gamePanel.setVisible(true);
+    }
+
+    @Override
+    public void displayWinView(Runnable onExit) {
+        new GameOverPanel(onExit);
+    }
+
+    @Override
+    public void displayGameOverView() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'displayGameOverView'");
     }
 }

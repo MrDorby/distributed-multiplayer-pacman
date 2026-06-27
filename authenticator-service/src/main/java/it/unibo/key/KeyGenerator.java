@@ -1,7 +1,7 @@
 package it.unibo.key;
 
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,7 +17,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
-import java.util.Objects;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -35,7 +34,7 @@ public class KeyGenerator {
     
     // TODO: FILE FOR CONSTANTS.
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyPairGenerator.class);
-    private static final String PATH = "/resources/keys/";
+    private static final String PATH = "keys/";
     private static final String PUBLIC_KEY_FILE = "public_key.der";
     private static final String PRIVATE_KEY_FILE = "private_key.der";
     private static final String KEY_ALGORITHM = "RSA";
@@ -94,17 +93,24 @@ public class KeyGenerator {
      * @throws NoSuchAlgorithmException
      */
     public static PublicKey loadAuthenticatorPublicKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        try (InputStream inputStream = KeyGenerator.class
-                .getClassLoader()
-                .getResourceAsStream(PATH + PUBLIC_KEY_FILE)) {
-            if (Objects.isNull(inputStream)) {
-                throw new IllegalStateException(PUBLIC_KEY_FILE + " not found!");
-            }
+        try (FileInputStream inputStream = new FileInputStream(PATH + PUBLIC_KEY_FILE)) {
             X509EncodedKeySpec spec = new X509EncodedKeySpec(inputStream.readAllBytes());
             return KeyFactory.getInstance(KEY_ALGORITHM).generatePublic(spec);
         } /*catch (IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
             LOGGER.error(e.getMessage());
         } */
+
+        // try (InputStream inputStream = KeyGenerator.class
+        //         .getClassLoader()
+        //         .getResourceAsStream(PATH + PUBLIC_KEY_FILE)) {
+        //     if (Objects.isNull(inputStream)) {
+        //         throw new IllegalStateException(PUBLIC_KEY_FILE + " not found!");
+        //     }
+        //     X509EncodedKeySpec spec = new X509EncodedKeySpec(inputStream.readAllBytes());
+        //     return KeyFactory.getInstance(KEY_ALGORITHM).generatePublic(spec);
+        // } /*catch (IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+        //     LOGGER.error(e.getMessage());
+        // } */
     }
 
     /**
@@ -114,12 +120,7 @@ public class KeyGenerator {
      * @throws NoSuchAlgorithmException
      */
     public static PrivateKey loadAuthenticatorPrivateKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        try (InputStream inputStream = KeyGenerator.class
-                .getClassLoader()
-                .getResourceAsStream(PATH + PRIVATE_KEY_FILE)) {
-            if (Objects.isNull(inputStream)) {
-                throw new IllegalStateException(PRIVATE_KEY_FILE + " not found!");
-            }
+        try (FileInputStream inputStream = new FileInputStream(PATH + PRIVATE_KEY_FILE)) {
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(inputStream.readAllBytes());
             return KeyFactory.getInstance(KEY_ALGORITHM).generatePrivate(spec);
         } /*catch (IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
@@ -127,14 +128,12 @@ public class KeyGenerator {
         } */
     }
 
-    /*
     // PEM extension file.
-    toPem("PUBLIC KEY", keyPair.getPublic().getEncoded())
+    //toPem("PUBLIC KEY", keyPair.getPublic().getEncoded())
     public static String toPem(String type, byte[] der) {
         String b64 = Base64.getMimeEncoder(64, new byte[]{'\n'}).encodeToString(der);
         return "-----BEGIN " + type + "-----\n" + b64 + "\n-----END " + type + "-----\n";
     }
-     */
 }
 
 
