@@ -108,7 +108,7 @@ public class GameEntitiesTest {
                 tiles.put(matrixPosition, new TileImpl(matrixPosition, centrePosition, type));
             }
         }
-        map = new FourPlayersGameMap(tiles, new MatrixCoordinates(row, column));
+        map = new FourPlayersGameMap("testMap", tiles, new MatrixCoordinates(row, column));
     }
 
     /* Simple computation of the next position. */
