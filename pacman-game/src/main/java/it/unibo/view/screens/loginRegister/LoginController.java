@@ -11,7 +11,7 @@ public class LoginController implements ScreenController {
 
     public LoginController(AppNavigator navigator) {
         loginView.onLogin(() -> {
-            String email = loginView.getEmail();
+            String email = loginView.getUsername();
             String password = loginView.getPassword();
             if (!email.isEmpty() && !password.isEmpty()) {
                 navigator.goTo(AppState.MAIN_MENU);

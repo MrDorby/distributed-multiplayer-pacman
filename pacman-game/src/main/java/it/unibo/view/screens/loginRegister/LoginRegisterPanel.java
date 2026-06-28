@@ -25,7 +25,7 @@ public class LoginRegisterPanel extends JPanel {
     private final JPanel bottomButtonPanel = new JPanel(new BorderLayout());
     private final JPanel emailLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     private final JPanel passwordLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    private final JTextField emailField = new JTextField();
+    private final JTextField usernameField = new JTextField();
     private final JPasswordField passwordField = new JPasswordField();
     private final JButton topButton = new JButton();
     private final JButton bottomButton = new JButton();
@@ -109,12 +109,12 @@ public class LoginRegisterPanel extends JPanel {
         emailLabelPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         emailLabelPanel.add(emailLabel);
         JPanel emailTextFieldPanel = new JPanel(new BorderLayout());
-        emailField.setBorder(BorderFactory.createCompoundBorder(
+        usernameField.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER),
                 BorderFactory.createEmptyBorder(0, 10, 0, 10))
         );
-        emailField.setFont(new Font(emailField.getFont().getFontName(), Font.PLAIN, 15));
-        emailTextFieldPanel.add(emailField);
+        usernameField.setFont(new Font(usernameField.getFont().getFontName(), Font.PLAIN, 15));
+        emailTextFieldPanel.add(usernameField);
         emailPanel.add(emailLabelPanel);
         emailPanel.add(emailTextFieldPanel);
         loginRegisterPanel.add(emailPanel);
@@ -229,8 +229,8 @@ public class LoginRegisterPanel extends JPanel {
         bottomButton.addActionListener(e -> action.run());
     }
 
-    public String getEmail() {
-        return emailField.getText();
+    public String getUsername() {
+        return usernameField.getText();
     }
 
     public String getPassword() {
@@ -238,7 +238,7 @@ public class LoginRegisterPanel extends JPanel {
     }
 
     public void clearFields() {
-        this.emailField.setText("");
+        this.usernameField.setText("");
         this.passwordField.setText("");
     }
 }

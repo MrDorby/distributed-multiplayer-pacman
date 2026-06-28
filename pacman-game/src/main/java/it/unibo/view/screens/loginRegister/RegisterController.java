@@ -12,7 +12,7 @@ public class RegisterController implements ScreenController {
 
     public RegisterController(AppNavigator navigator) {
         registerView.onRegister(() -> {
-            String email = registerView.getEmail();
+            String email = registerView.getUsername();
             String password = registerView.getPassword();
             if (!email.isEmpty() && !password.isEmpty()) {
                 navigator.goTo(AppState.LOGIN);  //TODO: informing the user that the registration went good.

@@ -22,8 +22,8 @@ public class RegisterView {
         registerPanel.onClickBottomButton(action);
     }
 
-    public String getEmail() {
-        return registerPanel.getEmail();
+    public String getUsername() {
+        return registerPanel.getUsername();
     }
 
     public String getPassword() {

@@ -22,8 +22,8 @@ public class LoginView {
         loginPanel.onClickBottomButton(action);
     }
 
-    public String getEmail() {
-        return loginPanel.getEmail();
+    public String getUsername() {
+        return loginPanel.getUsername();
     }
 
     public String getPassword() {

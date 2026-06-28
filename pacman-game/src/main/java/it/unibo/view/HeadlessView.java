@@ -16,4 +16,14 @@ public class HeadlessView implements GameView {
     public void show() {
         logger.info("Headless view initialized. No window will be displayed.");
     }
+
+    @Override
+    public void displayWinView(Runnable onExit) {
+        logger.info("Headless winView initialized. No window will be displayed.");
+    }
+
+    @Override
+    public void displayGameOverView() {
+        logger.info("Headless gameOverView initialized. No window will be displayed.");
+    }
 }
