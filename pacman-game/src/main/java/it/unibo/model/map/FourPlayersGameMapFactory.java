@@ -7,6 +7,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +38,8 @@ public class FourPlayersGameMapFactory implements GameMapFactory {
                             }
                             tilesMap.put(tileCoordinate, tile.get());
                         }));
-                return new FourPlayersGameMap(tilesMap, new MatrixCoordinates(gameMapJSON.rows, gameMapJSON.columns));
+                String mapName = Paths.get(path).getFileName().toString().replaceFirst("\\.json$", "");
+                return new FourPlayersGameMap(mapName, tilesMap, new MatrixCoordinates(gameMapJSON.rows, gameMapJSON.columns));
             } else {
                 throw new IllegalArgumentException(
                     "The number of tiles does not correspond to the specified map size (rows * columns) in JSON file: "

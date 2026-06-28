@@ -1,12 +1,18 @@
 package it.unibo.model.entities;
 
 import it.unibo.model.common.Direction;
-import it.unibo.model.movement.MovementManager;
+import it.unibo.model.common.MatrixCoordinates;
 
 /**
  * Models the concept of a pacman player.
  */
 public interface Pacman extends MovableEntity {
+
+    boolean isInvincible();
+
+    long getWhenInvincible();
+
+    long getLastTimeDirectionChanged();
 
     /**
      * @return String, the identifier of the pacman.
@@ -58,7 +64,7 @@ public interface Pacman extends MovableEntity {
     long getSpecialDotEatenTime();
 
     /**
-     * Returns the movement manager of the pacman.
+     * Returns position of the pacman in the matrix grid.
      */
-    MovementManager getMovementManager();
+    MatrixCoordinates getMatrixCoordinates();
 }

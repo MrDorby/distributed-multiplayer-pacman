@@ -31,11 +31,28 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     private int lives;
     private boolean controlledByPlayer;
     private boolean canEatGhosts;
+
+    @Override
+    public boolean isInvincible() {
+        return invincible;
+    }
+
+    @Override
+    public long getWhenInvincible() {
+        return whenInvincible;
+    }
+
     private boolean invincible;
     private long whenSpecialDotEat;
+
     private long whenInvincible;
+
+    @Override
+    public long getLastTimeDirectionChanged() {
+        return lastTimeDirection;
+    }
+
     private long lastTimeDirection;
-    private Direction direction;
 
     public PacmanImpl(Tile tile, GameMap map) {
         super(tile);
@@ -44,6 +61,27 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
         this.movementManager = new MovementManagerImpl(map, 
             tile.getMatrixPosition(), 
             GameConstants.GameEntityFeatures.PACMAN.getVelocity());
+    }
+
+    public PacmanImpl(Tile tile, GameMap map, String id, int score, int lives,
+               boolean controlledByPlayer, boolean canEatGhosts,
+               boolean invincible, long whenInvincible,
+               long whenSpecialDotEat, long lastTimeDirection,
+               boolean isAlive) {
+        super(tile);
+        this.movementManager = new MovementManagerImpl(map,
+                tile.getMatrixPosition(),
+                GameConstants.GameEntityFeatures.PACMAN.getVelocity());
+        this.id = id;
+        this.score = score;
+        this.lives = lives;
+        this.controlledByPlayer = controlledByPlayer;
+        this.canEatGhosts = canEatGhosts;
+        this.invincible = invincible;
+        this.whenInvincible = whenInvincible;
+        this.whenSpecialDotEat = whenSpecialDotEat;
+        this.lastTimeDirection = lastTimeDirection;
+        if (!isAlive) super.setIsAlive(false);
     }
 
     @Override
@@ -96,14 +134,13 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     }
 
     @Override
-    public Direction getDirection() {
-        return this.direction;
-        // TODO: movementManager needs to return the actual direction.
+    public MatrixCoordinates getMatrixCoordinates() {
+        return this.movementManager.currentMatrixCoordinates();
     }
 
     @Override
-    public MovementManager getMovementManager() {
-        return this.movementManager;
+    public Direction getDirection() {
+        return this.movementManager.getCurrentDirection();
     }
 
     // TODO: Handling the part of the AI pacman.

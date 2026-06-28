@@ -16,6 +16,13 @@ public class DotImpl extends GameEntityImpl implements Dot {
         super(position);
     }
 
+    public DotImpl(Vector2D position, boolean isSpecial, long lastTimeEaten, boolean isAlive) {
+        super(position);
+        this.isSpecial = isSpecial;
+        this.lastTimeEaten = lastTimeEaten;
+        this.setIsAlive(isAlive);
+    }
+
     @Override
     public boolean isSpecial() {
         return this.isSpecial;

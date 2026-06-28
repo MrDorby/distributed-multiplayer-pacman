@@ -148,4 +148,14 @@ public class MovementManagerImpl implements MovementManager {
     public MatrixCoordinates currentMatrixCoordinates() {
         return this.currentMatrixCoordinates;
     }
+
+    @Override
+    public Direction getCurrentDirection() {
+        return this.currentDirection;
+    }
+
+    @Override
+    public Direction getDesiredDirection() {
+        return this.desiredDirection;
+    }
 }

@@ -24,12 +24,30 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     private final static int GHOST_VALUE = 1;
     private MovementManager movementManager;
     private long lastTimeDead;
+
+    @Override
+    public long getLastTimeDirectionChanged() {
+        return lastTimeDirection;
+    }
+
+    @Override
+    public long getLastTimeDead() {
+        return lastTimeDead;
+    }
+
     private long lastTimeDirection;
-    private Direction direction;
 
     public GhostImpl(Tile tile, GameMap map) {
         super(tile);
         setMovementStart(tile, map);
+    }
+
+    public GhostImpl(Tile tile, GameMap map, boolean isAlive, long lastTimeDead, long lastTimeDirection) {
+        super(tile);
+        setMovementStart(tile, map);
+        this.lastTimeDead = lastTimeDead;
+        this.lastTimeDirection = lastTimeDirection;
+        if (!isAlive) this.setIsAlive(false);
     }
 
     private void setMovementStart(Tile tile, GameMap map) {
@@ -38,13 +56,7 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
                 tile.getMatrixPosition(),
                 GameConstants.GameEntityFeatures.GHOST.getVelocity()
         );
-        this.direction = MovableEntity.getRandomDirection();
-        this.movementManager.changeDirection(this.direction);
-    }
-
-    @Override
-    public Direction getDirection() {
-        return this.direction;
+        this.movementManager.changeDirection(MovableEntity.getRandomDirection());
     }
 
     @Override
@@ -63,8 +75,8 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
             Vector2D nextPosition = this.movementManager.move();
             long timeLeft = currentContext.getGameState().getTimeLeftInMillis();
             if (this.lastTimeDirection - timeLeft >= TIME_TO_CHANGE_DIRECTION || getPosition().equals(nextPosition)) {
-                this.direction = getRandomAvailableDirection(currentContext.getMap());
-                this.movementManager.changeDirection(this.direction);
+                Direction direction = getRandomAvailableDirection(currentContext.getMap());
+                this.movementManager.changeDirection(direction);
                 this.lastTimeDirection = currentContext.getGameState().getTimeLeftInMillis();
             }
             setPosition(nextPosition);
@@ -77,7 +89,7 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
         List<Direction> supp = MovableEntity.getWalkableDirection(coordinates, map)
             .values().stream().toList();
         return supp.stream()
-                    .filter(x -> x != this.direction.getOpposite())
+                    .filter(x -> x != this.movementManager.getCurrentDirection().getOpposite())
                     .collect(Collectors
                         .collectingAndThen(
                             Collectors.toList(), 
@@ -105,7 +117,12 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     }
 
     @Override
-    public MovementManager getMovementManager() {
-        return this.movementManager;
+    public MatrixCoordinates getMatrixCoordinates() {
+        return this.movementManager.currentMatrixCoordinates();
+    }
+
+    @Override
+    public Direction getDirection() {
+        return this.movementManager.getCurrentDirection();
     }
 }

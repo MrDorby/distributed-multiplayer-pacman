@@ -11,6 +11,12 @@ import java.util.Set;
 public interface GameMap {
 
     /**
+     * Returns the name of the map.
+     * @return a string representing the name of the map.
+     */
+    String getName();
+
+    /**
      * @return the Set of Tiles containing the Pac-Man spawn points.
      */
     Set<Tile> getPacmanSpawnPoints();

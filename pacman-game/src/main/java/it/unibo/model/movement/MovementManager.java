@@ -26,4 +26,16 @@ public interface MovementManager {
      * @return a MatrixCoordinates.
      */
     MatrixCoordinates currentMatrixCoordinates();
+
+    /**
+     * Returns the current direction.
+     * @return a Direction.
+     */
+    Direction getCurrentDirection();
+
+    /**
+     * Returns the desired direction.
+     * @return a Direction.
+     */
+    Direction getDesiredDirection();
 }

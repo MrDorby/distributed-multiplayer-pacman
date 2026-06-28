@@ -20,6 +20,7 @@ public class FourPlayersGameMap implements GameMap {
 
     private static final int PLAYERS_NUM = 4;
 
+    private final String mapName;
     private final Map<MatrixCoordinates, Tile> tilesGrid = new HashMap<>();
     private final Set<Tile> pacmanSpawnPoints;
     private final Tile ghostsSpawnPoint;
@@ -31,7 +32,8 @@ public class FourPlayersGameMap implements GameMap {
      * @param tilesGrid the grid containing all the Tiles in the GameMap.
      * @param gridSize the dimensions of the GameMap's matrix.
      */
-    public FourPlayersGameMap(Map<MatrixCoordinates, Tile> tilesGrid, MatrixCoordinates gridSize) {
+    public FourPlayersGameMap(String mapName, Map<MatrixCoordinates, Tile> tilesGrid, MatrixCoordinates gridSize) {
+        this.mapName = mapName;
         this.gridSize = gridSize;
         IntStream.range(0, gridSize.row()).forEach(i ->
                 IntStream.range(0, gridSize.column()).forEach(j -> {
@@ -64,6 +66,11 @@ public class FourPlayersGameMap implements GameMap {
         } else {
             throw new IllegalArgumentException("There can only be one ghost spawn point.");
         }
+    }
+
+    @Override
+    public String getName() {
+        return this.mapName;
     }
 
     @Override

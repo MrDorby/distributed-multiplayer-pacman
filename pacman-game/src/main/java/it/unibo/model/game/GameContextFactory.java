@@ -33,7 +33,7 @@ public class GameContextFactory {
 
         Map<MatrixCoordinates, Tile> tilesMap = new HashMap<>();
         tiles.forEach(t -> tilesMap.put(t.getMatrixPosition(), t));
-        GameMap gameMap = new FourPlayersGameMap(tilesMap, new MatrixCoordinates(16, 16));
+        GameMap gameMap = new FourPlayersGameMap("testmap", tilesMap, new MatrixCoordinates(16, 16));
 
         Tile pacmanSpawn = tiles.stream()
                 .filter(tile -> tile.getMatrixPosition().equals(new MatrixCoordinates(0, 1)))
