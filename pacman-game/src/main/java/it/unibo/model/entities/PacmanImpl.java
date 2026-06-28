@@ -20,39 +20,20 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class PacmanImpl extends GameEntityImpl implements Pacman {
-
     private final static int NUMBER_LIVES = 3;
-    private final static int TIME_CAN_EAT_GHOSTS = 3000;  // 5000 millis
-    private final static int TIME_INVINCIBILITY = 2000;
-    private static final int TIME_CHANGE_DIRECTION = 500;
+    private final static int ABILITY_TO_EAT_GHOSTS_DURATION_MILLIS = 3000;
+    private final static int INVINCIBILITY_DURATION_MILLIS = 2000;
+    private static final int DIRECTION_CHANGE_COOLDOWN_MILLIS = 500;
     private final MovementManager movementManager;
     private String id;
     private int score;
     private int lives;
     private boolean controlledByPlayer;
     private boolean canEatGhosts;
-
-    @Override
-    public boolean isInvincible() {
-        return invincible;
-    }
-
-    @Override
-    public long getWhenInvincible() {
-        return whenInvincible;
-    }
-
     private boolean invincible;
-    private long whenSpecialDotEat;
-
-    private long whenInvincible;
-
-    @Override
-    public long getLastTimeDirectionChanged() {
-        return lastTimeDirection;
-    }
-
-    private long lastTimeDirection;
+    private long lastTimeSpecialDotWasEaten;
+    private long lastTimeBecameInvincible;
+    private long lastTimeDirectionWasChanged;
 
     public PacmanImpl(Tile tile, GameMap map) {
         super(tile);
@@ -61,27 +42,6 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
         this.movementManager = new MovementManagerImpl(map, 
             tile.getMatrixPosition(), 
             GameConstants.GameEntityFeatures.PACMAN.getVelocity());
-    }
-
-    public PacmanImpl(Tile tile, GameMap map, String id, int score, int lives,
-               boolean controlledByPlayer, boolean canEatGhosts,
-               boolean invincible, long whenInvincible,
-               long whenSpecialDotEat, long lastTimeDirection,
-               boolean isAlive) {
-        super(tile);
-        this.movementManager = new MovementManagerImpl(map,
-                tile.getMatrixPosition(),
-                GameConstants.GameEntityFeatures.PACMAN.getVelocity());
-        this.id = id;
-        this.score = score;
-        this.lives = lives;
-        this.controlledByPlayer = controlledByPlayer;
-        this.canEatGhosts = canEatGhosts;
-        this.invincible = invincible;
-        this.whenInvincible = whenInvincible;
-        this.whenSpecialDotEat = whenSpecialDotEat;
-        this.lastTimeDirection = lastTimeDirection;
-        if (!isAlive) super.setIsAlive(false);
     }
 
     @Override
@@ -129,11 +89,6 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     }
 
     @Override
-    public long getSpecialDotEatenTime() {
-        return whenSpecialDotEat;
-    }
-
-    @Override
     public MatrixCoordinates getMatrixCoordinates() {
         return this.movementManager.currentMatrixCoordinates();
     }
@@ -141,6 +96,16 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     @Override
     public Direction getDirection() {
         return this.movementManager.getCurrentDirection();
+    }
+
+    @Override
+    public boolean isAlive() {
+        return this.lives > 0;
+    }
+
+    @Override
+    public boolean isInvincible() {
+        return invincible;
     }
 
     // TODO: Handling the part of the AI pacman.
@@ -163,13 +128,13 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     /* Checks if it is necessary to change the pacman state. */
     private void checkPacmanUpdates(GameContext context) {
         long currentTime = context.getGameState().getTimeLeftInMillis();
-        if (this.invincible && currentTime <= this.whenInvincible - TIME_INVINCIBILITY) {
+        if (this.invincible && currentTime <= this.lastTimeBecameInvincible - INVINCIBILITY_DURATION_MILLIS) {
             this.invincible = false;
         }
-        if (this.canEatGhosts && currentTime <= this.whenSpecialDotEat - TIME_CAN_EAT_GHOSTS) {
+        if (this.canEatGhosts && currentTime <= this.lastTimeSpecialDotWasEaten - ABILITY_TO_EAT_GHOSTS_DURATION_MILLIS) {
             this.canEatGhosts = false;
         }
-        if (!this.controlledByPlayer && currentTime <= this.lastTimeDirection - TIME_CHANGE_DIRECTION) {
+        if (!this.controlledByPlayer && currentTime <= this.lastTimeDirectionWasChanged - DIRECTION_CHANGE_COOLDOWN_MILLIS) {
             movementBehaviour(context);
         }
     }
@@ -214,7 +179,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
         // if (!found) {
         //     this.movementManager.changeDirection(MovableEntity.getRandomDirection());
         // }
-        this.lastTimeDirection = context.getGameState().getTimeLeftInMillis();
+        this.lastTimeDirectionWasChanged = context.getGameState().getTimeLeftInMillis();
     }
 
     private void checkCollisionWithGhost(Ghost ghost, GameContext context) {
@@ -222,7 +187,7 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
             if (this.lives > 0) {
                 this.lives = this.lives - 1;
                 this.invincible = true;
-                this.whenInvincible = context.getGameState().getTimeLeftInMillis();
+                this.lastTimeBecameInvincible = context.getGameState().getTimeLeftInMillis();
                 List<Tile> tiles = context.getMap().getPacmanSpawnPoints().stream().toList();
                 super.setPosition(tiles.get(new Random().nextInt(0, tiles.size())).getCenterPosition());
             } else {
@@ -239,13 +204,8 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     private void checkSpecialDot(Dot dot, GameContext context) {
         if (dot.isSpecial()) {
             this.canEatGhosts = true;
-            this.whenSpecialDotEat = context.getGameState().getTimeLeftInMillis();
+            this.lastTimeSpecialDotWasEaten = context.getGameState().getTimeLeftInMillis();
         }
         this.score = this.score + dot.dotValue();
-    }
-
-    @Override
-    public boolean isAlive() {
-        return this.lives > 0;
     }
 }

@@ -8,12 +8,6 @@ import it.unibo.model.common.MatrixCoordinates;
  */
 public interface Pacman extends MovableEntity {
 
-    boolean isInvincible();
-
-    long getWhenInvincible();
-
-    long getLastTimeDirectionChanged();
-
     /**
      * @return String, the identifier of the pacman.
      */
@@ -22,7 +16,6 @@ public interface Pacman extends MovableEntity {
     /**
      * Sets the identifier for the pacman. If it's present throws an Exception.
      * @param id, the pacman id (username of the user).
-     * @throws IllegalArgumentException
      */
     void setId(String id) throws IllegalArgumentException;
 
@@ -59,12 +52,13 @@ public interface Pacman extends MovableEntity {
     void changeBehaviour(boolean isPlayer);
 
     /**
-     * Returns the last time the pacman ate a special dot.
-     */
-    long getSpecialDotEatenTime();
-
-    /**
      * Returns position of the pacman in the matrix grid.
      */
     MatrixCoordinates getMatrixCoordinates();
+
+    /**
+     * Returns whether the pacman is unaffacted by ghosts.
+     * @return a boolean.
+     */
+    boolean isInvincible();
 }

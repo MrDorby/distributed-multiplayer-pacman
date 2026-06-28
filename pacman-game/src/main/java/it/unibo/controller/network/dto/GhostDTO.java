@@ -1,13 +1,13 @@
 package it.unibo.controller.network.dto;
 
 public record GhostDTO(
-        String currentDirection,
+        boolean isAlive,
+        long lastTimeDead,
+        long lastTimeDirectionWasChanged,
+        String currentDirection, // Unused for now when recreating a GhostImpl
         // String desiredDirection,
         int tileRow,
         int tileCol,
-        double x,
-        double y,
-        boolean isAlive,
-        long lastTimeDead,
-        long lastTimeDirectionWasChanged
+        int x,
+        int y
 ) {}

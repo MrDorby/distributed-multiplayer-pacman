@@ -2,11 +2,11 @@ package it.unibo.controller.network.dto;
 
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
-import it.unibo.model.entities.Dot;
-import it.unibo.model.entities.Ghost;
-import it.unibo.model.entities.Pacman;
+import it.unibo.model.entities.*;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameState;
+
+import java.lang.reflect.Field;
 
 public class GameContextMapper {
     public static GameContextDTO toDTO(GameContext context) {
@@ -15,8 +15,7 @@ public class GameContextMapper {
                 toDTO(context.getGameState()),
                 context.getPacmans().stream().map(GameContextMapper::toDTO).toList(),
                 context.getGhosts().stream().map(GameContextMapper::toDTO).toList(),
-                context.getDotsMap().entrySet().stream()
-                        .map(e -> toDTO(e.getKey(), e.getValue())).toList()
+                context.getDotsMap().entrySet().stream().map(e -> toDTO(e.getKey(), e.getValue())).toList()
         );
     }
 
@@ -30,52 +29,70 @@ public class GameContextMapper {
     }
 
     private static PacmanDTO toDTO(Pacman pacman) {
-        MatrixCoordinates coords = pacman.getMatrixCoordinates();
-        Vector2D position = pacman.getPosition();
-        return new PacmanDTO(
-                pacman.getId(),
-                pacman.getScore(),
-                pacman.getLives(),
-                pacman.isPlayer(),
-                pacman.canEatGhost(),
-                pacman.getSpecialDotEatenTime(),
-                pacman.isInvincible(),
-                pacman.getWhenInvincible(),
-                pacman.getDirection().name(),
-                coords.row(),
-                coords.column(),
-                position.x(),
-                position.y(),
-                pacman.getLastTimeDirectionChanged(),
-                pacman.isAlive()
-        );
+        try {
+            MatrixCoordinates coords = pacman.getMatrixCoordinates();
+            Vector2D position = pacman.getPosition();
+            return new PacmanDTO(
+                    pacman.getId(),
+                    pacman.getScore(),
+                    pacman.getLives(),
+                    pacman.isPlayer(),
+                    pacman.isAlive(),
+                    pacman.canEatGhost(),
+                    pacman.isInvincible(),
+                    (long) getField(pacman, "lastTimeSpecialDotWasEaten"),
+                    (long) getField(pacman, "lastTimeBecameInvincible"),
+                    (long) getField(pacman, "lastTimeDirectionWasChanged"),
+                    pacman.getDirection().name(),
+                    coords.row(),
+                    coords.column(),
+                    position.x(),
+                    position.y()
+            );
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException("Failed to read pacman fields via reflection", e);
+        }
     }
 
     private static GhostDTO toDTO(Ghost ghost) {
-        MatrixCoordinates coords = ghost.getMatrixCoordinates();
-        Vector2D position = ghost.getPosition();
-        return new GhostDTO(
-                ghost.getDirection().name(),
-                coords.row(),
-                coords.column(),
-                position.x(),
-                position.y(),
-                ghost.isAlive(),
-                ghost.getLastTimeDead(),
-                ghost.getLastTimeDirectionChanged()
-        );
+        try {
+            MatrixCoordinates coords = ghost.getMatrixCoordinates();
+            Vector2D position = ghost.getPosition();
+            return new GhostDTO(
+                    ghost.isAlive(),
+                    (long) getField(ghost, "lastTimeDead"),
+                    (long) getField(ghost, "lastTimeDirectionWasChanged"),
+                    ghost.getDirection().name(),
+                    coords.row(),
+                    coords.column(),
+                    position.x(),
+                    position.y()
+            );
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException("Failed to read ghost fields via reflection", e);
+        }
     }
 
     private static DotDTO toDTO(MatrixCoordinates coords, Dot dot) {
-        Vector2D position = dot.getPosition();
-        return new DotDTO(
-                dot.isSpecial(),
-                dot.getLastTimeEaten(),
-                position.x(),
-                position.y(),
-                dot.isAlive(),
-                coords.row(),
-                coords.column()
-        );
+        try {
+            Vector2D position = dot.getPosition();
+            return new DotDTO(
+                    dot.isSpecial(),
+                    dot.isAlive(),
+                    (long) getField(dot, "lastTimeEaten"),
+                    coords.row(),
+                    coords.column(),
+                    position.x(),
+                    position.y()
+            );
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException("Failed to read dot fields via reflection", e);
+        }
+    }
+
+    private static Object getField(Object instance, String fieldName) throws NoSuchFieldException, IllegalAccessException {
+        Field field = instance.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(instance);
     }
 }

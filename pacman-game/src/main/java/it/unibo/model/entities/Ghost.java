@@ -7,10 +7,6 @@ import it.unibo.model.common.MatrixCoordinates;
  */
 public interface Ghost extends MovableEntity {
 
-    long getLastTimeDirectionChanged();
-
-    long getLastTimeDead();
-
     /**
      * @return the value in points for the ghost.
      */

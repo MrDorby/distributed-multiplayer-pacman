@@ -1,6 +1,5 @@
 package it.unibo.controller.network.dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.entities.Dot;
@@ -13,7 +12,6 @@ import it.unibo.model.game.GameContextImpl;
 import it.unibo.model.map.GameMap;
 import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -33,7 +31,7 @@ public class GameContextRestorer {
             cachedMap = factory.restoreMap(dto.mapName());
         }
         Map<MatrixCoordinates, Dot> dotsMap = dto.dots().stream()
-                .collect(Collectors.toMap(d -> new MatrixCoordinates(d.row(), d.col()), factory::restoreDot));
+                .collect(Collectors.toMap(d -> new MatrixCoordinates(d.tileRow(), d.tileCol()), factory::restoreDot));
         Set<Ghost> ghosts = dto.ghosts().stream()
                 .map(g -> factory.restoreGhost(g, cachedMap))
                 .collect(Collectors.toSet());
@@ -43,7 +41,7 @@ public class GameContextRestorer {
         return new GameContextImpl(cachedMap, dotsMap, ghosts, pacmans, dto.gameState().timeLeftInMillis());
     }
 
-    static void main() throws IOException {
+    static void main() throws Exception {
         GameContext context = GameContextFactory.createFromMap("maps/map1.json", new GameEntityFactoryImpl());
         GameContextDTO dto = GameContextMapper.toDTO(context);
         CBORMapper cborMapper = new CBORMapper();

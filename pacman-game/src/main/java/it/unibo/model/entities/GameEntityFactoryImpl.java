@@ -13,9 +13,7 @@ public class GameEntityFactoryImpl implements GameEntityFactory {
 
     @Override
     public Dot createDot(Vector2D position, boolean isSpecial) {
-        Dot dot = new DotImpl(position);
-        dot.setIsSpecial(isSpecial);
-        return dot;
+        return new DotImpl(position, isSpecial);
     }
 
     @Override

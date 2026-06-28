@@ -5,16 +5,16 @@ public record PacmanDTO(
         int score,
         int lives,
         boolean controlledByPlayer,
+        boolean isAlive,
         boolean canEatGhosts,
-        long whenSpecialDotWasEaten,
         boolean isInvincible,
-        long whenBecameInvincible,
-        String currentDirection,
+        long lastTimeSpecialDotWasEaten,
+        long lastTimeBecameInvincible,
+        long lastTimeDirectionWasChanged,
+        String currentDirection, // Unused for now when recreating a PacmanImpl
         // String desiredDirection,
         int tileRow,
         int tileCol,
         int x,
-        int y,
-        long lastTimeDirectionWasChanged,
-        boolean isAlive
+        int y
 ) {}

@@ -18,36 +18,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GhostImpl extends GameEntityImpl implements Ghost {
-
-    private final static int TIME_TO_RESPAWN = 5000;  // 5000 millis
-    private final static int TIME_TO_CHANGE_DIRECTION = 500;
+    private final static int TIME_TO_RESPAWN_IN_MILLIS = 5000;
+    private final static int DIRECTION_CHANGE_COOLDOWN_MILLIS = 500;
     private final static int GHOST_VALUE = 1;
     private MovementManager movementManager;
     private long lastTimeDead;
-
-    @Override
-    public long getLastTimeDirectionChanged() {
-        return lastTimeDirection;
-    }
-
-    @Override
-    public long getLastTimeDead() {
-        return lastTimeDead;
-    }
-
-    private long lastTimeDirection;
+    private long lastTimeDirectionWasChanged;
 
     public GhostImpl(Tile tile, GameMap map) {
         super(tile);
         setMovementStart(tile, map);
-    }
-
-    public GhostImpl(Tile tile, GameMap map, boolean isAlive, long lastTimeDead, long lastTimeDirection) {
-        super(tile);
-        setMovementStart(tile, map);
-        this.lastTimeDead = lastTimeDead;
-        this.lastTimeDirection = lastTimeDirection;
-        if (!isAlive) this.setIsAlive(false);
     }
 
     private void setMovementStart(Tile tile, GameMap map) {
@@ -60,6 +40,21 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     }
 
     @Override
+    public int getGhostValue() {
+        return GHOST_VALUE;
+    }
+
+    @Override
+    public MatrixCoordinates getMatrixCoordinates() {
+        return this.movementManager.currentMatrixCoordinates();
+    }
+
+    @Override
+    public Direction getDirection() {
+        return this.movementManager.getCurrentDirection();
+    }
+
+    @Override
     public void update(GameContext currentContext) {
         Set<Collision> collision = currentContext.getCollisions(this);
         Stream<Pacman> pacman = collision.stream()
@@ -68,16 +63,16 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
         pacman.findFirst().ifPresent(x -> checkGhostCanBeEaten(x, currentContext));
         if (!this.isAlive()) {
             long timeLeft = currentContext.getGameState().getTimeLeftInMillis();
-            if (this.lastTimeDead - timeLeft >= TIME_TO_RESPAWN) {
+            if (this.lastTimeDead - timeLeft >= TIME_TO_RESPAWN_IN_MILLIS) {
                 this.setIsAlive(true);
             }
         } else {
             Vector2D nextPosition = this.movementManager.move();
             long timeLeft = currentContext.getGameState().getTimeLeftInMillis();
-            if (this.lastTimeDirection - timeLeft >= TIME_TO_CHANGE_DIRECTION || getPosition().equals(nextPosition)) {
+            if (this.lastTimeDirectionWasChanged - timeLeft >= DIRECTION_CHANGE_COOLDOWN_MILLIS || getPosition().equals(nextPosition)) {
                 Direction direction = getRandomAvailableDirection(currentContext.getMap());
                 this.movementManager.changeDirection(direction);
-                this.lastTimeDirection = currentContext.getGameState().getTimeLeftInMillis();
+                this.lastTimeDirectionWasChanged = currentContext.getGameState().getTimeLeftInMillis();
             }
             setPosition(nextPosition);
         }
@@ -101,7 +96,7 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
     }
 
     /* Checks if the ghost is alive or not by means of the pacman that collided with the ghost,
-    and setting the new position to the ghost spwan point. */
+    and setting the new position to the ghost spawn point. */
     private void checkGhostCanBeEaten(Pacman pacman, GameContext context) {
         if (pacman.canEatGhost()) {
             this.setIsAlive(false);
@@ -109,20 +104,5 @@ public class GhostImpl extends GameEntityImpl implements Ghost {
             setMovementStart(context.getMap().getGhostSpawnPoint(), context.getMap());
             this.lastTimeDead = context.getGameState().getTimeLeftInMillis();
         }
-    }
-
-    @Override
-    public int getGhostValue() {
-        return GHOST_VALUE;
-    }
-
-    @Override
-    public MatrixCoordinates getMatrixCoordinates() {
-        return this.movementManager.currentMatrixCoordinates();
-    }
-
-    @Override
-    public Direction getDirection() {
-        return this.movementManager.getCurrentDirection();
     }
 }
