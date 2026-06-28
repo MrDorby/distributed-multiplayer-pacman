@@ -111,8 +111,8 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
     // TODO: Handling the part of the AI pacman.
     @Override
     public void update(GameContext currentContext) {
-        if (this.lastTimeDirection == 0) {
-            this.lastTimeDirection = currentContext.getGameState().getTimeLeftInMillis();
+        if (this.lastTimeDirectionWasChanged == 0) {
+            this.lastTimeDirectionWasChanged = currentContext.getGameState().getTimeLeftInMillis();
         }
         Set<Collision> collision = currentContext.getCollisions(this);
         Stream<Ghost> ghosts = collision.stream().filter(x -> x.getGameEntity() instanceof Ghost).map(x -> (Ghost) x.getGameEntity());
