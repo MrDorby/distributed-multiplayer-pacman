@@ -1,22 +1,47 @@
-package it.unibo.controller.network.dto;
+package it.unibo.controller.network.translation;
 
+import it.unibo.controller.network.dto.DotDTO;
+import it.unibo.controller.network.dto.GameContextDTO;
+import it.unibo.controller.network.dto.GhostDTO;
+import it.unibo.controller.network.dto.PacmanDTO;
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.*;
+import it.unibo.model.game.GameContext;
+import it.unibo.model.game.GameContextImpl;
 import it.unibo.model.map.FourPlayersGameMapFactory;
 import it.unibo.model.map.GameMap;
 import it.unibo.model.map.Tile;
 
 import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-public class GameContextRestoreFactoryImpl implements GameContextRestoreFactory {
+/**
+ * Decodes a {@link GameContextDTO} back into a {@link GameContext}.
+ * The game map is loaded once and cached for subsequent decode calls.
+ */
+public class GameContextDecoderImpl implements GameContextDecoder{
+    private GameMap cachedMap;
+
     @Override
-    public GameMap restoreMap(String mapName) {
-        return new FourPlayersGameMapFactory().fromJSON("maps/" + mapName + ".json");
+    public GameContext decode(GameContextDTO dto) {
+        if (cachedMap == null) {
+            cachedMap = new FourPlayersGameMapFactory().fromJSON("maps/" + dto.mapName() + ".json");
+        }
+        Map<MatrixCoordinates, Dot> dotsMap = dto.dots().stream()
+                .collect(Collectors.toMap(d -> new MatrixCoordinates(d.tileRow(), d.tileCol()), this::decodeDot));
+        Set<Ghost> ghosts = dto.ghosts().stream()
+                .map(g -> decodeGhost(g, cachedMap))
+                .collect(Collectors.toSet());
+        Set<Pacman> pacmans = dto.pacmans().stream()
+                .map(p -> decodePacman(p, cachedMap))
+                .collect(Collectors.toSet());
+        return new GameContextImpl(cachedMap, dotsMap, ghosts, pacmans, dto.gameState().timeLeftInMillis());
     }
 
-    @Override
-    public Pacman restorePacman(PacmanDTO dto, GameMap map) {
+    private Pacman decodePacman(PacmanDTO dto, GameMap map) {
         try {
             Tile tile = map.getTile(new MatrixCoordinates(dto.tileRow(), dto.tileCol()));
             PacmanImpl pacman = new PacmanImpl(tile, map);
@@ -28,7 +53,7 @@ public class GameContextRestoreFactoryImpl implements GameContextRestoreFactory 
             setField(pacman, "controlledByPlayer", dto.controlledByPlayer());
             setField(pacman, "canEatGhosts", dto.canEatGhosts());
             setField(pacman, "invincible", dto.isInvincible());
-            setField(pacman, "lastTImeSpecialDotWasEaten", dto.lastTimeSpecialDotWasEaten());
+            setField(pacman, "lastTimeSpecialDotWasEaten", dto.lastTimeSpecialDotWasEaten());
             setField(pacman, "lastTimeBecameInvincible", dto.lastTimeBecameInvincible());
             setField(pacman, "lastTimeDirectionWasChanged", dto.lastTimeDirectionWasChanged());
             return pacman;
@@ -37,8 +62,7 @@ public class GameContextRestoreFactoryImpl implements GameContextRestoreFactory 
         }
     }
 
-    @Override
-    public Dot restoreDot(DotDTO dto) {
+    private Dot decodeDot(DotDTO dto) {
         try {
             DotImpl dot = new DotImpl(new Vector2D(dto.x(), dto.y()));
             dot.setIsAlive(dto.isAlive());
@@ -50,8 +74,7 @@ public class GameContextRestoreFactoryImpl implements GameContextRestoreFactory 
         }
     }
 
-    @Override
-    public Ghost restoreGhost(GhostDTO dto, GameMap map) {
+    private Ghost decodeGhost(GhostDTO dto, GameMap map) {
         try {
             Tile tile = map.getTile(new MatrixCoordinates(dto.tileRow(), dto.tileCol()));
             GhostImpl ghost = new GhostImpl(tile, map);

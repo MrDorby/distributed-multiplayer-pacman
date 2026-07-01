@@ -1,5 +1,6 @@
-package it.unibo.controller.network.dto;
+package it.unibo.controller.network.translation;
 
+import it.unibo.controller.network.dto.*;
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.*;
@@ -8,18 +9,23 @@ import it.unibo.model.game.GameState;
 
 import java.lang.reflect.Field;
 
-public class GameContextMapper {
-    public static GameContextDTO toDTO(GameContext context) {
+/**
+ * Implementation of {@link GameContextEncoder} that uses reflection
+ * to access private fields not exposed through the public API.
+ */
+public class GameContextEncoderImpl implements GameContextEncoder {
+    @Override
+    public GameContextDTO encode(GameContext context) {
         return new GameContextDTO(
                 context.getMap().getName(),
-                toDTO(context.getGameState()),
-                context.getPacmans().stream().map(GameContextMapper::toDTO).toList(),
-                context.getGhosts().stream().map(GameContextMapper::toDTO).toList(),
-                context.getDotsMap().entrySet().stream().map(e -> toDTO(e.getKey(), e.getValue())).toList()
+                encode(context.getGameState()),
+                context.getPacmans().stream().map(GameContextEncoderImpl::encode).toList(),
+                context.getGhosts().stream().map(GameContextEncoderImpl::encode).toList(),
+                context.getDotsMap().entrySet().stream().map(e -> encode(e.getKey(), e.getValue())).toList()
         );
     }
 
-    private static GameStateDTO toDTO(GameState state) {
+    private static GameStateDTO encode(GameState state) {
         return new GameStateDTO(
                 state.getLeaderboard(),
                 state.getTimeLeftInMillis(),
@@ -28,7 +34,7 @@ public class GameContextMapper {
         );
     }
 
-    private static PacmanDTO toDTO(Pacman pacman) {
+    private static PacmanDTO encode(Pacman pacman) {
         try {
             MatrixCoordinates coords = pacman.getMatrixCoordinates();
             Vector2D position = pacman.getPosition();
@@ -54,7 +60,7 @@ public class GameContextMapper {
         }
     }
 
-    private static GhostDTO toDTO(Ghost ghost) {
+    private static GhostDTO encode(Ghost ghost) {
         try {
             MatrixCoordinates coords = ghost.getMatrixCoordinates();
             Vector2D position = ghost.getPosition();
@@ -73,7 +79,7 @@ public class GameContextMapper {
         }
     }
 
-    private static DotDTO toDTO(MatrixCoordinates coords, Dot dot) {
+    private static DotDTO encode(MatrixCoordinates coords, Dot dot) {
         try {
             Vector2D position = dot.getPosition();
             return new DotDTO(
