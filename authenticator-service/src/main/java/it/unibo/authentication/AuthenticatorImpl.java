@@ -1,6 +1,7 @@
 package it.unibo.authentication;
 
 import java.io.IOException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
@@ -8,22 +9,30 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.AuthDetailsService;
+import it.unibo.dto.EncryptedRegisterRequest;
 import it.unibo.dto.LoginDTO;
 import it.unibo.dto.LoginResponse;
 import it.unibo.dto.PublicKeyClientDTO;
@@ -58,6 +67,7 @@ public class AuthenticatorImpl implements Authenticator {
     @PostMapping(value = "/syn", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> syn(@RequestBody PublicKeyClientDTO publicKeyClientDTO) {
         try {
+            System.out.println(publicKeyClientDTO);
             ResponseEntity<String> responseEntity = ResponseEntity.badRequest().build();
             boolean integrity = Hash.checkHash(publicKeyClientDTO);
             if (integrity) {
@@ -89,23 +99,21 @@ public class AuthenticatorImpl implements Authenticator {
      * @param loginRequest The body of the message containing username and password encrypted.
      * @return ResponseEntity<String> in json containing the LoginResponse serialized.
      */
-    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> login(@RequestBody String encryptedLoginDTO) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             String decryptedLoginDTO = KeyGenerator.encryptDecryptDataWithKey(encryptedLoginDTO, Cipher.DECRYPT_MODE, KeyGenerator.loadAuthenticatorPrivateKey());
             LoginDTO loginDTO = mapper.readValue(decryptedLoginDTO, LoginDTO.class);
             String encryptedPassword = new BCryptPasswordEncoder().encode(loginDTO.password());
-            UsernamePasswordAuthenticationToken credentials = new UsernamePasswordAuthenticationToken(
-                loginDTO.username(), encryptedPassword);
-            Authentication auth = this.authDetailsService.authenticate(credentials);
-            String token = tokenService.generateToken((String) auth.getPrincipal()); // TODO: What does the token contain?
+            AuthMongoDB auth = this.authDetailsService.authenticate(loginDTO.username(), encryptedPassword);
+            String token = tokenService.generateToken(auth.getUsername()); // TODO: What does the token contain?
             this.authDetailsService.addToken(loginDTO.username(), token);
             LoginResponse loginResponse = new LoginResponse(token);
             String json = mapper.writeValueAsString(loginResponse);
             String encryptedJson = KeyGenerator.encryptDecryptDataWithKey(json, Cipher.ENCRYPT_MODE, this.users.get(loginDTO.username()));
             return ResponseEntity.ok(encryptedJson);
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException | IOException e) {
+        } catch (Exception e) {
             //return new ResponseEntity<String>("", HttpStatus.CONFLICT);
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
@@ -117,22 +125,26 @@ public class AuthenticatorImpl implements Authenticator {
      * @return ResponseEntity in json containing the Response.
      */
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> register(@RequestBody String registerRequest) {
+    public ResponseEntity<String> register(@RequestBody String encryptedRequest) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            String decryptedRegisterDTO = KeyGenerator.encryptDecryptDataWithKey(registerRequest, Cipher.DECRYPT_MODE, KeyGenerator.loadAuthenticatorPrivateKey());
+            // EncryptedRegisterRequest registerRequest = mapper.readValue(encryptedRequest, EncryptedRegisterRequest.class);
+            //System.out.println(registerRequest.encryptedRequest());
+            String decryptedRegisterDTO = KeyGenerator.encryptDecryptDataWithKey(encryptedRequest, Cipher.DECRYPT_MODE, KeyGenerator.loadAuthenticatorPrivateKey());
             RegisterDTO registerDTO = mapper.readValue(decryptedRegisterDTO, RegisterDTO.class);
             String encryptedPassword = new BCryptPasswordEncoder().encode(registerDTO.password());
-            AuthMongoDB user = new AuthMongoDB(registerDTO.username(), encryptedPassword);
+            AuthMongoDB user = new AuthMongoDB(registerDTO.username(), encryptedPassword, "");
             if (this.authDetailsService.loadUserByUsername(user.getUsername()) == null) {
                 if (this.authDetailsService.register(user)) {
                     return ResponseEntity.ok().build(); 
                 }
-                return ResponseEntity.internalServerError().build();
+                return ResponseEntity.internalServerError().body("Registration error!");
             }
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError().body("User already exits!");
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
+
+    // TODO: add the part with the match maker
 }

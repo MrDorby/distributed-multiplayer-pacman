@@ -24,10 +24,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFIlterChain(HttpSecurity http) throws Exception {
         return http
+            .csrf(csrf -> csrf.disable())
+            //.anonymous(anonymous -> anonymous.principal("guest").authorities("ROLE_USER"))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilter(new UsernamePasswordAuthenticationFilter())
+            //.addFilter(new UsernamePasswordAuthenticationFilter())
             //.addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
+                // TODO here we need to add the error/ accessible by anyone.
+                .requestMatchers("/error").permitAll() 
                 .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/auth/syn").permitAll())
@@ -36,15 +40,15 @@ public class SecurityConfig {
             .build();
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
+    // @Bean
+    // public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) {
+    //     return authenticationConfiguration.getAuthenticationManager();
+    // }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-        //return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
+    // @Bean
+    // public PasswordEncoder passwordEncoder() {
+    //     return new BCryptPasswordEncoder();
+    //     //return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    // }
 
 }

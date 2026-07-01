@@ -1,0 +1,5 @@
+#PublicKey pk = KeyGenerator.loadAuthenticatorPublicKey();
+#String data = "{\"username\": \"pippo\", \"password\": \"1234\"}";
+#String encryptedPublic = KeyGenerator.encryptDecryptDataWithKey(data, Cipher.ENCRYPT_MODE, pk);
+
+curl -i -X POST -H "Content-Type:application/json" -d 'fwSgRxImaDWKhaDXvdb8Nf2/7FukCu969z29cTlXxX698bVHpFtD6QtxCro9rvt+yhr+2PAx3yXcHAGzcfroK/QskTQAIodQvmlly+K0MCZY8bzPpqSAubFViUwklGDOZuvtg9isPXdBx5qUfRx73KmxGKLlwzHb+Wppb/j/avxF/CLYbBEgFefWtV60yVi06hW9Ob0xgjFW/F/IwZkvYzspo3OzZubaJ/HmSNzmn3saMSRDvcTiZWXxt7rrc6x5yhrdRNTBWVTJwzoS2dTqo6Zf8mJn5sp905mwkYbl9Yjwk1y541/JlUUrK6gfctAbOP218t4asz09Zq/Xm2Ayc0I6lwgXbjr7zBH4Sy5jNkOCdczGVT/tjRlV8D7qfNwR4evDK9Ow+Ev6a081SSe55MZ2Qiuq8qAUN4zOzdybyxF267SFBm7AsuCCc4zAnOvz6AM7Rh2bR1AaqobZyNHe6PHrvK2NTkPLpQ+vKM61b7q16nY0kaHJ0ABZwIZKS/kQQXi98/0aDRnIdM9RTcGPxubFJ4RHKEaxGkM86YjbK3/dlU1pCH8RmZK3hPiQIpWEXOZrfXPcFieZVTH1WMYyTqApzqcuWcNFBcUN6y+/5d72nhJkTBQ3r8LFLUeE2vPIIJOhq7EkTtR6T0oXbyiOKdhK+a+yJgwyVQW8UzB0j34=' http://localhost:8080/auth/register

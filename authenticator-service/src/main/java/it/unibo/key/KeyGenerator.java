@@ -1,7 +1,11 @@
 package it.unibo.key;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,10 +38,16 @@ public class KeyGenerator {
     
     // TODO: FILE FOR CONSTANTS.
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyPairGenerator.class);
-    private static final String PATH = "keys/";
+    //private static final String PATH = "authenticator-service" + File.separator + "keys" + File.separator;
+    private static final String PATH1 = "authenticator-service";
+    private static final String PATH2 = "src";
+    private static final String PATH3 = "main";
+    private static final String PATH4 = "resources";
+    private static final String PATH5 = "keys";
     private static final String PUBLIC_KEY_FILE = "public_key.der";
     private static final String PRIVATE_KEY_FILE = "private_key.der";
     private static final String KEY_ALGORITHM = "RSA";
+    private static final String ALGORITHM_INSTANCE = "RSA/ECB/PKCS1Padding";
     private static final int KEYSIZE = 4096; // 2048
 
     /**
@@ -48,13 +58,13 @@ public class KeyGenerator {
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORITHM);
             keyPairGenerator.initialize(KEYSIZE);
             KeyPair keyPair = keyPairGenerator.genKeyPair();
-            Path keyDir = Paths.get(PATH);
+            Path keyDir = Paths.get(PATH1, PATH2, PATH3, PATH4, PATH5);
             if (!Files.exists(keyDir)) {
                 Files.createDirectory(keyDir);
             }
-            Path publicKey = Paths.get(PATH, PUBLIC_KEY_FILE);
+            Path publicKey = Paths.get(PATH1, PATH2, PATH3, PATH4, PATH5, PUBLIC_KEY_FILE);
             Files.write(publicKey, keyPair.getPublic().getEncoded());
-            Path privateKey = Paths.get(PATH, PRIVATE_KEY_FILE);
+            Path privateKey = Paths.get(PATH1, PATH2, PATH3, PATH4, PATH5, PRIVATE_KEY_FILE);
             Files.write(privateKey, keyPair.getPrivate().getEncoded());
 
         } catch (NoSuchAlgorithmException | IOException e) {
@@ -68,22 +78,35 @@ public class KeyGenerator {
      * @param cipherMode Cipher.ENCRYPT_MODE or Cipher.DECRYPT_MODE
      * @param key The key that will be used for the chosen mode.
      * @return the String (assumption) of the encrypted/decrypted message.
+     * @throws Exception
      */
-    public static String encryptDecryptDataWithKey(String data, int cipherMode, Key key) {
-        try {
-            Cipher cipher = Cipher.getInstance(KEY_ALGORITHM);
+    public static String encryptDecryptDataWithKey(String data, int cipherMode, Key key) throws Exception {
+        //try {
+            Cipher cipher = Cipher.getInstance(ALGORITHM_INSTANCE);
             //cipher.init(Cipher.ENCRYPT_MODE, key);
             if (cipherMode != Cipher.ENCRYPT_MODE && cipherMode != Cipher.DECRYPT_MODE) {
                 throw new IllegalArgumentException("Cipher mode accepted only: ENCRYPT and DECRYPT!");
             }
             cipher.init(cipherMode, key);
-            byte[] dataBytes = data.getBytes();
-            return Base64.getEncoder().encodeToString(cipher.doFinal(dataBytes));
-
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-            LOGGER.error(e.getMessage());
-            return null;
-        }
+            if (cipherMode == Cipher.DECRYPT_MODE) {
+                String cleanedData = data.trim().replaceAll("\\s+", ""); 
+                byte[] encryptedDataBytes = Base64.getMimeDecoder().decode(cleanedData);
+                byte[] output = cipher.doFinal(encryptedDataBytes);
+                return new String(output, StandardCharsets.UTF_8);
+            } else {
+                byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
+                byte[] output = cipher.doFinal(dataBytes);
+                return Base64.getEncoder().encodeToString(output); 
+            }
+        // } catch (NoSuchAlgorithmException | 
+        //         NoSuchPaddingException | 
+        //         InvalidKeyException | 
+        //         IllegalBlockSizeException | 
+        //         BadPaddingException | 
+        //         UnsupportedEncodingException e) {
+        //     LOGGER.error(e.getMessage());
+        //     return "";
+        // }
     }
 
     /**
@@ -93,7 +116,8 @@ public class KeyGenerator {
      * @throws NoSuchAlgorithmException
      */
     public static PublicKey loadAuthenticatorPublicKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        try (FileInputStream inputStream = new FileInputStream(PATH + PUBLIC_KEY_FILE)) {
+        Path path = Path.of(PATH2, PATH3, PATH4, PATH5, PUBLIC_KEY_FILE);
+        try (InputStream inputStream = Files.newInputStream(path)) {
             X509EncodedKeySpec spec = new X509EncodedKeySpec(inputStream.readAllBytes());
             return KeyFactory.getInstance(KEY_ALGORITHM).generatePublic(spec);
         } /*catch (IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
@@ -120,7 +144,8 @@ public class KeyGenerator {
      * @throws NoSuchAlgorithmException
      */
     public static PrivateKey loadAuthenticatorPrivateKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        try (FileInputStream inputStream = new FileInputStream(PATH + PRIVATE_KEY_FILE)) {
+        Path path = Path.of(PATH2, PATH3, PATH4, PATH5, PRIVATE_KEY_FILE);
+        try (InputStream inputStream = Files.newInputStream(path)) {
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(inputStream.readAllBytes());
             return KeyFactory.getInstance(KEY_ALGORITHM).generatePrivate(spec);
         } /*catch (IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {

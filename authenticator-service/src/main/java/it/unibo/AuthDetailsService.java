@@ -14,25 +14,29 @@ import it.unibo.mongodb.AuthRepository;
 
 /* Needed for the authentication of the user.*/
 @Service
-public class AuthDetailsService implements UserDetailsService {
+public class AuthDetailsService {
 
     @Autowired
     private AuthRepository authRepository;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    // @Autowired
+    // private AuthenticationManager authenticationManager;
 
     //@Autowired
     //private PasswordEncoder passwordEncoder;
 
-    public Authentication authenticate(UsernamePasswordAuthenticationToken credentials) {
-        return this.authenticationManager.authenticate(credentials);
+    // TODO: this method needs to be revisionated, no more authentication manager.
+    public AuthMongoDB authenticate(String username, String password) {
+        AuthMongoDB authUser = (AuthMongoDB) loadUserByUsername(username);
+        if (authUser.getUsername() == username && authUser.getPassword() == password) {
+            return authUser;
+        }
+        throw new UsernameNotFoundException("User not found.");
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return (AuthMongoDB) authRepository.findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("Username not found!"));
+    public AuthMongoDB loadUserByUsername(String username) throws UsernameNotFoundException {
+        return authRepository.findByUsername(username).orElse(null);
+            //.orElseThrow(() -> new UsernameNotFoundException("Username not found!"));
     }
 
     public boolean register(AuthMongoDB authMongoDB) {

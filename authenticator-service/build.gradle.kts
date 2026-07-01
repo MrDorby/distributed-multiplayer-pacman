@@ -1,7 +1,7 @@
 plugins {
     java
     application
-    id("org.springframework.boot") version "4.0.6"
+    id("org.springframework.boot") version "4.1.0"
     id("io.spring.dependency-management") version "1.1.7"
 }
 
@@ -16,8 +16,13 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    
     // Source: https://mvnrepository.com/artifact/tools.jackson.core/jackson-databind
-    implementation("tools.jackson.core:jackson-databind:3.1.3")
+    //implementation("tools.jackson.core:jackson-databind:3.1.3")
+    
+
+    // Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.22.0")
     // Source: https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     implementation("ch.qos.logback:logback-classic:1.5.32")
     // Source: https://docs.spring.io/spring-security/reference/getting-spring-security.html#getting-gradle-boot
@@ -32,6 +37,10 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-mongodb-test")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     testImplementation("org.springframework.boot:spring-boot-starter-data-mongodb-test")
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    implementation("org.springframework.boot:spring-boot-starter-restclient")
+    testImplementation("org.springframework.boot:spring-boot-starter-restclient-test")
 }
 
 java {

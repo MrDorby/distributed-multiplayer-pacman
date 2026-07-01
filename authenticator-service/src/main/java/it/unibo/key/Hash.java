@@ -24,7 +24,8 @@ public class Hash {
     public static boolean checkHash(PublicKeyClientDTO publicKeyClientDTO) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance(publicKeyClientDTO.hashType());
         byte[] hashByte = digest.digest(publicKeyClientDTO.publicKey().getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(hashByte) == publicKeyClientDTO.hash();
+        return Base64.getEncoder().encodeToString(hashByte).equals(publicKeyClientDTO.hash());
+        //return MessageDigest.isEqual(hashByte, publicKeyClientDTO.hash().getBytes());
     }
 
     /**
