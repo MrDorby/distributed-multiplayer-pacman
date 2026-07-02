@@ -1,7 +1,7 @@
 package it.unibo;
 
-import it.unibo.controller.engine.GameEngine;
-import it.unibo.controller.engine.ServerGameEngine;
+import it.unibo.controller.shared.engine.GameEngine;
+import it.unibo.controller.server.engine.ServerGameEngine;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;

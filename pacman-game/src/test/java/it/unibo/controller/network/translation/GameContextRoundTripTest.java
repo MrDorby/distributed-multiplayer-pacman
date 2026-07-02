@@ -1,6 +1,8 @@
 package it.unibo.controller.network.translation;
 
-import it.unibo.controller.network.dto.GameContextDTO;
+import it.unibo.controller.shared.network.dto.GameContextDTO;
+import it.unibo.controller.shared.network.translation.GameContextDecoderImpl;
+import it.unibo.controller.shared.network.translation.GameContextEncoderImpl;
 import it.unibo.model.entities.GameEntityFactoryImpl;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextFactory;

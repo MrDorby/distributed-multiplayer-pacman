@@ -1,9 +1,9 @@
 package it.unibo.view.screens.game;
 
-import it.unibo.controller.input.InputHandler;
-import it.unibo.controller.input.PlayerInputHandler;
-import it.unibo.controller.engine.PredictiveClientGameEngine;
-import it.unibo.controller.engine.GameEngine;
+import it.unibo.controller.shared.input.InputHandler;
+import it.unibo.controller.shared.input.PlayerInputHandler;
+import it.unibo.controller.client.engine.ClientGameEngine;
+import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextFactory;
@@ -30,7 +30,7 @@ public class GameController implements ScreenController {
     public void onEnter() {
         GameContext context = GameContextFactory.getTestContext();
         Game game = new GameImpl(context);
-        this.engine = new PredictiveClientGameEngine(game, null, null);
+        this.engine = new ClientGameEngine(game, null, null);
         InputHandler inputHandler = new PlayerInputHandler(engine, localPlayerUsername);
         this.gameView = new GameViewImpl(inputHandler);
         this.engine.setView(gameView);
