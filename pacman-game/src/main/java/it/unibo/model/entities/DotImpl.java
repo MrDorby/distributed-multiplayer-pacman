@@ -1,10 +1,7 @@
 package it.unibo.model.entities;
 
-import it.unibo.model.collisions.Collision;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
-
-import java.util.Set;
 
 public class DotImpl extends GameEntityImpl implements Dot {
     private final static int TIME_TO_RESPAWN_IN_MILLIS = 5000;
@@ -34,21 +31,28 @@ public class DotImpl extends GameEntityImpl implements Dot {
     @Override
     public void update(GameContext currentContext) {
         if (this.isAlive()) {
-            Set<Collision> collision = currentContext.getCollisions(this);
-            collision.stream()
-                    .filter(x -> x.getGameEntity() instanceof Pacman)
-                    .findFirst()
-                    .ifPresent(_ -> hideDot(currentContext));
+            checkCollisions(currentContext);
         } else {
-            long currentTime = currentContext.getGameState().getTimeLeftInMillis();
-            if (currentTime <= this.lastTimeEaten - TIME_TO_RESPAWN_IN_MILLIS) {
-                this.setIsAlive(true);
-            }
+            handleRespawn(currentContext);
         }
     }
 
-    private void hideDot(GameContext context) {
+    private void checkCollisions(GameContext currentContext) {
+        currentContext.getCollisions(this).stream()
+                .filter(collision -> collision.getInvolvedEntity() instanceof Pacman)
+                .findFirst()
+                .ifPresent(_ -> markAsEaten(currentContext));
+    }
+
+    private void markAsEaten(GameContext context) {
         this.setIsAlive(false);
         this.lastTimeEaten = context.getGameState().getTimeLeftInMillis();
+    }
+
+    protected void handleRespawn(GameContext currentContext) {
+        long currentTime = currentContext.getGameState().getTimeLeftInMillis();
+        if (currentTime <= this.lastTimeEaten - TIME_TO_RESPAWN_IN_MILLIS) {
+            this.setIsAlive(true);
+        }
     }
 }
