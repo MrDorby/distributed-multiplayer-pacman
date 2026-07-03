@@ -4,10 +4,12 @@ public record GhostDTO(
         boolean isAlive,
         long lastTimeDead,
         long lastTimeDirectionWasChanged,
-        String currentDirection, // Unused for now when recreating a GhostImpl
-        // String desiredDirection,
-        int tileRow,
-        int tileCol,
+        String currentDirection,
+        String desiredDirection,
+        int targetTileRow,
+        int targetTileCol,
+        int currentTileRow,
+        int currentTileCol,
         int x,
         int y
 ) {}

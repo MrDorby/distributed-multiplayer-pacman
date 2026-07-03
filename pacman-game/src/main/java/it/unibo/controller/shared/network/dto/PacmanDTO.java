@@ -11,10 +11,12 @@ public record PacmanDTO(
         long lastTimeSpecialDotWasEaten,
         long lastTimeBecameInvincible,
         long lastTimeDirectionWasChanged,
-        String currentDirection, // Unused for now when recreating a PacmanImpl
-        // String desiredDirection,
-        int tileRow,
-        int tileCol,
+        String currentDirection,
+        String desiredDirection,
+        int targetTileRow,
+        int targetTileCol,
+        int currentTileRow,
+        int currentTileCol,
         int x,
         int y
 ) {}

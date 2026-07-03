@@ -4,8 +4,8 @@ public record DotDTO(
         boolean isSpecial,
         boolean isAlive,
         long lastTimeEaten,
-        int tileRow,
-        int tileCol,
+        int currentTileRow,
+        int currentTileCol,
         int x,
         int y
 ) {}

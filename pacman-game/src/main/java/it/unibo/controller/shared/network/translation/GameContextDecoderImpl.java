@@ -4,6 +4,7 @@ import it.unibo.controller.shared.network.dto.DotDTO;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
 import it.unibo.controller.shared.network.dto.GhostDTO;
 import it.unibo.controller.shared.network.dto.PacmanDTO;
+import it.unibo.model.common.Direction;
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.*;
@@ -13,16 +14,18 @@ import it.unibo.model.map.FourPlayersGameMapFactory;
 import it.unibo.model.map.GameMap;
 import it.unibo.model.map.Tile;
 
-import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static it.unibo.controller.shared.utils.ReflectionUtils.getField;
+import static it.unibo.controller.shared.utils.ReflectionUtils.setField;
 
 /**
  * Decodes a {@link GameContextDTO} back into a {@link GameContext}.
  * The game map is loaded once and cached for subsequent decode calls.
  */
-public class GameContextDecoderImpl implements GameContextDecoder{
+public class GameContextDecoderImpl implements GameContextDecoder {
     private GameMap cachedMap;
 
     @Override
@@ -31,23 +34,27 @@ public class GameContextDecoderImpl implements GameContextDecoder{
             cachedMap = new FourPlayersGameMapFactory().fromJSON("maps/" + dto.mapName() + ".json");
         }
         Map<MatrixCoordinates, Dot> dotsMap = dto.dots().stream()
-                .collect(Collectors.toMap(d -> new MatrixCoordinates(d.tileRow(), d.tileCol()), this::decodeDot));
+                .collect(Collectors.toMap(dot ->
+                        new MatrixCoordinates(dot.currentTileRow(), dot.currentTileCol()),
+                        this::decodeDot));
         Set<Ghost> ghosts = dto.ghosts().stream()
-                .map(g -> decodeGhost(g, cachedMap))
+                .map(ghost -> decodeGhost(ghost, cachedMap))
                 .collect(Collectors.toSet());
         Set<Pacman> pacmans = dto.pacmans().stream()
-                .map(p -> decodePacman(p, cachedMap))
+                .map(pacman -> decodePacman(pacman, cachedMap))
                 .collect(Collectors.toSet());
         return new GameContextImpl(cachedMap, dotsMap, ghosts, pacmans, dto.gameState().timeLeftInMillis());
     }
 
     private Pacman decodePacman(PacmanDTO dto, GameMap map) {
         try {
-            Tile tile = map.getTile(new MatrixCoordinates(dto.tileRow(), dto.tileCol()));
+            Vector2D position = new Vector2D(dto.x(), dto.y());
+            MatrixCoordinates matrixPosition = new MatrixCoordinates(dto.currentTileRow(), dto.currentTileCol());
+            Tile tile = map.getTile(matrixPosition);
             PacmanImpl pacman = new PacmanImpl(tile, map);
             pacman.setId(dto.id());
             pacman.setIsAlive(dto.isAlive());
-            pacman.setPosition(new Vector2D(dto.x(), dto.y()));
+            pacman.setPosition(position);
             setField(pacman, "score", dto.score());
             setField(pacman, "lives", dto.lives());
             setField(pacman, "controlledByPlayer", dto.controlledByPlayer());
@@ -56,6 +63,13 @@ public class GameContextDecoderImpl implements GameContextDecoder{
             setField(pacman, "lastTimeSpecialDotWasEaten", dto.lastTimeSpecialDotWasEaten());
             setField(pacman, "lastTimeBecameInvincible", dto.lastTimeBecameInvincible());
             setField(pacman, "lastTimeDirectionWasChanged", dto.lastTimeDirectionWasChanged());
+            // Set the movement manager fields via reflection
+            Object movementManager = getField(pacman, "movementManager");
+            setField(movementManager, "currentDirection", Direction.valueOf(dto.currentDirection()));
+            setField(movementManager, "desiredDirection", Direction.valueOf(dto.desiredDirection()));
+            setField(movementManager, "currentMatrixCoordinates", matrixPosition);
+            setField(movementManager, "targetMatrixCoordinates", new MatrixCoordinates(dto.targetTileRow(), dto.targetTileCol()));
+            setField(movementManager, "position", position);
             return pacman;
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException("Failed to set pacman fields via reflection", e);
@@ -76,21 +90,24 @@ public class GameContextDecoderImpl implements GameContextDecoder{
 
     private Ghost decodeGhost(GhostDTO dto, GameMap map) {
         try {
-            Tile tile = map.getTile(new MatrixCoordinates(dto.tileRow(), dto.tileCol()));
+            Vector2D position = new Vector2D(dto.x(), dto.y());
+            MatrixCoordinates matrixPosition = new MatrixCoordinates(dto.currentTileRow(), dto.currentTileCol());
+            Tile tile = map.getTile(matrixPosition);
             GhostImpl ghost = new GhostImpl(tile, map);
             ghost.setIsAlive(dto.isAlive());
-            ghost.setPosition(new Vector2D(dto.x(), dto.y()));
+            ghost.setPosition(position);
             setField(ghost, "lastTimeDead", dto.lastTimeDead());
             setField(ghost, "lastTimeDirectionWasChanged", dto.lastTimeDirectionWasChanged());
+            // Set the movement manager fields via reflection
+            Object movementManager = getField(ghost, "movementManager");
+            setField(movementManager, "currentDirection", Direction.valueOf(dto.currentDirection()));
+            setField(movementManager, "desiredDirection", Direction.valueOf(dto.desiredDirection()));
+            setField(movementManager, "currentMatrixCoordinates", matrixPosition);
+            setField(movementManager, "targetMatrixCoordinates", new MatrixCoordinates(dto.targetTileRow(), dto.targetTileCol()));
+            setField(movementManager, "position", position);
             return ghost;
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException("Failed to set ghost fields via reflection", e);
         }
-    }
-
-    private static void setField(Object instance, String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
-        Field field = instance.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(instance, value);
     }
 }

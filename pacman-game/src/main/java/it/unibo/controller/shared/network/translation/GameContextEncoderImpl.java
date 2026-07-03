@@ -1,13 +1,14 @@
 package it.unibo.controller.shared.network.translation;
 
 import it.unibo.controller.shared.network.dto.*;
+import it.unibo.model.common.Direction;
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.*;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameState;
 
-import java.lang.reflect.Field;
+import static it.unibo.controller.shared.utils.ReflectionUtils.getField;
 
 /**
  * Implementation of {@link GameContextEncoder} that uses reflection
@@ -36,8 +37,11 @@ public class GameContextEncoderImpl implements GameContextEncoder {
 
     private static PacmanDTO encode(Pacman pacman) {
         try {
-            MatrixCoordinates coords = pacman.getMatrixCoordinates();
+            MatrixCoordinates currentMatrixCoordinates = pacman.getMatrixCoordinates();
             Vector2D position = pacman.getPosition();
+            Object movementManager = getField(pacman, "movementManager");
+            Direction desiredDirection = (Direction) getField(movementManager, "desiredDirection");
+            MatrixCoordinates targetMatrixCoordinates = (MatrixCoordinates) getField(movementManager, "targetMatrixCoordinates");
             return new PacmanDTO(
                     pacman.getId(),
                     pacman.getScore(),
@@ -50,8 +54,11 @@ public class GameContextEncoderImpl implements GameContextEncoder {
                     (long) getField(pacman, "lastTimeBecameInvincible"),
                     (long) getField(pacman, "lastTimeDirectionWasChanged"),
                     pacman.getDirection().name(),
-                    coords.row(),
-                    coords.column(),
+                    desiredDirection.name(),
+                    targetMatrixCoordinates.row(),
+                    targetMatrixCoordinates.column(),
+                    currentMatrixCoordinates.row(),
+                    currentMatrixCoordinates.column(),
                     position.x(),
                     position.y()
             );
@@ -62,15 +69,21 @@ public class GameContextEncoderImpl implements GameContextEncoder {
 
     private static GhostDTO encode(Ghost ghost) {
         try {
-            MatrixCoordinates coords = ghost.getMatrixCoordinates();
+            MatrixCoordinates currentMatrixCoordinates = ghost.getMatrixCoordinates();
             Vector2D position = ghost.getPosition();
+            Object movementManager = getField(ghost, "movementManager");
+            Direction desiredDirection = (Direction) getField(movementManager, "desiredDirection");
+            MatrixCoordinates targetMatrixCoordinates = (MatrixCoordinates) getField(movementManager, "targetMatrixCoordinates");
             return new GhostDTO(
                     ghost.isAlive(),
                     (long) getField(ghost, "lastTimeDead"),
                     (long) getField(ghost, "lastTimeDirectionWasChanged"),
                     ghost.getDirection().name(),
-                    coords.row(),
-                    coords.column(),
+                    desiredDirection.name(),
+                    targetMatrixCoordinates.row(),
+                    targetMatrixCoordinates.column(),
+                    currentMatrixCoordinates.row(),
+                    currentMatrixCoordinates.column(),
                     position.x(),
                     position.y()
             );
@@ -79,26 +92,20 @@ public class GameContextEncoderImpl implements GameContextEncoder {
         }
     }
 
-    private static DotDTO encode(MatrixCoordinates coords, Dot dot) {
+    private static DotDTO encode(MatrixCoordinates matrixCoordinates, Dot dot) {
         try {
             Vector2D position = dot.getPosition();
             return new DotDTO(
                     dot.isSpecial(),
                     dot.isAlive(),
                     (long) getField(dot, "lastTimeEaten"),
-                    coords.row(),
-                    coords.column(),
+                    matrixCoordinates.row(),
+                    matrixCoordinates.column(),
                     position.x(),
                     position.y()
             );
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException("Failed to read dot fields via reflection", e);
         }
-    }
-
-    private static Object getField(Object instance, String fieldName) throws NoSuchFieldException, IllegalAccessException {
-        Field field = instance.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        return field.get(instance);
     }
 }
