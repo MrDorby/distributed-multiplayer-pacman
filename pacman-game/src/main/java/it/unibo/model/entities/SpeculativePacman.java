@@ -6,8 +6,9 @@ import it.unibo.model.map.GameMap;
 import it.unibo.model.map.Tile;
 
 /**
- * This {@code Pacman} implementation doesn't perform collision handling, moving only
- * along the pacman's last set direction if it is a bot, but it checks timing expirations.
+ * This {@code Pacman} implementation doesn't perform movement decisions nor
+ * collision handling, moving both human players and bots along their last set direction.
+ * However, it does check timing expirations.
  */
 public class SpeculativePacman extends PacmanImpl {
     public SpeculativePacman(Tile tile, GameMap map) {
