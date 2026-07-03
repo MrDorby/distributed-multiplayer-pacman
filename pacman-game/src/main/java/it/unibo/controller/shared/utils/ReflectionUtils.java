@@ -33,7 +33,19 @@ public class ReflectionUtils {
     }
 
     private static Field accessibleField(Object instance, String fieldName) throws NoSuchFieldException {
-        Field field = instance.getClass().getDeclaredField(fieldName);
+        Class<?> clazz = instance.getClass();
+        Field field = null;
+        while (clazz != null) {
+            try {
+                field = clazz.getDeclaredField(fieldName);
+                break;
+            } catch (NoSuchFieldException e) {
+                clazz = clazz.getSuperclass();
+            }
+        }
+        if (field == null) {
+            throw new NoSuchFieldException("Field [" + fieldName + "] not found in hierarchy of " + instance.getClass().getName());
+        }
         field.setAccessible(true);
         return field;
     }

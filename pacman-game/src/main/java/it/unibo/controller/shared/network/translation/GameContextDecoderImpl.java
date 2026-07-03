@@ -26,7 +26,12 @@ import static it.unibo.controller.shared.utils.ReflectionUtils.setField;
  * The game map is loaded once and cached for subsequent decode calls.
  */
 public class GameContextDecoderImpl implements GameContextDecoder {
+    private final GameEntityFactory entityFactory;
     private GameMap cachedMap;
+
+    public GameContextDecoderImpl(GameEntityFactory entityFactory) {
+        this.entityFactory = entityFactory;
+    }
 
     @Override
     public GameContext decode(GameContextDTO dto) {
@@ -51,7 +56,7 @@ public class GameContextDecoderImpl implements GameContextDecoder {
             Vector2D position = new Vector2D(dto.x(), dto.y());
             MatrixCoordinates matrixPosition = new MatrixCoordinates(dto.currentTileRow(), dto.currentTileCol());
             Tile tile = map.getTile(matrixPosition);
-            PacmanImpl pacman = new PacmanImpl(tile, map);
+            Pacman pacman = this.entityFactory.createPacman(tile, map);
             pacman.setId(dto.id());
             pacman.setIsAlive(dto.isAlive());
             pacman.setPosition(position);
@@ -78,10 +83,9 @@ public class GameContextDecoderImpl implements GameContextDecoder {
 
     private Dot decodeDot(DotDTO dto) {
         try {
-            DotImpl dot = new DotImpl(new Vector2D(dto.x(), dto.y()));
+            Dot dot = this.entityFactory.createDot(new Vector2D(dto.x(), dto.y()), dto.isSpecial());
             dot.setIsAlive(dto.isAlive());
             setField(dot, "lastTimeEaten", dto.lastTimeEaten());
-            setField(dot, "isSpecial", dto.isSpecial());
             return dot;
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException("Failed to set dot fields via reflection", e);
@@ -93,7 +97,7 @@ public class GameContextDecoderImpl implements GameContextDecoder {
             Vector2D position = new Vector2D(dto.x(), dto.y());
             MatrixCoordinates matrixPosition = new MatrixCoordinates(dto.currentTileRow(), dto.currentTileCol());
             Tile tile = map.getTile(matrixPosition);
-            GhostImpl ghost = new GhostImpl(tile, map);
+            Ghost ghost = this.entityFactory.createGhost(tile, map);
             ghost.setIsAlive(dto.isAlive());
             ghost.setPosition(position);
             setField(ghost, "lastTimeDead", dto.lastTimeDead());
