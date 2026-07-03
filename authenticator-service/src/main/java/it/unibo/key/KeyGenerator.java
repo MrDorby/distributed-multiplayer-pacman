@@ -39,7 +39,7 @@ public class KeyGenerator {
     // TODO: FILE FOR CONSTANTS.
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyPairGenerator.class);
     //private static final String PATH = "authenticator-service" + File.separator + "keys" + File.separator;
-    private static final String PATH1 = "authenticator-service";
+    private static final String PATH1 = "authenticator-service";  //TODO: define the correct path for the keys.
     private static final String PATH2 = "src";
     private static final String PATH3 = "main";
     private static final String PATH4 = "resources";

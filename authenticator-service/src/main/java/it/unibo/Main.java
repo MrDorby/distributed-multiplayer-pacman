@@ -12,9 +12,12 @@ import javax.crypto.Cipher;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 import it.unibo.key.KeyGenerator;
+import it.unibo.mongodb.AuthRepository;
 
+//@EnableMongoRepositories(basePackages = "it.unibo.mongodb")
 @SpringBootApplication
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -24,11 +27,12 @@ public class Main {
         //String b = "X9AsXcj3J9jrpasD4KKjZnZ8LpqpSB4qKoij/VzGRhLGTP3/oTDIIVe3kIQEBX2zNNvuIzV5hhXEs802ZSdfJ1ZaZZwi6NcULqNDJBDzlwAGWKcqc6T4mjOK2BNB//PsoVVKtAATVqsigYYcvGVShsA9sCHMWzsEW63ezq4Wmh145gDb/246PB4z7Ve8H48nzXfU8xjOUJylUk+rRdnc/BiyQLjM+hl20zlE/KYVKWIILDyRTLeU5/NKfLaA0q52XsE0qzGVCBzk7A1Zr2CAhI5cxU6qh3Rx48NWRh1a7z7PSfNXnTaLzbJpsHhn4tP6VKilij6q4X78YOFFwapmIgjpTgyQfz5LtsBCl6KKn69KAOD8Oj+RWhkzdbfUJzRhP29KNdrvRRf9i6vMEIHR/ucO1CL/hOpLRsPRZouIbu6ZKupE3XO8/BzxXxiHFzunWAfTql5OazQeVbboMLBJTQv1DSEVr0saCHKCIsQ/ModDX7o8S2skZIGMieHTVc2gqPfDKlTX0FU884nmZCLWBbCMA2Z+qXa1FeB4vQEmKf7pdpQjfIxhbjO5ZurQcFrATXeTc4why/dFWIaLtOkltIoOdCPMUVpplE+jscW74u5VlO91gjwlH533M5G4hDwiHjX6z1hMLfXI2GPxCVIHt9pB08xeBXHfpu18Ptl+dWA=";
         //System.out.println(encryptedPublic.equals(b));
         //PublicKey pk = KeyGenerator.loadAuthenticatorPublicKey();
+        //System.out.println(Base64.getEncoder().encodeToString(pk.getEncoded()));
         //System.out.println("MODULUS PUBBLICO: " + ((java.security.interfaces.RSAPublicKey) pk).getModulus().toString(16).substring(0, 20));
         //PrivateKey prk = KeyGenerator.loadAuthenticatorPrivateKey();
         //System.out.println("MODULUS Privato: " + ((java.security.interfaces.RSAPrivateKey) prk).getModulus().toString(16).substring(0, 20));
         
-        //String data = "{\"username\": \"pippo\", \"password\": \"1234\"}";
+        //String data = "{\"username\": \"pluto\", \"password\": \"1234\"}";
         //String encrypted = KeyGenerator.encryptDecryptDataWithKey(data, Cipher.ENCRYPT_MODE, pk);
         //System.out.println(encrypted + "\n\n\n");
         // System.out.println(encryptedPublic.equals(encrypted));
