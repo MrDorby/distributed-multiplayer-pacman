@@ -1,21 +1,17 @@
 package it.unibo.model.game;
 
-import it.unibo.model.entities.Pacman;
-
-import java.time.Duration;
 import java.util.Map;
-import java.util.Optional;
 
 public interface GameState {
     /**
      * Returns a leaderboard mapping pacmans to their score.
      */
-    Map<Pacman, Integer> getLeaderboard();
+    Map<String, Integer> getLeaderboard();
 
     /**
-     * Returns the time left.
+     * Returns the time left in millis.
      */
-    Duration getTimeLeft();
+    long getTimeLeftInMillis();
 
     /**
      * Returns whether the game is considered over.
@@ -23,7 +19,7 @@ public interface GameState {
     boolean isGameOver();
 
     /**
-     * Returns the winner.
+     * Returns the id of the winner.
      */
-    Optional<Pacman> getWinner();
+    String getWinnerId();
 }

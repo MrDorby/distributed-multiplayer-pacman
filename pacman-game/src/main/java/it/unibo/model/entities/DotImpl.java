@@ -1,30 +1,26 @@
 package it.unibo.model.entities;
 
-import it.unibo.model.collisions.Collision;
+import it.unibo.model.common.Vector2D;
 import it.unibo.model.game.GameContext;
-import it.unibo.model.map.Tile;
-
-import java.util.Set;
 
 public class DotImpl extends GameEntityImpl implements Dot {
-
-    private final static int TIME_TO_RESPAWN = 5;
+    private final static int TIME_TO_RESPAWN_IN_MILLIS = 5000;
     private final static int DOT_VALUE = 1;
-    private boolean isSpecial;
-    private long lastTimeDead;
+    private final boolean isSpecial;
+    private long lastTimeEaten;
 
-    public DotImpl(Tile tile) {
-        super(tile);
+    public DotImpl(Vector2D position, boolean isSpecial) {
+        super(position);
+        this.isSpecial = isSpecial;
+    }
+
+    public DotImpl(Vector2D position) {
+        this(position, false);
     }
 
     @Override
     public boolean isSpecial() {
         return this.isSpecial;
-    }
-
-    @Override
-    public void setIsSpecial(boolean isSpecial) {
-        this.isSpecial = isSpecial;
     }
 
     @Override
@@ -35,18 +31,28 @@ public class DotImpl extends GameEntityImpl implements Dot {
     @Override
     public void update(GameContext currentContext) {
         if (this.isAlive()) {
-            Set<Collision> collision = currentContext.getCollisions(this);
-            collision.stream().filter(x -> x.getGameEntity() instanceof Pacman)
-                    .findFirst().ifPresent(_ -> hideDot());
+            checkCollisions(currentContext);
         } else {
-            if (System.currentTimeMillis() - this.lastTimeDead >= TIME_TO_RESPAWN) {
-                this.setIsAlive(true);
-            }
+            handleRespawn(currentContext);
         }
     }
 
-    private void hideDot() {
+    private void checkCollisions(GameContext currentContext) {
+        currentContext.getCollisions(this).stream()
+                .filter(collision -> collision.getInvolvedEntity() instanceof Pacman)
+                .findFirst()
+                .ifPresent(_ -> markAsEaten(currentContext));
+    }
+
+    private void markAsEaten(GameContext context) {
         this.setIsAlive(false);
-        this.lastTimeDead = System.currentTimeMillis();
+        this.lastTimeEaten = context.getGameState().getTimeLeftInMillis();
+    }
+
+    protected void handleRespawn(GameContext currentContext) {
+        long currentTime = currentContext.getGameState().getTimeLeftInMillis();
+        if (currentTime <= this.lastTimeEaten - TIME_TO_RESPAWN_IN_MILLIS) {
+            this.setIsAlive(true);
+        }
     }
 }

@@ -1,9 +1,11 @@
 package it.unibo.model.game;
 
 import it.unibo.model.collisions.Collision;
+import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.entities.*;
-import it.unibo.model.map.Map;
+import it.unibo.model.map.GameMap;
 
+import java.util.Map;
 import java.util.Set;
 
 public interface GameContext {
@@ -16,7 +18,7 @@ public interface GameContext {
     /**
      * Overrides the current collisions with the new ones.
      */
-    void setCollisions(Set<Collision> collisions);
+    void setCollisions(Map<GameEntity, Set<Collision>> collisions);
 
     /**
      * Returns every game entity of the domain.
@@ -31,12 +33,12 @@ public interface GameContext {
     /**
      * Returns the current map.
      */
-    Map getMap();
+    GameMap getMap();
 
     /**
-     * Returns the dots on the map.
+     * Returns a map from MatrixCoordinates to Dots
      */
-    Set<Dot> getDots();
+    Map<MatrixCoordinates, Dot> getDotsMap();
 
     /**
      * Returns the ghosts.
@@ -52,6 +54,11 @@ public interface GameContext {
      * Returns current game state (results).
      */
     GameState getGameState();
+
+    /**
+     * Decreases time from time left.
+     */
+    void decrementTime(long deltaInMillis);
 
     /**
      * Calculates the current game state.

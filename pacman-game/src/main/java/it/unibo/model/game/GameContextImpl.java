@@ -1,46 +1,45 @@
 package it.unibo.model.game;
 
 import it.unibo.model.collisions.Collision;
+import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.entities.*;
-import it.unibo.model.map.Map;
+import it.unibo.model.map.GameMap;
 
-import java.time.Duration;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class GameContextImpl implements GameContext {
-    private final Map map;
-    private final Set<Dot> dots;
+    private final GameMap map;
+    private final Map<MatrixCoordinates, Dot> dotsMap;
     private final Set<Ghost> ghosts;
     private final Set<Pacman> pacmans;
     private GameState gameState;
-    private final Duration timeLeft;
-    private Set<Collision> collisions = new HashSet<>();
+    private long timeLeftInMillis;
+    private Map<GameEntity, Set<Collision>> collisions = new HashMap<>();
 
-    public GameContextImpl(Map map, Set<Dot> dots, Set<Ghost> ghosts, Set<Pacman> pacmans, Duration timeLeft) {
+    public GameContextImpl(GameMap map, Map<MatrixCoordinates, Dot> dotsMap, Set<Ghost> ghosts, Set<Pacman> pacmans, long timeLeftInMillis) {
         this.map = map;
-        this.dots = dots;
+        this.dotsMap = dotsMap;
         this.ghosts = ghosts;
         this.pacmans = pacmans;
-        this.timeLeft = timeLeft;
+        this.timeLeftInMillis = timeLeftInMillis;
+        this.createGameState();
     }
 
     @Override
     public Set<Collision> getCollisions(GameEntity entity) {
-        return this.collisions;
+        return collisions.getOrDefault(entity, Collections.emptySet());
     }
 
     @Override
-    public void setCollisions(Set<Collision> collisions) {
+    public void setCollisions(Map<GameEntity, Set<Collision>> collisions) {
         this.collisions = collisions;
     }
 
     @Override
     public Set<GameEntity> getGameEntities() {
         Set<GameEntity> gameEntities = new HashSet<>();
-        gameEntities.addAll(dots);
+        gameEntities.addAll(dotsMap.values());
         gameEntities.addAll(ghosts);
         gameEntities.addAll(pacmans);
         return gameEntities;
@@ -55,13 +54,13 @@ public class GameContextImpl implements GameContext {
     }
 
     @Override
-    public Map getMap() {
+    public GameMap getMap() {
         return this.map;
     }
 
     @Override
-    public Set<Dot> getDots() {
-        return this.dots;
+    public Map<MatrixCoordinates, Dot> getDotsMap() {
+        return this.dotsMap;
     }
 
     @Override
@@ -80,30 +79,46 @@ public class GameContextImpl implements GameContext {
     }
 
     @Override
+    public void decrementTime(long deltaInMillis) {
+        this.timeLeftInMillis = this.timeLeftInMillis - deltaInMillis;
+        if (this.timeLeftInMillis < 0) {
+            this.timeLeftInMillis = 0;
+        }
+    }
+
+    @Override
     public void createGameState() {
         this.gameState = new GameStateImpl(
             calculateLeaderboard(),
-            this.timeLeft,
+            this.timeLeftInMillis,
             checkGameOver(),
-            calculateWinner()
+            findWinnerId()
         );
     }
 
-    private java.util.Map<Pacman, Integer> calculateLeaderboard() {
-        return pacmans.stream().collect(Collectors.toMap(pacman -> pacman, Pacman::getScore));
+    private Map<String, Integer> calculateLeaderboard() {
+        return pacmans.stream()
+                .filter(pacman -> pacman.getId() != null)
+                .sorted(Comparator.comparing(Pacman::getScore).reversed())
+                .collect(Collectors.toMap(
+                        Pacman::getId,
+                        Pacman::getScore,
+                        (a, _) -> a,
+                        LinkedHashMap::new));
     }
 
     private boolean checkGameOver() {
-        // TODO add whether time is up
-        return pacmans.stream().filter(pacman -> pacman.getLives() > 0).count() == 1;
+        boolean timeIsUp = timeLeftInMillis <= 0;
+        boolean onlyOnePacmanLeft = pacmans.stream().filter(pacman -> pacman.getLives() > 0).count() == 1;
+        return timeIsUp || onlyOnePacmanLeft;
     }
 
-    private Pacman calculateWinner() {
+    private String findWinnerId() {
         if (checkGameOver()) {
-            return pacmans
-                    .stream()
+            return pacmans.stream()
                     .filter(pacman -> pacman.getLives() > 0)
-                    .max(Comparator.comparingInt(Pacman::getScore)).orElse(null);
+                    .max(Comparator.comparingInt(Pacman::getScore))
+                    .map(Pacman::getId).orElse(null);
         }
         return null;
     }

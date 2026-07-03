@@ -11,12 +11,11 @@ public interface GameEntity {
 
     /**
      * Updates the state of the GameEntity according to the current GameContext.
-     * @param currentContext
      */
     void update(GameContext currentContext);
 
     /**
-     * @return the current poisiton as a Vector2D of the GameEntity.
+     * @return the current position as a Vector2D of the GameEntity.
      */
     Vector2D getPosition();
 

@@ -1,22 +1,24 @@
 package it.unibo.model.entities;
 
+import it.unibo.model.common.Vector2D;
+import it.unibo.model.map.GameMap;
 import it.unibo.model.map.Tile;
 
 public class GameEntityFactoryImpl implements GameEntityFactory {
 
     @Override
-    public Pacman createPacman(Tile spawnPoint) {
-        return new PacmanImpl(spawnPoint);
+    public Pacman createPacman(Tile spawnPoint, GameMap map) {
+        return new PacmanImpl(spawnPoint, map);
     }
 
     @Override
-    public Dot createDot(Tile tile) {
-        return new DotImpl(tile);
+    public Dot createDot(Vector2D position, boolean isSpecial) {
+        return new DotImpl(position, isSpecial);
     }
 
     @Override
-    public Ghost createGhost(Tile spawnPoint) {
-        return new GhostImpl(spawnPoint);
+    public Ghost createGhost(Tile spawnPoint, GameMap map) {
+        return new GhostImpl(spawnPoint, map);
     }
 
     @Override

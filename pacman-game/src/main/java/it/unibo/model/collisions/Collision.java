@@ -7,7 +7,7 @@ public interface Collision {
     /**
      * Returns the entity involved in the collision.
      */
-    GameEntity getGameEntity();
+    GameEntity getInvolvedEntity();
 
     /**
      * Returns the direction of the collision with the game entity.
