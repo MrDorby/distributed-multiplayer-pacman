@@ -1,5 +1,7 @@
 package it.unibo.controller.engine;
 
+import it.unibo.controller.shared.engine.AbstractFixedTimeStepGameEngine;
+import it.unibo.controller.shared.engine.LocalGameEngine;
 import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
 import org.junit.jupiter.api.BeforeEach;

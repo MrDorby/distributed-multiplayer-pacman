@@ -1,9 +1,9 @@
 package it.unibo;
 
-import it.unibo.controller.input.InputHandler;
-import it.unibo.controller.input.PlayerInputHandler;
-import it.unibo.controller.engine.GameEngine;
-import it.unibo.controller.engine.LocalGameEngine;
+import it.unibo.controller.shared.input.InputHandler;
+import it.unibo.controller.shared.input.PlayerInputHandler;
+import it.unibo.controller.shared.engine.GameEngine;
+import it.unibo.controller.shared.engine.LocalGameEngine;
 import it.unibo.model.entities.GameEntityFactoryImpl;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;

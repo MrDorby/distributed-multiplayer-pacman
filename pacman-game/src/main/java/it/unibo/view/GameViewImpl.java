@@ -1,6 +1,6 @@
 package it.unibo.view;
 
-import it.unibo.controller.input.InputHandler;
+import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.model.common.Direction;
 import it.unibo.model.game.GameContext;
 import it.unibo.view.screens.game.GameOverPanel;
