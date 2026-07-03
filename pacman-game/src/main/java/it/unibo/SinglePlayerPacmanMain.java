@@ -13,7 +13,7 @@ import it.unibo.view.GameViewImpl;
 
 import javax.swing.*;
 
-public class StandalonePacmanGame {
+public class SinglePlayerPacmanMain {
     static void main() {
         SwingUtilities.invokeLater(() -> {
             String playerName = "LocalPlayer";

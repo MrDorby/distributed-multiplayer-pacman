@@ -10,12 +10,12 @@ import it.unibo.view.screens.menu.MainMenuController;
 import javax.swing.*;
 import java.awt.*;
 
-public class PacmanClient {
+public class FullPacmanMain {
     private final JFrame frame = new JFrame("Pacman");
     private final static int WIDTH_FRAME = Toolkit.getDefaultToolkit().getScreenSize().width;
     private final static int HEIGHT_FRAME = Toolkit.getDefaultToolkit().getScreenSize().height;
 
-    public PacmanClient() {
+    public FullPacmanMain() {
         frame.setSize(WIDTH_FRAME, HEIGHT_FRAME);
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -33,7 +33,7 @@ public class PacmanClient {
 
     static void main() {
         SwingUtilities.invokeLater(() -> {
-            PacmanClient app = new PacmanClient();
+            FullPacmanMain app = new FullPacmanMain();
             app.start();
         });
     }
