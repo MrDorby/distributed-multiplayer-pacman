@@ -19,8 +19,6 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.22.0")
     // Source: https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     implementation("ch.qos.logback:logback-classic:1.5.32")
-    // Source: https://mvnrepository.com/artifact/com.esotericsoftware/kryonet
-    implementation("com.esotericsoftware:kryonet:2.22.0-RC1")
     // Source: https://mvnrepository.com/artifact/io.netty/netty-all
     implementation("io.netty:netty-all:4.2.15.Final")
 }
