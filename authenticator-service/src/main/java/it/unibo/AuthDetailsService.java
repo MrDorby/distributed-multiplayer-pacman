@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import it.unibo.mongodb.AuthMongoDB;
@@ -25,10 +26,9 @@ public class AuthDetailsService {
     //@Autowired
     //private PasswordEncoder passwordEncoder;
 
-    // TODO: this method needs to be revisionated, no more authentication manager.
-    public AuthMongoDB authenticate(String username, String password) {
+    public AuthMongoDB authenticate(String username, String password, PasswordEncoder passwordEncoder) {
         AuthMongoDB authUser = (AuthMongoDB) loadUserByUsername(username);
-        if (authUser.getUsername() == username && authUser.getPassword() == password) {
+        if (authUser.getUsername().equals(username) && passwordEncoder.matches(password, authUser.getPassword())) {
             return authUser;
         }
         throw new UsernameNotFoundException("User not found.");
@@ -39,12 +39,16 @@ public class AuthDetailsService {
             //.orElseThrow(() -> new UsernameNotFoundException("Username not found!"));
     }
 
-    public boolean register(AuthMongoDB authMongoDB) {
-        return authRepository.save(authMongoDB) == authMongoDB ? true : false;
+    public AuthMongoDB register(AuthMongoDB authMongoDB) {
+        return authRepository.save(authMongoDB);
     }
 
-    public void addToken(String username, String token) {
-        authRepository.updateToken(username, token);
+    public void addKey(String username, String key) {
+        //authRepository.updateKey(username, key);
+        authRepository.findByUsername(username).ifPresent(x -> {
+            x.setKey(key); 
+            authRepository.save(x);
+        });
     }
     
 }
