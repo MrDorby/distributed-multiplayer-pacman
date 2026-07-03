@@ -4,10 +4,11 @@ import it.unibo.controller.shared.engine.AbstractFixedTimeStepGameEngine;
 import it.unibo.controller.shared.input.PacmanCommand;
 import it.unibo.controller.server.network.GameBroadcaster;
 import it.unibo.model.game.Game;
-import it.unibo.model.game.GameContext;
 import it.unibo.view.HeadlessView;
 
 public class ServerGameEngine extends AbstractFixedTimeStepGameEngine {
+    private static final int BROADCAST_TICK_DIVISOR = 4;
+    private int tickCounter = 0;
     private final GameBroadcaster broadcaster;
 
     public ServerGameEngine(Game game, GameBroadcaster broadcaster) {
@@ -28,7 +29,10 @@ public class ServerGameEngine extends AbstractFixedTimeStepGameEngine {
 
     @Override
     protected void afterTick() {
-        GameContext context = this.game.getContext();
-        broadcaster.broadcast(context);
+        tickCounter++;
+        if (tickCounter >= BROADCAST_TICK_DIVISOR) {
+            tickCounter = 0;
+            broadcaster.broadcast(this.game.getContext());
+        }
     }
 }

@@ -42,14 +42,18 @@ public class NettyGameNetworkClient {
 
     private final GameClientNetworkListener listener;
 
+    private final String username;
+
     public NettyGameNetworkClient(String host, int tcpPort, int udpPort, String username,
                                    GameClientNetworkListener listener) throws InterruptedException {
         this.serverUdpAddress = new InetSocketAddress(host, udpPort);
         this.listener = listener;
+        this.username = username;
 
         Bootstrap udpBootstrap = new Bootstrap()
                 .group(workerGroup)
                 .channel(NioDatagramChannel.class)
+                .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(65535))
                 .handler(new SimpleChannelInboundHandler<DatagramPacket>() {
                     @Override
                     protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket msg) {
@@ -79,8 +83,9 @@ public class NettyGameNetworkClient {
                     }
                 });
         this.tcpChannel = tcpBootstrap.connect(host, tcpPort).sync().channel();
+        logger.info("TCP connected to {}:{}", host, tcpPort);
         sendTcp(PacketType.JOIN_MATCH, new JoinMatchPacket(username));
-        sendUdp(PacketType.UDP_HANDSHAKE, new UdpHandshakePacket(username));
+        logger.info("Sent JOIN_MATCH for user '{}'", username);
     }
 
     public void sendTcp(PacketType type, Object packet) {
@@ -111,24 +116,27 @@ public class NettyGameNetworkClient {
 
     private void handleIncomingPayload(ByteBuf buffer) {
         if (buffer.readableBytes() < 1) return;
-        try {
-            byte packetTypeId = buffer.readByte();
-            PacketType type = PacketType.fromId(packetTypeId);
-            if (type == PacketType.GAME_CONTEXT) {
-                try (ByteBufInputStream inputStream = new ByteBufInputStream(buffer)) {
-                    GameContextDTO dto = cborMapper.readValue((InputStream) inputStream, GameContextDTO.class);
-                    listener.onGameContext(decoder.decode(dto));
-                }
-                return;
-            }
-            if (type == PacketType.GAME_START) {
-                listener.onGameStart();
-                return;
-            }
-            logger.warn("Unexpected or unhandled packet type received on client: {}", type);
-        } catch (IOException e) {
-            logger.error("Failed to decode payload", e);
+        byte packetTypeId = buffer.readByte();
+        PacketType type = PacketType.fromId(packetTypeId);
+        if (type == PacketType.JOIN_ACK) {
+            sendUdp(PacketType.UDP_HANDSHAKE, new UdpHandshakePacket(username));
+            logger.info("Received JOIN_ACK; sent UDP_HANDSHAKE for user '{}'", username);
+            return;
         }
+        if (type == PacketType.GAME_CONTEXT) {
+            try (ByteBufInputStream inputStream = new ByteBufInputStream(buffer)) {
+                GameContextDTO dto = cborMapper.readValue((InputStream) inputStream, GameContextDTO.class);
+                listener.onGameContext(decoder.decode(dto));
+            } catch (IOException e) {
+                logger.error("Failed to decode payload", e);
+            }
+            return;
+        }
+        if (type == PacketType.GAME_START) {
+            listener.onGameStart();
+            return;
+        }
+        logger.warn("Unexpected or unhandled packet type received on client: {}", type);
     }
 
     private ByteBuf serializePacket(PacketType type, Object packet) throws IOException {

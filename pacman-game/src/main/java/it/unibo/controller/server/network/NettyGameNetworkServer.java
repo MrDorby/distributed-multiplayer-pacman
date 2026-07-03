@@ -16,6 +16,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
+import it.unibo.controller.shared.network.packets.JoinAckPacket;
 import it.unibo.controller.shared.network.packets.JoinMatchPacket;
 import it.unibo.controller.shared.network.packets.PacketType;
 import it.unibo.controller.shared.network.packets.UdpHandshakePacket;
@@ -145,9 +146,13 @@ public class NettyGameNetworkServer {
                     GameUserSession session = new GameUserSession(username, channel);
                     activeSessions.put(username, session);
                     logger.info("Player {} successfully connected via TCP.", username);
+                    sendTcp(username, PacketType.JOIN_ACK.getId(), new JoinAckPacket());
+                    logger.info("Sent JOIN_ACK to {}", username);
                     listener.onPlayerJoined(username);
                 }
+                return;
             }
+            logger.warn("Received unhandled TCP packet type: {}", type);
         } catch (IOException e) {
             logger.error("Failed to unpack TCP routing payload", e);
         }
@@ -165,6 +170,8 @@ public class NettyGameNetworkServer {
                     if (session != null) {
                         session.setUdpAddress(datagram.sender());
                         logger.info("Player {} UDP bound to real remote endpoint: {}", handshake.username(), datagram.sender());
+                    } else {
+                        logger.warn("Received UDP handshake for unknown/not-yet-joined user: {}", handshake.username());
                     }
                 }
                 return;
@@ -174,6 +181,8 @@ public class NettyGameNetworkServer {
                     PacmanMoveCommand command = cborMapper.readValue((InputStream) inputStream, PacmanMoveCommand.class);
                     String senderId = command.pacmanId();
                     GameUserSession session = activeSessions.get(senderId);
+                    logger.debug("Move command from senderId='{}', session={}, sessionUdpAddr={}, datagramSender={}",
+                            senderId, session != null, session != null ? session.getUdpAddress() : null, datagram.sender());
                     if (session != null && datagram.sender().equals(session.getUdpAddress())) {
                         listener.onCommandReceived(senderId, command);
                     } else {

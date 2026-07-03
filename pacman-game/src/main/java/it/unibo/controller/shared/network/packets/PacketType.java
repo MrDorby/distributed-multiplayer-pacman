@@ -5,7 +5,8 @@ public enum PacketType {
     UDP_HANDSHAKE((byte) 2),
     MOVE_COMMAND((byte) 3),
     GAME_START((byte) 4),
-    GAME_CONTEXT((byte) 5);
+    GAME_CONTEXT((byte) 5),
+    JOIN_ACK((byte) 6);
 
     private final byte id;
 
