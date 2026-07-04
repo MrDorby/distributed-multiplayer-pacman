@@ -1,11 +1,6 @@
 package it.unibo.mongodb;
 
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
@@ -14,9 +9,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "auth")
 public class AuthMongoDB {
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthMongoDB.class);
-    
-    //@Indexed(unique = true)
     @Id
     private String id;
     private String username;
@@ -32,12 +24,6 @@ public class AuthMongoDB {
         this.username = username;
         this.key = key;
     }
-
-    // public AuthMongoDB(String username, String password) {
-    //     this.password = password;
-    //     this.username = username;
-    //     this.token = Optional.empty();
-    // }
     
     public String getId() {
         return id;
@@ -64,7 +50,7 @@ public class AuthMongoDB {
     }
 
     public String getKey() {
-        return this.key;//.orElse("");
+        return this.key;
     }
 
     public void setKey(String key) {

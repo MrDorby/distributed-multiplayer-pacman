@@ -1,6 +1,7 @@
 package it.unibo;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
@@ -9,19 +10,33 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
-import it.unibo.key.KeyGenerator;
+import it.unibo.dto.TokenDTO;
+import it.unibo.key.KeyManager;
 import it.unibo.mongodb.AuthRepository;
+import it.unibo.token.TokenService;
+import tools.jackson.databind.ObjectMapper;
 
 //@EnableMongoRepositories(basePackages = "it.unibo.mongodb")
 @SpringBootApplication
 public class Main {
     public static void main(String[] args) throws Exception {
-        SpringApplication.run(Main.class, args);
+        //SpringApplication.run(Main.class, args);
+        //SecretKey k = KeyGenerator.randomSecretKey();
+        //System.out.println(k instanceof Key);
+        //System.out.println(Cipher.getInstance("AES/CBC/PKCS5Padding").getAlgorithm());
+        // TokenService tokenService = new TokenService();
+        // String token = tokenService.generateToken("pippo");
+        // System.out.println(token);
+        // String json = new ObjectMapper().writeValueAsString(new TokenDTO(token));
+        // System.out.println("\n\n\n" + json + "\n");
+        // TokenDTO tokenDTO = new ObjectMapper().readValue(json, TokenDTO.class); 
+        // System.out.println(tokenDTO);
         //String encryptedPublic = "fwSgRxImaDWKhaDXvdb8Nf2/7FukCu969z29cTlXxX698bVHpFtD6QtxCro9rvt+yhr+2PAx3yXcHAGzcfroK/QskTQAIodQvmlly+K0MCZY8bzPpqSAubFViUwklGDOZuvtg9isPXdBx5qUfRx73KmxGKLlwzHb+Wppb/j/avxF/CLYbBEgFefWtV60yVi06hW9Ob0xgjFW/F/IwZkvYzspo3OzZubaJ/HmSNzmn3saMSRDvcTiZWXxt7rrc6x5yhrdRNTBWVTJwzoS2dTqo6Zf8mJn5sp905mwkYbl9Yjwk1y541/JlUUrK6gfctAbOP218t4asz09Zq/Xm2Ayc0I6lwgXbjr7zBH4Sy5jNkOCdczGVT/tjRlV8D7qfNwR4evDK9Ow+Ev6a081SSe55MZ2Qiuq8qAUN4zOzdybyxF267SFBm7AsuCCc4zAnOvz6AM7Rh2bR1AaqobZyNHe6PHrvK2NTkPLpQ+vKM61b7q16nY0kaHJ0ABZwIZKS/kQQXi98/0aDRnIdM9RTcGPxubFJ4RHKEaxGkM86YjbK3/dlU1pCH8RmZK3hPiQIpWEXOZrfXPcFieZVTH1WMYyTqApzqcuWcNFBcUN6y+/5d72nhJkTBQ3r8LFLUeE2vPIIJOhq7EkTtR6T0oXbyiOKdhK+a+yJgwyVQW8UzB0j34="; 
         // System.out.println(encryptedPublic.length());
         //String b = "X9AsXcj3J9jrpasD4KKjZnZ8LpqpSB4qKoij/VzGRhLGTP3/oTDIIVe3kIQEBX2zNNvuIzV5hhXEs802ZSdfJ1ZaZZwi6NcULqNDJBDzlwAGWKcqc6T4mjOK2BNB//PsoVVKtAATVqsigYYcvGVShsA9sCHMWzsEW63ezq4Wmh145gDb/246PB4z7Ve8H48nzXfU8xjOUJylUk+rRdnc/BiyQLjM+hl20zlE/KYVKWIILDyRTLeU5/NKfLaA0q52XsE0qzGVCBzk7A1Zr2CAhI5cxU6qh3Rx48NWRh1a7z7PSfNXnTaLzbJpsHhn4tP6VKilij6q4X78YOFFwapmIgjpTgyQfz5LtsBCl6KKn69KAOD8Oj+RWhkzdbfUJzRhP29KNdrvRRf9i6vMEIHR/ucO1CL/hOpLRsPRZouIbu6ZKupE3XO8/BzxXxiHFzunWAfTql5OazQeVbboMLBJTQv1DSEVr0saCHKCIsQ/ModDX7o8S2skZIGMieHTVc2gqPfDKlTX0FU884nmZCLWBbCMA2Z+qXa1FeB4vQEmKf7pdpQjfIxhbjO5ZurQcFrATXeTc4why/dFWIaLtOkltIoOdCPMUVpplE+jscW74u5VlO91gjwlH533M5G4hDwiHjX6z1hMLfXI2GPxCVIHt9pB08xeBXHfpu18Ptl+dWA=";

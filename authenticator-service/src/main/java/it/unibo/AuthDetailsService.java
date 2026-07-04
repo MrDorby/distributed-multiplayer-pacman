@@ -1,11 +1,6 @@
 package it.unibo;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,12 +14,6 @@ public class AuthDetailsService {
 
     @Autowired
     private AuthRepository authRepository;
-
-    // @Autowired
-    // private AuthenticationManager authenticationManager;
-
-    //@Autowired
-    //private PasswordEncoder passwordEncoder;
 
     public AuthMongoDB authenticate(String username, String password, PasswordEncoder passwordEncoder) {
         AuthMongoDB authUser = (AuthMongoDB) loadUserByUsername(username);
@@ -44,7 +33,6 @@ public class AuthDetailsService {
     }
 
     public void addKey(String username, String key) {
-        //authRepository.updateKey(username, key);
         authRepository.findByUsername(username).ifPresent(x -> {
             x.setKey(key); 
             authRepository.save(x);

@@ -8,9 +8,9 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
       MONGO_INITDB_DATABASE: authDB  # Database to be created on startup
     ports:
-      - "27018:27017"
+      - "27018:27017" # Port changed because possible conflict with MongoDb on local
     volumes:
-      #- ./mongo-auth:/data/db
+      #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
     networks:
       - auth_mongodb_network

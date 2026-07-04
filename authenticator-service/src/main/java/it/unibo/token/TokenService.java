@@ -1,79 +1,82 @@
 package it.unibo.token;
 
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
-import it.unibo.key.KeyGenerator;
+import it.unibo.key.KeyManager;
 
 @Service
 public class TokenService {
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenService.class);
     private static final int TIME_EXPIRATION = 10; // hours
     private static final String ZONE_ID = "+1";
+    private static final String ISSUER = "auth-token";
 
-    public String generateToken(String user) {
-        try {
-            Algorithm algorithm = Algorithm.RSA512(
-                (RSAPublicKey) KeyGenerator.loadAuthenticatorPublicKey(), 
-                (RSAPrivateKey) KeyGenerator.loadAuthenticatorPrivateKey());
-            return JWT.create()
-                    .withIssuer("auth-token")
-                    .withSubject(user)
-                    .withClaim("Username", user)
-                    .withExpiresAt(getExpirationDate())
-                    .sign(algorithm);
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
-        }
-        return "";
+    /**
+     * Generates the token for the specified user and 
+     * the Authenticator signs it with its private key.
+     * @param user that requires the token.
+     * @return a String representing the token.
+     * @throws Exception 
+     */
+    public String generateToken(String user) throws Exception {
+        Algorithm algorithm = Algorithm.RSA512(
+            (RSAPublicKey) KeyManager.loadAuthenticatorPublicKey(), 
+            (RSAPrivateKey) KeyManager.loadAuthenticatorPrivateKey());
+        return JWT.create()
+                .withIssuer(ISSUER)
+                .withSubject(user)
+                .withClaim("Username", user)
+                .withExpiresAt(getExpirationDate())
+                .sign(algorithm);
+    }
+
+    /**
+     * Checks the Issuer of the token.
+     * @param token the token to verify.
+     * @return true if it is ok (the correct token has been received) and false otherwise.
+     */
+    public boolean checkIssuer(String token) {
+        return JWT.decode(token).getIssuer().equals(ISSUER);
+    }
+
+    /**
+     * Gets the paramater from the specified claim.
+     * @param token the token to verify.
+     * @param claim the field to return.
+     * @return a String of the desired parameter.
+     */
+    public String getClaimFromToken(String token, String claim) {
+        return JWT.decode(token).getClaim(claim).asString();
     }
 
     /**
      * Checks the validity of the token and returns a decoded version of it.
      * @param token as astring.
-     * @return the token decoded if the validation is positive (the signature can be checked) otherwise null.
+     * @return the token decoded if the validation is positive (the signature can be checked).
+     * @throws Exception
      */
-    public DecodedJWT getTokenVerified(String token, RSAPublicKey publicKey) {
-        Algorithm algorithm;
-        try {
-            algorithm = Algorithm.RSA512(publicKey, null);
-            return JWT.require(algorithm).build().verify(token);
-        } catch (IllegalArgumentException | JWTVerificationException e) {
-            LOGGER.error(e.getMessage());
-            return null;
-        }
+    public DecodedJWT getTokenVerified(String token, RSAPublicKey publicKey) throws Exception {
+        Algorithm algorithm = Algorithm.RSA512(publicKey, null);
+        return JWT.require(algorithm).build().verify(token);
+    }
 
-        // try {
-        //     Algorithm algorithm = Algorithm.RSA512(
-        //         (RSAPublicKey) KeyGenerator.loadAuthenticatorPublicKey(), 
-        //         null);
-        //     JWTVerifier verifier = JWT.require(algorithm)
-        //     // specify any specific claim validations
-        //     .withIssuer("auth-token")
-        //     // reusable verifier instance
-        //     .build();
-        //     DecodedJWT decodedJWT = verifier.verify(token);
-        //     System.out.println(decodedJWT.getClaim("Username").asString());
-        // } catch (JWTVerificationException | IllegalArgumentException | InvalidKeySpecException | NoSuchAlgorithmException | IOException exception) {
-            
-        // }
+    /**
+     * Checks the expiration date of the token.
+     * @param expirationDate inside the token.
+     * @return true if the token is still valid and false otherwise.
+     */
+    public boolean checkExpirationDate(Instant expirationDate) {
+        return expirationDate.compareTo(LocalDateTime.now().toInstant(ZoneOffset.of(ZONE_ID))) > 0;
     }
 
     private Instant getExpirationDate() {
