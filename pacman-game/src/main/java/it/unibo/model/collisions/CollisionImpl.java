@@ -13,7 +13,7 @@ public class CollisionImpl implements Collision{
     }
 
     @Override
-    public GameEntity getGameEntity() {
+    public GameEntity getInvolvedEntity() {
         return entity;
     }
 

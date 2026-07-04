@@ -14,17 +14,15 @@ import it.unibo.model.movement.MovementManagerImpl;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class PacmanImpl extends GameEntityImpl implements Pacman {
     private final static int NUMBER_LIVES = 3;
-    private final static int ABILITY_TO_EAT_GHOSTS_DURATION_MILLIS = 3000;
-    private final static int INVINCIBILITY_DURATION_MILLIS = 2000;
+    private final static int ABILITY_TO_EAT_GHOSTS_DURATION_IN_MILLIS = 3000;
+    private final static int INVINCIBILITY_DURATION_IN_MILLIS = 2000;
     private static final int DIRECTION_CHANGE_COOLDOWN_MILLIS = 500;
-    private final MovementManager movementManager;
+    protected final MovementManager movementManager;
     private String id;
     private int score;
     private int lives;
@@ -108,107 +106,100 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
         return invincible;
     }
 
-    // TODO: Handling the part of the AI pacman.
     @Override
     public void update(GameContext currentContext) {
         if (this.lastTimeDirectionWasChanged == 0) {
             this.lastTimeDirectionWasChanged = currentContext.getGameState().getTimeLeftInMillis();
         }
-        Set<Collision> collision = currentContext.getCollisions(this);
-        Stream<Ghost> ghosts = collision.stream().filter(x -> x.getGameEntity() instanceof Ghost).map(x -> (Ghost) x.getGameEntity());
-        ghosts.findFirst().ifPresent(x -> checkCollisionWithGhost(x, currentContext));
+        // Collision checking should be performed only when the pacman is alive.
         if (this.isAlive()) {
-            collision.stream()
-                .filter(x -> x.getGameEntity() instanceof Dot)
-                .map(x -> (Dot) x.getGameEntity())
-                .findFirst()
-                .ifPresent(x -> checkSpecialDot(x, currentContext));
-            checkPacmanUpdates(currentContext);
+            checkCollisions(currentContext);
+        }
+        if (this.isAlive()) {
+            checkStateExpirations(currentContext);
+            if (!controlledByPlayer) {
+                handleBotBehaviour(currentContext);
+            }
             super.setPosition(this.movementManager.move());
         }
     }
 
-    /* Checks if it is necessary to change the pacman state. */
-    private void checkPacmanUpdates(GameContext context) {
-        long currentTime = context.getGameState().getTimeLeftInMillis();
-        if (this.invincible && currentTime <= this.lastTimeBecameInvincible - INVINCIBILITY_DURATION_MILLIS) {
-            this.invincible = false;
-        }
-        if (this.canEatGhosts && currentTime <= this.lastTimeSpecialDotWasEaten - ABILITY_TO_EAT_GHOSTS_DURATION_MILLIS) {
-            this.canEatGhosts = false;
-        }
-        if (!this.controlledByPlayer && currentTime <= this.lastTimeDirectionWasChanged - DIRECTION_CHANGE_COOLDOWN_MILLIS) {
-            movementBehaviour(context);
+    private void checkCollisions(GameContext context) {
+        Set<Collision >collisions = context.getCollisions(this);
+        // Check for Ghost interactions
+        collisions.stream()
+                .filter(collision -> collision.getInvolvedEntity() instanceof Ghost)
+                .map(collision -> (Ghost) collision.getInvolvedEntity())
+                .findFirst()
+                .ifPresent(ghost -> checkGhostCollision(ghost, context));
+        // Check for Dot interactions only if still alive after checking ghosts
+        if (this.isAlive()) {
+            collisions.stream()
+                    .filter(collision -> collision.getInvolvedEntity() instanceof Dot)
+                    .map(collision -> (Dot) collision.getInvolvedEntity())
+                    .findFirst()
+                    .ifPresent(dot -> checkDotCollision(dot, context));
         }
     }
 
-    /* Chooses how to move the pacman if no user commands it,
-    by checking its neighbors or otherwise gets random direction. */
-    private void movementBehaviour(GameContext context) {
-        GameMap map = context.getMap();
-        //boolean found = false;
-        Map<MatrixCoordinates, Direction> md = MovableEntity
-            .getWalkableDirection(this.movementManager.currentMatrixCoordinates(), map);
-        List<Tile> tiles = md.entrySet()
-            .stream()
-            .map(x -> map.getTile(x.getKey()))
-            .filter(
-                y -> y.getTileType() == TileType.DOT ||
-                y.getTileType() == TileType.SPECIAL_DOT
-            ).collect(
-                Collectors.collectingAndThen(
-                    Collectors.toList(),
-                    collected -> {
-                        Collections.shuffle(collected);
-                        return collected;
-                    }
-                )
-            );
-        if (tiles.isEmpty()) {
-            this.movementManager.changeDirection(MovableEntity.getRandomDirection());
-        } else {
-            this.movementManager.changeDirection(md.get(tiles.getFirst().getMatrixPosition()));
-        }
-        // for (int i = 0; i < Direction.values().length - 1 && !found; i++) {
-        //     Direction direction = Direction.values()[i];
-        //     MatrixCoordinates tile = this.movementManager.currentMatrixCoordinates()
-        //         .getNeighbour(direction, map.getGridSize());
-        //     Tile mapTile = map.getTile(tile);
-        //     if (mapTile.getTileType() == TileType.DOT || mapTile.getTileType() == TileType.SPECIAL_DOT) {
-        //         found = true;
-        //         this.movementManager.changeDirection(direction);
-        //     }
-        // }
-        // if (!found) {
-        //     this.movementManager.changeDirection(MovableEntity.getRandomDirection());
-        // }
-        this.lastTimeDirectionWasChanged = context.getGameState().getTimeLeftInMillis();
-    }
-
-    private void checkCollisionWithGhost(Ghost ghost, GameContext context) {
+    private void checkGhostCollision(Ghost ghost, GameContext context) {
         if (!this.canEatGhosts && !this.invincible) {
             if (this.lives > 0) {
                 this.lives = this.lives - 1;
                 this.invincible = true;
                 this.lastTimeBecameInvincible = context.getGameState().getTimeLeftInMillis();
-                List<Tile> tiles = context.getMap().getPacmanSpawnPoints().stream().toList();
-                super.setPosition(tiles.get(new Random().nextInt(0, tiles.size())).getCenterPosition());
+                // Code below doesn't work. In any case, it's better if it doesn't teleport to
+                // a non-deterministic spawn point for speculative execution purposes.
+                // List<Tile> tiles = context.getMap().getPacmanSpawnPoints().stream().toList();
+                // super.setPosition(tiles.get(new Random().nextInt(0, tiles.size())).getCenterPosition());
             } else {
                 super.setIsAlive(false);
             }
-        } else {
-            if (isAlive() && this.canEatGhosts) {
-                this.score = this.score + ghost.getGhostValue();
-            }
+        } else if (this.canEatGhosts) {
+            this.score = this.score + ghost.getGhostValue();
         }
     }
 
     /* Checks if the collision made with a dot and if the dot is special. */
-    private void checkSpecialDot(Dot dot, GameContext context) {
+    private void checkDotCollision(Dot dot, GameContext context) {
         if (dot.isSpecial()) {
             this.canEatGhosts = true;
             this.lastTimeSpecialDotWasEaten = context.getGameState().getTimeLeftInMillis();
         }
         this.score = this.score + dot.dotValue();
+    }
+
+    protected void checkStateExpirations(GameContext context) {
+        long currentTime = context.getGameState().getTimeLeftInMillis();
+        if (this.invincible && currentTime <= this.lastTimeBecameInvincible - INVINCIBILITY_DURATION_IN_MILLIS) {
+            this.invincible = false;
+        }
+        if (this.canEatGhosts && currentTime <= this.lastTimeSpecialDotWasEaten - ABILITY_TO_EAT_GHOSTS_DURATION_IN_MILLIS) {
+            this.canEatGhosts = false;
+        }
+    }
+
+    /* Chooses how to move the pacman if no user commands it,
+    by checking its neighbours or otherwise gets random direction. */
+    private void handleBotBehaviour(GameContext context) {
+        long currentTime = context.getGameState().getTimeLeftInMillis();
+        if (currentTime <= this.lastTimeDirectionWasChanged - DIRECTION_CHANGE_COOLDOWN_MILLIS) {
+            GameMap map = context.getMap();
+            Map<MatrixCoordinates, Direction> md = MovableEntity
+                    .getWalkableDirection(this.movementManager.currentMatrixCoordinates(), map);
+            List<Tile> tiles = md.keySet()
+                    .stream()
+                    .map(map::getTile)
+                    .filter(y -> y.getTileType() == TileType.DOT || y.getTileType() == TileType.SPECIAL_DOT)
+                    .collect(Collectors.collectingAndThen(Collectors.toList(), collected -> {
+                        Collections.shuffle(collected);return collected;
+                    }));
+            if (tiles.isEmpty()) {
+                this.movementManager.changeDirection(MovableEntity.getRandomDirection());
+            } else {
+                this.movementManager.changeDirection(md.get(tiles.getFirst().getMatrixPosition()));
+            }
+            this.lastTimeDirectionWasChanged = context.getGameState().getTimeLeftInMillis();
+        }
     }
 }

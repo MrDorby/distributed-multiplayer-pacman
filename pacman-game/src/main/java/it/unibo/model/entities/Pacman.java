@@ -57,7 +57,7 @@ public interface Pacman extends MovableEntity {
     MatrixCoordinates getMatrixCoordinates();
 
     /**
-     * Returns whether the pacman is unaffacted by ghosts.
+     * Returns whether the pacman is unaffected by ghosts.
      * @return a boolean.
      */
     boolean isInvincible();

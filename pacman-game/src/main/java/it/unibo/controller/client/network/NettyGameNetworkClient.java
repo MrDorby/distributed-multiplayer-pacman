@@ -20,6 +20,7 @@ import it.unibo.controller.shared.network.packets.PacketType;
 import it.unibo.controller.shared.network.packets.UdpHandshakePacket;
 import it.unibo.controller.shared.network.translation.GameContextDecoder;
 import it.unibo.controller.shared.network.translation.GameContextDecoderImpl;
+import it.unibo.model.entities.SpeculativeEntityFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +34,7 @@ public class NettyGameNetworkClient {
     private static final int TIMEOUT_IN_MILLIS = 5000;
 
     private final CBORMapper cborMapper = new CBORMapper();
-    private final GameContextDecoder decoder = new GameContextDecoderImpl();
+    private final GameContextDecoder decoder = new GameContextDecoderImpl(new SpeculativeEntityFactoryImpl());
     private final EventLoopGroup workerGroup = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
 
     private final Channel tcpChannel;

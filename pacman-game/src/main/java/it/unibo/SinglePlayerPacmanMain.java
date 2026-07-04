@@ -17,6 +17,7 @@ public class SinglePlayerPacmanMain {
     static void main() {
         SwingUtilities.invokeLater(() -> {
             String playerName = "LocalPlayer";
+            // Can use SpeculativeEntityFactoryImpl for no collision effects.
             GameContext context = GameContextFactory.createFromMap("maps/map1.json", new GameEntityFactoryImpl());
             Game game = new GameImpl(context);
             GameEngine engine = new LocalGameEngine(game, playerName);
