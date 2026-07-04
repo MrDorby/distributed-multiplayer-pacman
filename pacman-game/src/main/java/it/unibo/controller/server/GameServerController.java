@@ -1,6 +1,7 @@
 package it.unibo.controller.server;
 
 import it.unibo.controller.server.engine.ServerGameEngine;
+import it.unibo.controller.server.network.GameLifecycleListener;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
 import it.unibo.controller.server.network.GameBroadcaster;
@@ -11,23 +12,22 @@ import it.unibo.controller.shared.network.packets.GameStartPacket;
 import it.unibo.controller.shared.network.packets.PacketType;
 import it.unibo.controller.shared.network.translation.GameContextEncoder;
 import it.unibo.controller.shared.network.translation.GameContextEncoderImpl;
-import it.unibo.model.entities.GameEntityFactoryImpl;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
-import it.unibo.model.game.GameContextFactory;
-import it.unibo.model.game.GameImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class GameServerController implements GameServerNetworkListener, GameBroadcaster {
+public class GameServerController implements GameServerNetworkListener, GameBroadcaster, GameLifecycleListener {
     private static final Logger logger = LoggerFactory.getLogger(GameServerController.class);
     private static final int REQUIRED_PLAYERS = 4;
 
     private final NettyGameNetworkServer server;
     private final GameEngine engine;
+
+    private final GameContextPersistenceController persistenceController = new GameContextPersistenceController(null);
 
     private final GameContextEncoder encoder = new GameContextEncoderImpl();
 
@@ -62,6 +62,7 @@ public class GameServerController implements GameServerNetworkListener, GameBroa
         server.broadcastTcp(PacketType.GAME_CONTEXT.getId(), initialDto);
         server.broadcastTcp(PacketType.GAME_START.getId(), new GameStartPacket());
         engine.start();
+        persistenceController.start();
         logger.info("Game engine started.");
     }
 
@@ -73,16 +74,16 @@ public class GameServerController implements GameServerNetworkListener, GameBroa
     }
 
     @Override
+    public void onGameEnded(GameContext finalContext) {
+        persistenceController.onGameEnded(encoder.encode(finalContext));
+    }
+
+    @Override
     public void broadcast(GameContext context) {
         if (gameStarted) {
             GameContextDTO dto = encoder.encode(context);
             server.broadcastUdp(PacketType.GAME_CONTEXT.getId(), dto);
-            // logger.debug("Broadcasted game context to all sessions.");
+            logger.debug("Broadcasted game context to all sessions.");
         }
-    }
-
-    static void main() throws Exception {
-        GameContext context = GameContextFactory.createFromMap("maps/map1.json", new GameEntityFactoryImpl());
-        GameServerController controller = new GameServerController(new GameImpl(context), 700, 701);
     }
 }
