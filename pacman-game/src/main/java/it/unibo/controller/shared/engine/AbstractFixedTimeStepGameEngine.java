@@ -131,4 +131,9 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
     public boolean isRunning() {
         return running;
     }
+
+    @Override
+    public int getTickRate() {
+        return TICKS_PER_SECOND;
+    }
 }

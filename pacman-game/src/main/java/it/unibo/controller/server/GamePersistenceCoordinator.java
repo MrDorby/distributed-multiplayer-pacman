@@ -1,7 +1,9 @@
 package it.unibo.controller.server;
 
 import it.unibo.controller.server.backup.GameBackupService;
+import it.unibo.controller.server.results.GameResultsService;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
+import it.unibo.controller.shared.network.translation.GameContextEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,14 +13,20 @@ public class GameContextPersistenceController {
     private static final Logger logger = LoggerFactory.getLogger(GameContextPersistenceController.class.getName());
     private static final long PERIOD_SECONDS = 10;
 
-    private final GameBackupService persister;
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "context-persist"));
+    private final GameBackupService backupService;
+    private final GameResultsService resultsService;
+    private final GameContextEncoder encoder;
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     private volatile GameContextDTO lastContext;
     private ScheduledFuture<?> periodicTask;
 
-    public GameContextPersistenceController(GameBackupService persister) {
-        this.persister = persister;
+    public GamePersistenceCoordinator(GameBackupService backupService,
+                                      GameResultsService resultsService,
+                                      GameContextEncoder encoder) {
+        this.backupService = backupService;
+        this.resultsService = resultsService;
+        this.encoder = encoder;
     }
 
     public void updateContext(GameContextDTO context) {

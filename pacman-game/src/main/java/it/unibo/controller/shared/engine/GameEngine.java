@@ -20,6 +20,9 @@ public interface GameEngine {
      */
     boolean isRunning();
 
+    /**
+     * Returns the current instance of the game.
+     */
     Game getGame();
 
     /**
@@ -36,4 +39,9 @@ public interface GameEngine {
      * Attaches view to the engine for rendering purposes.
      */
     void setView(GameView view);
+
+    /**
+    * Returns the rate in ticks per second at which this engine advances its simulation.
+     */
+    int getTickRate();
 }
