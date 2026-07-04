@@ -1,4 +1,4 @@
-package it.unibo.controller.server.results;
+package it.unibo.controller.server.persistence.results;
 
 import it.unibo.controller.shared.network.dto.GameContextDTO;
 import org.slf4j.Logger;

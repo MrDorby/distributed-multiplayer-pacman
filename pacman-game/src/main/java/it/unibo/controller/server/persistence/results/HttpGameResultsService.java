@@ -1,4 +1,4 @@
-package it.unibo.controller.server.results;
+package it.unibo.controller.server.persistence.results;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

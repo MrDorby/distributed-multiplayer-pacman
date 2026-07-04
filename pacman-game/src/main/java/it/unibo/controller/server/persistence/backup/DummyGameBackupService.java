@@ -1,4 +1,4 @@
-package it.unibo.controller.server.backup;
+package it.unibo.controller.server.persistence.backup;
 
 import it.unibo.controller.shared.network.dto.GameContextDTO;
 import org.slf4j.Logger;
