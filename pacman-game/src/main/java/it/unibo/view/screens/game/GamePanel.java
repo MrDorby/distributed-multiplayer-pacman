@@ -7,12 +7,9 @@ import it.unibo.view.font.FontName;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-import ch.qos.logback.core.joran.sanity.Pair;
-
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -155,18 +152,18 @@ public class GamePanel extends JPanel {
     }
 
     private static class ScoreboardPanel extends JPanel {
-        private record Pair(JLabel name, JLabel points) {
+        private record Triple(JLabel name, JLabel lives, JLabel points) {
             
         }
         //private final Map<String, JLabel> scoreLabels = new HashMap<>();
-        private final Map<Integer, Pair> scoreLabels = new HashMap<>();
+        private final Map<Integer, Triple> scoreLabels = new HashMap<>();
 
         ScoreboardPanel() {
             this.setLayout(new GridLayout(0, 2));
             this.setOpaque(false);
             this.setBorder(BorderFactory.createEmptyBorder(50, 10, 0, 10));
             float titleScoreboardFontSize = 18f;
-            JLabel playerName = new JLabel("Player name", SwingConstants.CENTER);
+            JLabel playerName = new JLabel("Players", SwingConstants.CENTER);
             playerName.setFont(FontManager.addingFont(titleScoreboardFontSize, FONT_NAME));
             playerName.setForeground(Color.BLACK);
             playerName.setBorder(new EmptyBorder(20, 0, 20, 0));
@@ -181,12 +178,17 @@ public class GamePanel extends JPanel {
                 id.setFont(FontManager.addingFont(14f, FONT_NAME));
                 id.setForeground(Color.BLACK);
                 id.setBorder(new EmptyBorder(20, 0, 20, 0));
+                JLabel lives = new JLabel("", SwingConstants.CENTER);
+                lives.setFont(FontManager.addingFont(14f, FONT_NAME));
+                lives.setForeground(Color.BLACK);
+                lives.setBorder(new EmptyBorder(20, 0, 20, 0));
                 JLabel points = new JLabel("", SwingConstants.CENTER);
                 points.setFont(FontManager.addingFont(14f, FONT_NAME));
                 points.setForeground(Color.BLACK);
                 points.setBorder(new EmptyBorder(20, 0, 20, 0));
-                scoreLabels.put(i, new Pair(id, points));
+                scoreLabels.put(i, new Triple(id, lives, points));
                 this.add(id);
+                this.add(lives);
                 this.add(points);
             }
         }
@@ -201,11 +203,20 @@ public class GamePanel extends JPanel {
                 .collect(Collectors.toList()).reversed();
             for (int i = 0; i < list.size(); i++) {
                 String playerId = list.get(i).getKey();
+                String lives = String.valueOf(gameContext
+                    .getPacmans()
+                    .stream()
+                    .filter(
+                        x -> x.getId().equals(playerId))
+                    .findFirst()
+                    .get()
+                    .getLives());
                 String points = String.valueOf(list.get(i).getValue());
                 String displayName = playerId.length() > PLAYER_NAME_LENGTH
                         ? playerId.substring(0, PLAYER_NAME_LENGTH) + "..."
                         : playerId;
                 scoreLabels.get(i).name.setText(displayName);
+                scoreLabels.get(i).lives.setText(lives);
                 scoreLabels.get(i).points.setText(points);
             }
             /*{
