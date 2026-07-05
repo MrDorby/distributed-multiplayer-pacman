@@ -21,6 +21,7 @@ import java.util.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.Logger;
@@ -74,16 +75,40 @@ public class KeyManager {
     }
 
     /**
-     * Encrypts and decrypts incoming data by choosing the right mode and passing the key.
+     * Encrypts and decrypts with RSA the incoming data by choosing the right mode and passing the key.
      * @param data : the content that will be encrypted or decrypted.
      * @param cipherMode : Cipher.ENCRYPT_MODE or Cipher.DECRYPT_MODE
      * @param key : The key that will be used for the chosen mode (AES or RSA).
      * @return the String of the encrypted/decrypted message.
      * @throws Exception
      */
-    public static String encryptDecryptData(String data, int cipherMode, Key key) throws Exception {
-        return encryptDecrypt(data, cipherMode, key);
+    public static String encryptDecryptDataRSA(String data, int cipherMode, Key key) throws Exception {
+        if (cipherMode != Cipher.ENCRYPT_MODE && cipherMode != Cipher.DECRYPT_MODE) {
+            throw new IllegalArgumentException("Cipher mode accepted only: ENCRYPT and DECRYPT!");
+        }
+        Cipher cipher = Cipher.getInstance(RSA_INSTANCE);
+            cipher.init(cipherMode, key);
+        return encryptDecrypt(data, cipherMode, cipher);
     }
+
+    /**
+     * Encrypts and decrypts with AES the incoming data by choosing the right mode and passing the key.
+     * @param data : the content that will be encrypted or decrypted.
+     * @param cipherMode : Cipher.ENCRYPT_MODE or Cipher.DECRYPT_MODE
+     * @param key : the key that will be used for the chosen mode (AES or RSA).
+     * @param ivParameterSpec : the initialization vector for the algorithm.
+     * @return the String of the encrypted/decrypted message.
+     * @throws Exception
+     */
+    public static String encryptDecryptDataAES(String data, int cipherMode, SecretKey key, IvParameterSpec ivParameterSpec) throws Exception {
+        if (cipherMode != Cipher.ENCRYPT_MODE && cipherMode != Cipher.DECRYPT_MODE) {
+            throw new IllegalArgumentException("Cipher mode accepted only: ENCRYPT and DECRYPT!");
+        }
+        Cipher cipher = Cipher.getInstance(AES_INSTANCE);
+        cipher.init(cipherMode, key, ivParameterSpec);
+        return encryptDecrypt(data, cipherMode, cipher);
+    }
+        
 
     /**
      * @return the Public key of the authentication service.
@@ -92,7 +117,7 @@ public class KeyManager {
      * @throws NoSuchAlgorithmException
      */
     public static PublicKey loadAuthenticatorPublicKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        Path path = Path.of(PATH1, PATH2, PATH3, PATH4, PATH5, PUBLIC_KEY_FILE);
+        Path path = Path.of(PATH2, PATH3, PATH4, PATH5, PUBLIC_KEY_FILE);
         try (InputStream inputStream = Files.newInputStream(path)) {
             X509EncodedKeySpec spec = new X509EncodedKeySpec(inputStream.readAllBytes());
             return KeyFactory.getInstance(RSA_ALGORITHM).generatePublic(spec);
@@ -106,7 +131,7 @@ public class KeyManager {
      * @throws NoSuchAlgorithmException
      */
     public static PrivateKey loadAuthenticatorPrivateKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        Path path = Path.of(PATH1, PATH2, PATH3, PATH4, PATH5, PRIVATE_KEY_FILE);
+        Path path = Path.of(PATH2, PATH3, PATH4, PATH5, PRIVATE_KEY_FILE);
         try (InputStream inputStream = Files.newInputStream(path)) {
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(inputStream.readAllBytes());
             return KeyFactory.getInstance(RSA_ALGORITHM).generatePrivate(spec);
@@ -149,6 +174,18 @@ public class KeyManager {
     }
 
     /**
+     * Converts the input String in a Private Key object.
+     * @param key the input String.
+     * @return the related Private Key.
+     * @throws Exception
+     */
+    public static PrivateKey getPrivateKeyFromString(String key) throws Exception {
+        byte[] keyByte = Base64.getDecoder().decode(key);
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyByte);
+        return KeyFactory.getInstance(RSA_ALGORITHM).generatePrivate(spec);
+    }
+
+    /**
      * Convertion from String to SecretKey for AES algorithm.
      * @param key the String version of the original secret key.
      * @return the SecretKey.
@@ -160,17 +197,7 @@ public class KeyManager {
     }
 
     /* Encrypts and decrypts data based on the key received in input. */
-    private static String encryptDecrypt(String data, int cipherMode, Key key) throws Exception {
-        Cipher cipher;
-        if (key instanceof SecretKey) {
-            cipher = Cipher.getInstance(AES_INSTANCE);
-        } else {
-            cipher = Cipher.getInstance(RSA_INSTANCE);
-        }
-        if (cipherMode != Cipher.ENCRYPT_MODE && cipherMode != Cipher.DECRYPT_MODE) {
-            throw new IllegalArgumentException("Cipher mode accepted only: ENCRYPT and DECRYPT!");
-        }
-        cipher.init(cipherMode, key);
+    private static String encryptDecrypt(String data, int cipherMode, Cipher cipher) throws Exception {
         if (cipherMode == Cipher.DECRYPT_MODE) {
             String cleanedData = data.trim().replaceAll("\\s+", ""); 
             byte[] encryptedDataBytes = Base64.getMimeDecoder().decode(cleanedData);

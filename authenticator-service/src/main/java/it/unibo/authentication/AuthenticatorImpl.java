@@ -1,10 +1,8 @@
 package it.unibo.authentication;
 
-import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HashMap;
@@ -12,6 +10,7 @@ import java.util.Map;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -80,7 +79,7 @@ public class AuthenticatorImpl implements Authenticator {
                 
                 /* Storaging the Public Key of the user. */
                 String publicKey = Base64.getEncoder().encodeToString(authPubByte);
-                this.users.put(publicKeyClientDTO.username(), authPub);
+                this.users.put(publicKeyClientDTO.username(), KeyManager.getPublicKeyFromString(publicKeyClientDTO.publicKey()));
                 
                 /* Mapping the Message to a String in JSON format. */
                 ObjectMapper mapper = new ObjectMapper();
@@ -88,7 +87,7 @@ public class AuthenticatorImpl implements Authenticator {
                 responseEntity = ResponseEntity.ok(json);
             }
             return responseEntity;
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException | IOException e) {
+        } catch (Exception e) {
             if (e instanceof NoSuchAlgorithmException) {
                 // In this case, the auth send a empty response to indicate that something wrong happened and the 
                 // user needs to re-authenticate itself.
@@ -111,7 +110,7 @@ public class AuthenticatorImpl implements Authenticator {
         ObjectMapper mapper = new ObjectMapper();
         try {
             /* Decrypting the incoming message and authenticating the user. */
-            String decryptedLoginDTO = KeyManager.encryptDecryptData(encryptedLoginDTO, Cipher.DECRYPT_MODE, KeyManager.loadAuthenticatorPrivateKey());
+            String decryptedLoginDTO = KeyManager.encryptDecryptDataRSA(encryptedLoginDTO, Cipher.DECRYPT_MODE, KeyManager.loadAuthenticatorPrivateKey());
             LoginDTO loginDTO = mapper.readValue(decryptedLoginDTO, LoginDTO.class);
             AuthMongoDB auth = this.authDetailsService.authenticate(loginDTO.username(), loginDTO.password(), bCryptPasswordEncoder);
             
@@ -124,14 +123,15 @@ public class AuthenticatorImpl implements Authenticator {
             TokenDTO tokenDTO = new TokenDTO(token);
             String jsonToken = mapper.writeValueAsString(tokenDTO);
             SecretKey secretKey = KeyManager.randomSecretKey();
-            String encryptedJsonToken = KeyManager.encryptDecryptData(jsonToken, Cipher.ENCRYPT_MODE, secretKey);
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(new byte[16]);
+            String encryptedJsonToken = KeyManager.encryptDecryptDataAES(jsonToken, Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
 
             /* Encrypting the secret key. */
             String secret = Base64.getEncoder().encodeToString(secretKey.getEncoded());
-            String encryptedKey = KeyManager.encryptDecryptData(secret, Cipher.ENCRYPT_MODE, this.users.get(loginDTO.username()));
+            String encryptedKey = KeyManager.encryptDecryptDataRSA(secret, Cipher.ENCRYPT_MODE, this.users.get(loginDTO.username()));
 
             /* Creating the response and converting it to JSON format. */
-            EncryptedTokenDTO encryptedTokenDTO = new EncryptedTokenDTO(encryptedKey, encryptedJsonToken);
+            EncryptedTokenDTO encryptedTokenDTO = new EncryptedTokenDTO(encryptedKey, encryptedJsonToken, Base64.getEncoder().encodeToString(ivParameterSpec.getIV()));
             String jsonEncryptedTokenDTO = mapper.writeValueAsString(encryptedTokenDTO);
             return ResponseEntity.ok(jsonEncryptedTokenDTO);
         } catch (Exception e) {
@@ -150,7 +150,7 @@ public class AuthenticatorImpl implements Authenticator {
         ObjectMapper mapper = new ObjectMapper();
         try {
             /* Decrypting the incoming message and creating a RegisterDTO. */
-            String decryptedRegisterDTO = KeyManager.encryptDecryptData(encryptedRequest, Cipher.DECRYPT_MODE, KeyManager.loadAuthenticatorPrivateKey());
+            String decryptedRegisterDTO = KeyManager.encryptDecryptDataRSA(encryptedRequest, Cipher.DECRYPT_MODE, KeyManager.loadAuthenticatorPrivateKey());
             RegisterDTO registerDTO = mapper.readValue(decryptedRegisterDTO, RegisterDTO.class);
             
             /* Encrypting the password and creating a user for MongoDB. */
@@ -176,17 +176,18 @@ public class AuthenticatorImpl implements Authenticator {
     @PostMapping(value = "/token", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> checkToken(@RequestBody TokenDTO token) {
         Instant expireDate = JWT.decode(token.token()).getExpiresAtAsInstant();
+        String claim = "username";
 
         /* Checking on the expiration date and the correctness of the issuer in the token. */
         if (this.tokenService.checkExpirationDate(expireDate) && this.tokenService.checkIssuer(token.token())) {
             /* Obtaining the username from the token and the public key of the authenticator service who signed the token */
-            String username = this.tokenService.getClaimFromToken(token.token(), "username");
+            String username = this.tokenService.getClaimFromToken(token.token(), claim);
             String stringKey = this.authDetailsService.loadUserByUsername(username).getKey();
             try {
                 /* Verifying the validity of the token and its signature. */
                 PublicKey publicKey = KeyManager.getPublicKeyFromString(stringKey);
                 DecodedJWT jwt = this.tokenService.getTokenVerified(token.token(), (RSAPublicKey) publicKey);
-                return ResponseEntity.ok(jwt.getClaim(username).asString());
+                return ResponseEntity.ok(jwt.getClaim(claim).asString());
             } catch (Exception e) {
                 return ResponseEntity.badRequest().body(e.getMessage());
             }

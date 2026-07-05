@@ -1,0 +1,7 @@
+# Request to send to the authentication server that includes.
+# 1. The public key of the client.
+# 2. The hash of the key.
+# 3. The hash type used.
+# 4. The username of the user.
+
+curl -i -X POST -H "Content-Type:application/json" -d '{"publicKey": "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAp7N9ePIr20oE+YbmtE+qkDo6QXt0jKrmUai2BAqFcxIznLgr7XIIekSFsnTcmStO1MHYU6MZeWIBwo3H4IbI8db6hYJflHZ1gl4JchHczpxf+Xa83nZEGkQlsT8cYHf8hDCAL5ey6MoDZbXx0qHLxdglpeuBD/+ei/dKHNg3JqGB3qQ+3FHRhq+7S9Cmw6ruBFmHW6YqbsKNjzsHryyPaIAjHxvLhc/mVks55gESV9GroieOueb7snCj3+sLcXVubzom1+7wVe2DZpsG4W9rQS2va+pyVPLqJ0Sn6izGDE1mfn0G4eXocFn+2asSx5Ds/C2JKk/Wx74sYX+JOcAMPiKooXo84y5l1agXpqA15dT1wJ3bZZ0dMnCoDBr6GEzxPV+C7bMDJ0OHDzfCIKGrLcLIsDEBotFh8d87Fpomz5B7kD7XrRtMJKQZW+Pi8XdLEUEl1CHMBVLu4VdG36OSBVlV8oD8zRQavtHPyALHoZ9ixsqhoUKx8RxK19mbOwOpqUTX7VRDo3+/qMb2VNh2cq6I3ZGO66H016fh3RtFR4FWm/QbDZqyzOPutLJJmr3l5+zVyT6ubq/kbuTkFpYENhep8RvT3ZKn7jdy/gxUKQxpv5wsEFLAmR+B8LYsi8g2MgwvO9QV9mAkrf8H7NZoT8C6Bjz/MIz2fDPQDDXQ6u8CAwEAAQ==", "hash": "7o2loGIME/fRN1uuvfs6FWWVDR3jMD/jLPuKnoH30b0=", "hashType": "SHA-256", "username": "pippo"}' http://localhost:8080/auth/syn
