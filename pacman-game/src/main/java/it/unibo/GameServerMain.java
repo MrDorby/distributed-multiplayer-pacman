@@ -1,6 +1,7 @@
 package it.unibo;
 
-import it.unibo.controller.server.GameServerController;
+import it.unibo.controller.server.GameContextServerController;
+import it.unibo.controller.server.GameServerControllerFactory;
 import it.unibo.model.entities.GameEntityFactoryImpl;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextFactory;
@@ -23,6 +24,6 @@ public class GameServerMain {
         int udpPort = args.length > 2 ?  Integer.parseInt(args[2]) : DEFAULT_UDP_PORT;
         String mapPath = MAP_PATH_FORMAT.formatted(mapName);
         GameContext context = GameContextFactory.createFromMap(mapPath, new GameEntityFactoryImpl());
-        GameServerController controller = new GameServerController(new GameImpl(context), tcpPort, udpPort);
+        GameContextServerController controller = GameServerControllerFactory.withDummyPersistence(new GameImpl(context), tcpPort, udpPort);
     }
 }

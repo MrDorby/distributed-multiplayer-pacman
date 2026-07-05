@@ -11,29 +11,37 @@ public interface GameEngine {
     void enqueueCommand(PacmanCommand command);
 
     /**
-     * Ticks processed in the last completed second.
+     * Ticks processed in the last second.
      */
     int getCurrentTps();
 
     /**
-     * Returns whether the loop is still running.
+     * Returns whether the game engine is still running.
      */
     boolean isRunning();
 
+    /**
+     * Returns the current instance of the game.
+     */
     Game getGame();
 
     /**
-     * Starts the game loop.
+     * Starts the game engine.
      */
     void start();
 
     /**
-     * Stops the game loop.
+     * Stops the game engine.
      */
     void stop();
 
     /**
-     * Attaches view to the engine for rendering purposes.
+     * Attaches the view to the engine for rendering purposes.
      */
     void setView(GameView view);
+
+    /**
+    * Returns the rate in ticks per second at which this engine advances its simulation.
+     */
+    int getTickRate();
 }
