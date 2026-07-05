@@ -1,5 +1,8 @@
 package it.unibo.controller.server;
 
+import it.unibo.controller.server.health.GameServerHealthCheckHandler;
+import it.unibo.controller.server.health.GameServerStatus;
+import it.unibo.controller.server.network.GameHttpServer;
 import it.unibo.controller.server.persistence.GamePersistenceCoordinator;
 import it.unibo.controller.server.persistence.backup.GameBackupService;
 import it.unibo.controller.server.engine.ServerGameEngine;
@@ -26,21 +29,25 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Top-level coordinator for a single authoritative game server session.
  */
-public class GameContextServerController implements GameServerNetworkListener, GameContextBroadcaster, GameLifecycleListener {
-    private static final Logger logger = LoggerFactory.getLogger(GameContextServerController.class);
+public class GameServerController implements GameServerNetworkListener, GameContextBroadcaster, GameLifecycleListener {
+    private static final Logger logger = LoggerFactory.getLogger(GameServerController.class);
     private static final int REQUIRED_PLAYERS = 4;
     private final NettyGameNetworkServer server;
     private final GameEngine engine;
     private final GamePersistenceCoordinator persistenceCoordinator;
+    private final GameHttpServer httpServer;
     private final GameContextEncoder encoder = new GameContextEncoderImpl();
     private final List<String> joinedUsernames = new CopyOnWriteArrayList<>();
     private volatile boolean gameStarted = false;
 
-    public GameContextServerController(Game game, int tcpPort, int udpPort,
-                                       GameBackupService backupService, GameResultsService resultsService) throws Exception {
+    public GameServerController(Game game, int tcpPort, int udpPort, int httpPort,
+                                GameBackupService backupService, GameResultsService resultsService) throws Exception {
         this.server = new NettyGameNetworkServer(tcpPort, udpPort, this);
         this.engine = new ServerGameEngine(game, this);
         this.persistenceCoordinator = new GamePersistenceCoordinator(backupService, resultsService);
+        this.httpServer = new GameHttpServer(httpPort);
+        httpServer.addGetEndpoint("/health", new GameServerHealthCheckHandler(this::getCurrentHealthStatus));
+        httpServer.start();
         server.start();
         logger.info("Server controller initialized. TCP port: {}, UDP port: {}", tcpPort, udpPort);
     }
@@ -90,5 +97,9 @@ public class GameContextServerController implements GameServerNetworkListener, G
             server.broadcastUdp(PacketType.GAME_CONTEXT.getId(), dto);
             logger.debug("Broadcasted game context to all sessions.");
         }
+    }
+
+    private GameServerStatus getCurrentHealthStatus() {
+        return new GameServerStatus(gameStarted, joinedUsernames.size(), REQUIRED_PLAYERS, engine.isRunning());
     }
 }
