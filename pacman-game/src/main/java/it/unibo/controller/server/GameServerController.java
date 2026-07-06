@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Top-level coordinator for a single authoritative game server session.
@@ -32,49 +31,64 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class GameServerController implements GameServerNetworkListener, GameContextBroadcaster, GameLifecycleListener {
     private static final Logger logger = LoggerFactory.getLogger(GameServerController.class);
     private static final int REQUIRED_PLAYERS = 4;
-    private final NettyGameNetworkServer server;
+
+    private final NettyGameNetworkServer tcpUdpServer;
     private final GameEngine engine;
     private final GamePersistenceCoordinator persistenceCoordinator;
     private final GameHttpServer httpServer;
     private final GameContextEncoder encoder = new GameContextEncoderImpl();
-    private final List<String> joinedUsernames = new CopyOnWriteArrayList<>();
-    private volatile boolean gameStarted = false;
+    private final PlayerLobby lobby = new PlayerLobby(REQUIRED_PLAYERS);
+
+    private final int tcpPort;
+    private final int udpPort;
+    private final int httpPort;
 
     public GameServerController(Game game, int tcpPort, int udpPort, int httpPort,
-                                GameBackupService backupService, GameResultsService resultsService) throws Exception {
-        this.server = new NettyGameNetworkServer(tcpPort, udpPort, this);
+                                GameBackupService backupService, GameResultsService resultsService) {
+        this.tcpPort = tcpPort;
+        this.udpPort = udpPort;
+        this.httpPort = httpPort;
+        this.tcpUdpServer = new NettyGameNetworkServer(tcpPort, udpPort, this);
         this.engine = new ServerGameEngine(game, this);
         this.persistenceCoordinator = new GamePersistenceCoordinator(backupService, resultsService);
         this.httpServer = new GameHttpServer(httpPort);
-        httpServer.addGetEndpoint("/health", new GameServerHealthCheckHandler(this::getCurrentHealthStatus));
-        httpServer.start();
-        server.start();
-        logger.info("Server controller initialized. TCP port: {}, UDP port: {}", tcpPort, udpPort);
+        this.httpServer.addGetEndpoint("/health", new GameServerHealthCheckHandler(this::getCurrentHealthStatus));
     }
+
+    public void start() throws Exception {
+        try {
+            httpServer.start();
+            tcpUdpServer.start();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        logger.info("Server started. TCP port: {}, UDP port: {}, HTTP port: {}", tcpPort, udpPort, httpPort);
+    }
+
+    // TODO add shutdown
 
     @Override
     public void onPlayerJoined(String username) {
-        if (gameStarted) {
-            logger.warn("Player {} tried to join after game already started; ignoring.", username);
+        if (lobby.lobbyIsPlaying()) {
+            logger.warn("Player {} tried to join after game already started.", username);
             return;
         }
-        joinedUsernames.add(username);
-        logger.info("Player {} joined ({}/{}).", username, joinedUsernames.size(), REQUIRED_PLAYERS);
-        if (joinedUsernames.size() == REQUIRED_PLAYERS) {
+        boolean lobbyFull = lobby.tryJoin(username);
+        logger.info("Player {} joined ({}/{}).", username, lobby.joinedCount(), lobby.requiredPlayers());
+        if (lobbyFull) {
             startGame();
         }
     }
 
     private void startGame() {
-        gameStarted = true;
-        logger.info("Required player count reached. Starting game with players: {}", joinedUsernames);
-        engine.getGame().setPacmanNames(List.copyOf(joinedUsernames));
+        List<String> players = lobby.joinedUsernames();
+        logger.info("Required player count reached. Starting game with players: {}", players);
+        engine.getGame().setPacmanNames(players);
         GameContextDTO initialDto = encoder.encode(engine.getGame().getContext());
-        server.broadcastTcp(PacketType.GAME_CONTEXT.getId(), initialDto);
-        server.broadcastTcp(PacketType.GAME_START.getId(), new GameStartPacket());
+        tcpUdpServer.broadcastTcp(PacketType.GAME_CONTEXT.getId(), initialDto);
+        tcpUdpServer.broadcastTcp(PacketType.GAME_START.getId(), new GameStartPacket());
         engine.start();
         persistenceCoordinator.start();
-        logger.info("Game engine started.");
     }
 
     @Override
@@ -91,15 +105,15 @@ public class GameServerController implements GameServerNetworkListener, GameCont
 
     @Override
     public void broadcast(GameContext context) {
-        if (gameStarted) {
+        if (lobby.lobbyIsPlaying()) {
             GameContextDTO dto = encoder.encode(context);
             persistenceCoordinator.updateContext(dto);
-            server.broadcastUdp(PacketType.GAME_CONTEXT.getId(), dto);
+            tcpUdpServer.broadcastUdp(PacketType.GAME_CONTEXT.getId(), dto);
             logger.debug("Broadcasted game context to all sessions.");
         }
     }
 
     private GameServerStatus getCurrentHealthStatus() {
-        return new GameServerStatus(gameStarted, joinedUsernames.size(), REQUIRED_PLAYERS, engine.isRunning());
+        return new GameServerStatus(lobby.lobbyIsPlaying(), lobby.joinedCount(), lobby.requiredPlayers(), engine.isRunning());
     }
 }

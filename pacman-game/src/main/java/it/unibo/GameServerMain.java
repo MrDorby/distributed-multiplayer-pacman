@@ -27,5 +27,6 @@ public class GameServerMain {
         String mapPath = MAP_PATH_FORMAT.formatted(mapName);
         GameContext context = GameContextFactory.createFromMap(mapPath, new GameEntityFactoryImpl());
         GameServerController controller = GameServerControllerFactory.withDummyPersistence(new GameImpl(context), tcpPort, udpPort, httpPort);
+        controller.start();
     }
 }
