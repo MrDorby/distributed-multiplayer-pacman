@@ -1,6 +1,6 @@
 package it.unibo.controller.server;
 
-import it.unibo.controller.server.network.GameHttpServer;
+import it.unibo.controller.server.network.http.GameHttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package it.unibo.controller.server.network;
+package it.unibo.controller.server.network.transport;
 
 import io.netty.channel.Channel;
 

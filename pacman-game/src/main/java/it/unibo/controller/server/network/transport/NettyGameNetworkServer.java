@@ -1,4 +1,4 @@
-package it.unibo.controller.server.network;
+package it.unibo.controller.server.network.transport;
 
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import io.netty.bootstrap.Bootstrap;
@@ -15,37 +15,45 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
-import it.unibo.controller.shared.input.PacmanMoveCommand;
-import it.unibo.controller.shared.network.packets.JoinAckPacket;
-import it.unibo.controller.shared.network.packets.JoinMatchPacket;
+import it.unibo.controller.server.network.transport.handler.TcpPacketHandler;
+import it.unibo.controller.server.network.transport.handler.UdpPacketHandler;
 import it.unibo.controller.shared.network.packets.PacketType;
-import it.unibo.controller.shared.network.packets.UdpHandshakePacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.EnumMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class NettyGameNetworkServer {
+public class NettyGameNetworkServer implements PacketSender {
     private static final Logger logger = LoggerFactory.getLogger(NettyGameNetworkServer.class);
+
     private final int tcpPort;
     private final int udpPort;
     private final CBORMapper cborMapper = new CBORMapper();
+
+    private final GameSessionRegistry sessions;
     private final EventLoopGroup workerGroup = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
-    private final Map<String, GameUserSession> activeSessions = new ConcurrentHashMap<>();
-    private Channel serverTcpChannel;
-    private Channel serverUdpChannel;
+    private final Map<PacketType, TcpPacketHandler> tcpHandlers = new EnumMap<>(PacketType.class);
+    private final Map<PacketType, UdpPacketHandler> udpHandlers = new EnumMap<>(PacketType.class);
 
-    private final GameServerNetworkListener listener;
+    private Channel tcpChannel;
+    private Channel udpChannel;
 
-    public NettyGameNetworkServer(int tcpPort, int udpPort, GameServerNetworkListener listener) {
+    public NettyGameNetworkServer(int tcpPort, int udpPort, GameSessionRegistry sessions) {
         this.tcpPort = tcpPort;
         this.udpPort = udpPort;
-        this.listener = listener;
+        this.sessions = sessions;
+    }
+
+    public void registerTcpHandler(PacketType type, TcpPacketHandler handler) {
+        this.tcpHandlers.put(type, handler);
+    }
+
+    public void registerUdpHandler(PacketType type, UdpPacketHandler handler) {
+        this.udpHandlers.put(type, handler);
     }
 
     public void start() throws Exception {
@@ -58,7 +66,7 @@ public class NettyGameNetworkServer {
                         handleIncomingUdp(msg);
                     }
                 });
-        this.serverUdpChannel = udpBootstrap.bind(udpPort).sync().channel();
+        this.udpChannel = udpBootstrap.bind(udpPort).sync().channel();
 
         ServerBootstrap tcpBootstrap = new ServerBootstrap()
                 .group(workerGroup)
@@ -78,12 +86,24 @@ public class NettyGameNetworkServer {
                         );
                     }
                 });
-        this.serverTcpChannel = tcpBootstrap.bind(tcpPort).sync().channel();
+        this.tcpChannel = tcpBootstrap.bind(tcpPort).sync().channel();
         logger.info("Server running. TCP Port: {}, UDP Port: {}", tcpPort, udpPort);
     }
 
+    public void shutdown() {
+        if (tcpChannel != null) {
+            tcpChannel.close();
+        }
+        if (udpChannel != null) {
+            udpChannel.close();
+        }
+        workerGroup.shutdownGracefully();
+        logger.info("TCP/UDP server shut down. TCP Port: {}, UDP Port: {}", tcpPort, udpPort);
+    }
+
+    @Override
     public void sendTcp(String username, byte packetTypeId, Object packet) {
-        GameUserSession session = activeSessions.get(username);
+        GameUserSession session = sessions.get(username);
         if (session != null && session.getTcpChannel().isActive()) {
             try {
                 session.getTcpChannel().writeAndFlush(serialize(packetTypeId, packet));
@@ -93,25 +113,27 @@ public class NettyGameNetworkServer {
         }
     }
 
+    @Override
     public void sendUdp(String username, byte packetTypeId, Object packet) {
-        GameUserSession session = activeSessions.get(username);
-        if (session != null && session.getUdpAddress() != null && serverUdpChannel != null && serverUdpChannel.isActive()) {
+        GameUserSession session = sessions.get(username);
+        if (session != null && session.getUdpAddress() != null && udpChannel != null && udpChannel.isActive()) {
             try {
                 ByteBuf buf = serialize(packetTypeId, packet);
-                serverUdpChannel.writeAndFlush(new DatagramPacket(buf, session.getUdpAddress()));
+                udpChannel.writeAndFlush(new DatagramPacket(buf, session.getUdpAddress()));
             } catch (IOException e) {
                 logger.error("UDP send failed for user: {}", username, e);
             }
         }
     }
 
+    @Override
     public void broadcastTcp(byte packetTypeId, Object packet) {
         try {
             ByteBuf buf = serialize(packetTypeId, packet);
-            for (GameUserSession session : activeSessions.values()) {
+            for (GameUserSession session : sessions.all()) {
                 Channel channel = session.getTcpChannel();
                 if (channel != null && channel.isActive()) {
-                    channel.writeAndFlush(buf.retain());
+                    channel.writeAndFlush(buf.retainedDuplicate());
                 }
             }
             buf.release();
@@ -120,13 +142,14 @@ public class NettyGameNetworkServer {
         }
     }
 
+    @Override
     public void broadcastUdp(byte packetTypeId, Object packet) {
         try {
             ByteBuf buf = serialize(packetTypeId, packet);
-            for (GameUserSession session : activeSessions.values()) {
+            for (GameUserSession session : sessions.all()) {
                 InetSocketAddress udpAddr = session.getUdpAddress();
-                if (udpAddr != null && serverUdpChannel != null && serverUdpChannel.isActive()) {
-                    serverUdpChannel.writeAndFlush(new DatagramPacket(buf.retain(), udpAddr));
+                if (udpAddr != null && udpChannel != null && udpChannel.isActive()) {
+                    udpChannel.writeAndFlush(new DatagramPacket(buf.retainedDuplicate(), udpAddr));
                 }
             }
             buf.release();
@@ -136,64 +159,45 @@ public class NettyGameNetworkServer {
     }
 
     private void handleIncomingTcp(Channel channel, ByteBuf buffer) {
+        PacketType type;
         try {
             byte packetTypeId = buffer.readByte();
-            PacketType type = PacketType.fromId(packetTypeId);
-            if (type == PacketType.JOIN_MATCH) {
-                try (ByteBufInputStream is = new ByteBufInputStream(buffer)) {
-                    JoinMatchPacket packet = cborMapper.readValue((InputStream) is, JoinMatchPacket.class);
-                    String username = packet.username();
-                    GameUserSession session = new GameUserSession(username, channel);
-                    activeSessions.put(username, session);
-                    logger.info("Player {} successfully connected via TCP.", username);
-                    sendTcp(username, PacketType.JOIN_ACK.getId(), new JoinAckPacket());
-                    logger.info("Sent JOIN_ACK to {}", username);
-                    listener.onPlayerJoined(username);
-                }
-                return;
-            }
+            type = PacketType.fromId(packetTypeId);
+        } catch (Exception e) {
+            logger.warn("Received malformed/unrecognized TCP packet.", e);
+            return;
+        }
+        TcpPacketHandler handler = tcpHandlers.get(type);
+        if (handler == null) {
             logger.warn("Received unhandled TCP packet type: {}", type);
+            return;
+        }
+        try (ByteBufInputStream inputStream = new ByteBufInputStream(buffer)) {
+            handler.handle(channel, inputStream);
         } catch (IOException e) {
-            logger.error("Failed to unpack TCP routing payload", e);
+            logger.error("Failed to unpack TCP payload for {}", type, e);
         }
     }
 
     private void handleIncomingUdp(DatagramPacket datagram) {
         ByteBuf buffer = datagram.content();
+        PacketType type;
         try {
             byte packetTypeId = buffer.readByte();
-            PacketType type = PacketType.fromId(packetTypeId);
-            if (type == PacketType.UDP_HANDSHAKE) {
-                try (ByteBufInputStream inputStream = new ByteBufInputStream(buffer)) {
-                    UdpHandshakePacket handshake = cborMapper.readValue((InputStream) inputStream, UdpHandshakePacket.class);
-                    GameUserSession session = activeSessions.get(handshake.username());
-                    if (session != null) {
-                        session.setUdpAddress(datagram.sender());
-                        logger.info("Player {} UDP bound to real remote endpoint: {}", handshake.username(), datagram.sender());
-                    } else {
-                        logger.warn("Received UDP handshake for unknown/not-yet-joined user: {}", handshake.username());
-                    }
-                }
-                return;
-            }
-            if (type == PacketType.MOVE_COMMAND) {
-                try (ByteBufInputStream inputStream = new ByteBufInputStream(buffer)) {
-                    PacmanMoveCommand command = cborMapper.readValue((InputStream) inputStream, PacmanMoveCommand.class);
-                    String senderId = command.pacmanId();
-                    GameUserSession session = activeSessions.get(senderId);
-                    logger.debug("Move command from senderId='{}', session={}, sessionUdpAddr={}, datagramSender={}",
-                            senderId, session != null, session != null ? session.getUdpAddress() : null, datagram.sender());
-                    if (session != null && datagram.sender().equals(session.getUdpAddress())) {
-                        listener.onCommandReceived(senderId, command);
-                    } else {
-                        logger.warn("Intercepted bad UDP packet from: {}", datagram.sender());
-                    }
-                }
-                return;
-            }
+            type = PacketType.fromId(packetTypeId);
+        } catch (Exception e) {
+            logger.warn("Received malformed/unrecognized UDP packet from {}.", datagram.sender(), e);
+            return;
+        }
+        UdpPacketHandler handler = udpHandlers.get(type);
+        if (handler == null) {
             logger.warn("Received unhandled UDP packet type: {}", type);
+            return;
+        }
+        try (ByteBufInputStream is = new ByteBufInputStream(buffer)) {
+            handler.handle(datagram.sender(), is);
         } catch (IOException e) {
-            logger.error("Server failed to unpack UDP routing payload", e);
+            logger.error("Failed to unpack UDP payload for {}", type, e);
         }
     }
 

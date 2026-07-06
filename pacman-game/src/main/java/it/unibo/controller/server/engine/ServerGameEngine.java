@@ -2,7 +2,7 @@ package it.unibo.controller.server.engine;
 
 import it.unibo.controller.shared.engine.AbstractFixedTimeStepGameEngine;
 import it.unibo.controller.shared.input.PacmanCommand;
-import it.unibo.controller.server.network.GameContextBroadcaster;
+import it.unibo.controller.server.GameContextBroadcaster;
 import it.unibo.model.game.Game;
 
 /**

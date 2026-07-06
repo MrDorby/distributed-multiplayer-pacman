@@ -1,4 +1,4 @@
-package it.unibo.controller.server.network;
+package it.unibo.controller.server.network.http;
 
 import io.javalin.Javalin;
 import io.javalin.http.Handler;
