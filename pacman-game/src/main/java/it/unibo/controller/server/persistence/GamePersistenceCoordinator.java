@@ -17,7 +17,7 @@ import java.util.concurrent.*;
  * {@link GameResultsService}.
  */
 public class GamePersistenceCoordinator {
-    private static final Logger logger = LoggerFactory.getLogger(GamePersistenceCoordinator.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(GamePersistenceCoordinator.class);
     private static final long PERIOD_IN_SECONDS = 10;
 
     private final GameBackupService backupService;
@@ -38,7 +38,7 @@ public class GamePersistenceCoordinator {
 
     public void start() {
         periodicTask = scheduler.scheduleAtFixedRate(this::saveSnapShot, PERIOD_IN_SECONDS, PERIOD_IN_SECONDS, TimeUnit.SECONDS);
-        logger.info("Periodic context persistence started (every {}s).", PERIOD_IN_SECONDS);
+        logger.info("Game context save routine started (every {}s).", PERIOD_IN_SECONDS);
     }
 
     private void saveSnapShot() {

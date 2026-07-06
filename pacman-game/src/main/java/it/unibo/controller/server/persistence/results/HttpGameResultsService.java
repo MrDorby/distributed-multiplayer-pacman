@@ -20,14 +20,15 @@ import java.util.concurrent.CompletionException;
  */
 public class HttpGameResultsService implements GameResultsService {
     private static final Logger logger = LoggerFactory.getLogger(HttpGameResultsService.class);
-    private final HttpClient client = HttpClient.newHttpClient();
+    private final HttpClient client;
     private final ObjectMapper mapper = new ObjectMapper();
     private final URI endpoint;
 
     /**
      * @param endpoint the URI of the results backend to POST results to.
      */
-    public HttpGameResultsService(URI endpoint) {
+    public HttpGameResultsService(HttpClient client, URI endpoint) {
+        this.client = client;
         this.endpoint = endpoint;
     }
 

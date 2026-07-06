@@ -21,14 +21,15 @@ import java.util.concurrent.CompletionException;
 public class HttpGameBackupService implements GameBackupService {
     private final Logger logger = LoggerFactory.getLogger(HttpGameBackupService.class);
 
-    private final HttpClient client = HttpClient.newHttpClient();
+    private final HttpClient client;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final URI endpoint;
 
     /**
      * @param endpoint the URI of the backup backend to POST snapshots to
      */
-    public HttpGameBackupService(URI endpoint) {
+    public HttpGameBackupService(HttpClient client, URI endpoint) {
+        this.client = client;
         this.endpoint = endpoint;
     }
 
