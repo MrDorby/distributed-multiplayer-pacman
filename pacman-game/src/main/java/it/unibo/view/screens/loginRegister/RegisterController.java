@@ -2,6 +2,7 @@ package it.unibo.view.screens.loginRegister;
 
 import javax.swing.JPanel;
 
+import it.unibo.controller.client.services.ServiceManager;
 import it.unibo.view.navigation.AppNavigator;
 import it.unibo.view.navigation.AppState;
 import it.unibo.view.screens.ScreenController;
@@ -10,12 +11,18 @@ public class RegisterController implements ScreenController {
 
     private final RegisterView registerView = new RegisterView();
 
-    public RegisterController(AppNavigator navigator) {
+    public RegisterController(AppNavigator navigator, ServiceManager serviceManager) {
         registerView.onRegister(() -> {
-            String email = registerView.getUsername();
+            String username = registerView.getUsername();
             String password = registerView.getPassword();
-            if (!email.isEmpty() && !password.isEmpty()) {
-                navigator.goTo(AppState.LOGIN);  //TODO: informing the user that the registration went good.
+            if (!username.isEmpty() && !password.isEmpty()) {
+                try {
+                    String result = serviceManager.register(username, password);  // TODO: manage the display message.
+                    registerView.showMessage(result);
+                    navigator.goTo(AppState.LOGIN);  //TODO: informing the user that the registration went good.
+                } catch (Exception e) {
+                    registerView.showMessage(e.getMessage());
+                }
             } else {
                 registerView.showMessage("Please fill in all fields");
             }

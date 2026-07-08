@@ -130,8 +130,10 @@ public class AuthenticatorImpl implements Authenticator {
             String secret = Base64.getEncoder().encodeToString(secretKey.getEncoded());
             String encryptedKey = KeyManager.encryptDecryptDataRSA(secret, Cipher.ENCRYPT_MODE, this.users.get(loginDTO.username()));
 
+            String ivParameters = Base64.getEncoder().encodeToString(ivParameterSpec.getIV());
+            String encryptedIV = KeyManager.encryptDecryptDataRSA(ivParameters, Cipher.ENCRYPT_MODE, this.users.get(loginDTO.username()));
             /* Creating the response and converting it to JSON format. */
-            EncryptedTokenDTO encryptedTokenDTO = new EncryptedTokenDTO(encryptedKey, encryptedJsonToken, Base64.getEncoder().encodeToString(ivParameterSpec.getIV()));
+            EncryptedTokenDTO encryptedTokenDTO = new EncryptedTokenDTO(encryptedKey, encryptedJsonToken, encryptedIV);
             String jsonEncryptedTokenDTO = mapper.writeValueAsString(encryptedTokenDTO);
             return ResponseEntity.ok(jsonEncryptedTokenDTO);
         } catch (Exception e) {

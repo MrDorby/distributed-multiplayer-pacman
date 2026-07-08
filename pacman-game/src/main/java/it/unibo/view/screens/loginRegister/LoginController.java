@@ -1,5 +1,6 @@
 package it.unibo.view.screens.loginRegister;
 
+import it.unibo.controller.client.services.ServiceManager;
 import it.unibo.view.navigation.AppNavigator;
 import it.unibo.view.navigation.AppState;
 import it.unibo.view.screens.ScreenController;
@@ -9,12 +10,17 @@ import javax.swing.*;
 public class LoginController implements ScreenController {
     private final LoginView loginView = new LoginView();
 
-    public LoginController(AppNavigator navigator) {
+    public LoginController(AppNavigator navigator, ServiceManager serviceManager) {
         loginView.onLogin(() -> {
-            String email = loginView.getUsername();
+            String username = loginView.getUsername();
             String password = loginView.getPassword();
-            if (!email.isEmpty() && !password.isEmpty()) {
-                navigator.goTo(AppState.MAIN_MENU);
+            if (!username.isEmpty() && !password.isEmpty()) {
+                try {
+                    serviceManager.login(username, password);
+                    navigator.goTo(AppState.MAIN_MENU);
+                } catch (Exception e) {
+                    loginView.showMessage(e.getMessage());
+                }
             } else {
                 loginView.showMessage("Please fill in all fields");
             }
