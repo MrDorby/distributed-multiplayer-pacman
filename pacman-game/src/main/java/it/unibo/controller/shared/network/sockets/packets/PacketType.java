@@ -1,4 +1,4 @@
-package it.unibo.controller.shared.network.packets;
+package it.unibo.controller.shared.network.sockets.packets;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,12 +10,12 @@ import java.util.Map;
  * in the network protocol to identify the payload that follows.
  */
 public enum PacketType {
-    JOIN_GAME(1),
-    JOIN_GAME_ACK(2),
-    UDP_HANDSHAKE(3),
-    GAME_START(4),
-    PACMAN_MOVE_COMMAND(5),
-    GAME_CONTEXT(6);
+    JOIN_GAME(1, JoinGamePacket.class),
+    JOIN_GAME_ACK(2, JoinGameAckPacket.class),
+    UDP_HANDSHAKE(3, UdpHandshakePacket.class),
+    GAME_START(4, GameStartPacket.class),
+    PACMAN_MOVE_COMMAND(5, PacmanMovePacket.class),
+    GAME_CONTEXT(6, GameContextPacket.class);
 
     private static final Map<Byte, PacketType> PACKET_TYPE_BY_ID = new HashMap<>();
 
@@ -28,20 +28,22 @@ public enum PacketType {
     }
 
     private final byte id;
+    private final Class<? extends NetworkPacket> packetClass;
 
-    PacketType(int id) {
+    PacketType(int id, Class<? extends NetworkPacket> packetClass) {
         this.id = (byte) id;
+        this.packetClass = packetClass;
     }
 
     public byte getId() {
         return id;
     }
 
+    public Class<? extends NetworkPacket> getPacketClass() {
+        return packetClass;
+    }
+
     public static PacketType fromId(byte id) {
-        PacketType type = PACKET_TYPE_BY_ID.get(id);
-        if (type == null) {
-            throw new IllegalArgumentException("Unknown packet ID: " + Byte.toUnsignedInt(id));
-        }
-        return type;
+        return PACKET_TYPE_BY_ID.get(id);
     }
 }

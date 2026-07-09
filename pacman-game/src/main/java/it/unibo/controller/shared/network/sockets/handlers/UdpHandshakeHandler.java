@@ -1,22 +1,16 @@
-package it.unibo.controller.server.network.transport.handler;
+package it.unibo.controller.shared.network.sockets.handlers;
 
-import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
-import io.netty.buffer.ByteBufInputStream;
-import it.unibo.controller.server.network.transport.GameSessionRegistry;
-import it.unibo.controller.server.network.transport.GameUserSession;
-import it.unibo.controller.shared.network.UdpPacketHandler;
-import it.unibo.controller.shared.network.packets.UdpHandshakePacket;
+import it.unibo.controller.server.network.sockets.GameSessionRegistry;
+import it.unibo.controller.server.network.sockets.GameUserSession;
+import it.unibo.controller.shared.network.sockets.packets.NetworkPacket;
+import it.unibo.controller.shared.network.sockets.packets.UdpHandshakePacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetSocketAddress;
 
-public class UdpHandshakeHandler implements UdpPacketHandler {
+public class UdpHandshakeHandler implements UdpHandler {
     private static final Logger logger = LoggerFactory.getLogger(UdpHandshakeHandler.class);
-
-    private final CBORMapper cborMapper = new CBORMapper();
     private final GameSessionRegistry sessions;
 
     public UdpHandshakeHandler(GameSessionRegistry sessions) {
@@ -24,9 +18,9 @@ public class UdpHandshakeHandler implements UdpPacketHandler {
     }
 
     @Override
-    public void handle(InetSocketAddress sender, ByteBufInputStream payload) throws IOException {
-        UdpHandshakePacket handshake = cborMapper.readValue((InputStream) payload, UdpHandshakePacket.class);
-        String token = handshake.secret();
+    public void handle(InetSocketAddress sender, NetworkPacket packet) {
+        UdpHandshakePacket udpHandshakePacket = (UdpHandshakePacket) packet;
+        String token = udpHandshakePacket.token();
         GameUserSession session = sessions.getByUdpToken(token);
         if (session != null) {
             session.setUdpAddress(sender);

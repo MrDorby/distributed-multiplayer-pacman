@@ -1,4 +1,4 @@
-package it.unibo.controller.shared.network.packets;
+package it.unibo.controller.shared.network.sockets.packets;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

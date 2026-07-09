@@ -1,46 +1,40 @@
-package it.unibo.controller.server.network.transport.handler;
+package it.unibo.controller.shared.network.sockets.handlers;
 
-import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.Channel;
-import it.unibo.controller.server.GameServerNetworkListener;
-import it.unibo.controller.server.network.transport.GameSessionRegistry;
-import it.unibo.controller.server.network.transport.GameUserSession;
-import it.unibo.controller.server.network.transport.PacketSender;
-import it.unibo.controller.shared.network.TcpPacketHandler;
-import it.unibo.controller.shared.network.packets.JoinGameAckPacket;
-import it.unibo.controller.shared.network.packets.JoinGamePacket;
+import it.unibo.controller.server.GameServerController;
+import it.unibo.controller.server.network.sockets.GameSessionRegistry;
+import it.unibo.controller.server.network.sockets.GameUserSession;
+import it.unibo.controller.server.network.sockets.NettyGameNetworkServer;
+import it.unibo.controller.shared.network.sockets.packets.JoinGameAckPacket;
+import it.unibo.controller.shared.network.sockets.packets.JoinGamePacket;
+import it.unibo.controller.shared.network.sockets.packets.NetworkPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.UUID;
 
-public class JoinGameHandler implements TcpPacketHandler {
+public class JoinGameHandler implements TcpHandler {
     private static final Logger logger = LoggerFactory.getLogger(JoinGameHandler.class);
-
-    private final CBORMapper cborMapper = new CBORMapper();
     private final GameSessionRegistry sessions;
-    private final GameServerNetworkListener listener;
-    private final PacketSender sender;
+    private final GameServerController controller;
+    private final NettyGameNetworkServer sender;
 
-    public JoinGameHandler(GameSessionRegistry sessions, GameServerNetworkListener listener, PacketSender sender) {
-        this.sessions = sessions;
-        this.listener = listener;
+    public JoinGameHandler(GameServerController controller, NettyGameNetworkServer sender, GameSessionRegistry sessions) {
+        this.controller = controller;
         this.sender = sender;
+        this.sessions = sessions;
     }
 
     @Override
-    public void handle(Channel channel, ByteBufInputStream payload) throws IOException {
-        JoinGamePacket packet = cborMapper.readValue((InputStream) payload, JoinGamePacket.class);
-        String username = packet.username();
+    public void handle(Channel channel, NetworkPacket packet) {
+        JoinGamePacket joinGamePacket = (JoinGamePacket) packet;
+        String username = joinGamePacket.username();
         GameUserSession session = sessions.register(username, channel);
         logger.info("Player {} successfully connected via TCP.", username);
         String token = UUID.randomUUID().toString();
         session.setUdpToken(token);
         sender.sendTcp(username, new JoinGameAckPacket(token));
         logger.info("Sent JOIN_ACK with token to {}", username);
-        listener.onPlayerJoined(username);
+        controller.onPlayerJoined(username);
     }
 }

@@ -1,4 +1,4 @@
-package it.unibo.controller.shared.network.packets;
+package it.unibo.controller.shared.network.sockets.packets;
 
 /**
  * Sent by the client over TCP when initially connecting to the server.
