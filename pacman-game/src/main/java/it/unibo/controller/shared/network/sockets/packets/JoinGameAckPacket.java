@@ -6,7 +6,7 @@ package it.unibo.controller.shared.network.packets;
  * <p> Confirms that the server has registered the client's TCP session and
  * is ready to receive the UDP handshake.
  */
-public record JoinGameAckPacket() implements NetworkPacket{
+public record JoinGameAckPacket(String secret) implements NetworkPacket{
     @Override
     public PacketType getType() {
         return PacketType.JOIN_GAME_ACK;

@@ -1,14 +1,16 @@
 package it.unibo.controller.client;
 
 import it.unibo.controller.client.engine.ClientGameEngine;
+import it.unibo.controller.client.network.NettyGameNetworkClientFactory;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.InputHandler;
-import it.unibo.controller.shared.input.PacmanCommand;
 import it.unibo.controller.client.network.GameCommandDispatcher;
 import it.unibo.controller.client.network.GameClientNetworkListener;
 import it.unibo.controller.client.network.NettyGameNetworkClient;
+import it.unibo.controller.shared.input.PacmanCommand;
+import it.unibo.controller.shared.input.PacmanMoveCommand;
 import it.unibo.controller.shared.input.PlayerInputHandler;
-import it.unibo.controller.shared.network.packets.PacketType;
+import it.unibo.controller.shared.network.packets.PacmanMovePacket;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameImpl;
@@ -27,7 +29,7 @@ public class GameClientController implements GameClientNetworkListener, GameComm
     private final GameContextBuffer contextBuffer = new GameContextBuffer();
 
     public GameClientController(Game game, String host, int tcpPort, int udpPort, String username) throws InterruptedException {
-        this.client = new NettyGameNetworkClient(host, tcpPort, udpPort, username, this);
+        this.client = NettyGameNetworkClientFactory.create(host, tcpPort, udpPort, this);
         this.engine = new ClientGameEngine(game, contextBuffer, this);
         logger.info("Client controller initialized for user '{}', connecting to {}:{} (TCP) / {} (UDP).",
                 username, host, tcpPort, udpPort);
@@ -47,8 +49,9 @@ public class GameClientController implements GameClientNetworkListener, GameComm
 
     @Override
     public void sendMoveCommand(PacmanCommand command) {
-        logger.debug("Sending move command: {}", command);
-        client.sendUdp(PacketType.MOVE_COMMAND, command);
+        PacmanMoveCommand moveCommand = (PacmanMoveCommand) command;
+        logger.debug("Sending move command: {}", moveCommand);
+        client.sendUdp(new PacmanMovePacket(moveCommand.pacmanId(), moveCommand.direction()));
     }
 
     public ClientGameEngine getEngine() {

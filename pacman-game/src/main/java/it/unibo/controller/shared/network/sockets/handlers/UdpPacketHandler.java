@@ -1,4 +1,4 @@
-package it.unibo.controller.server.network.transport.handler;
+package it.unibo.controller.shared.network.sockets;
 
 import io.netty.buffer.ByteBufInputStream;
 

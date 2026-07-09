@@ -6,7 +6,7 @@ package it.unibo.controller.shared.network.packets;
  * <p> The server uses the source address of this packet to discover and
  * register the client's UDP endpoint.
  */
-public record UdpHandshakePacket(String username) implements NetworkPacket{
+public record UdpHandshakePacket(String secret) implements NetworkPacket{
     @Override
     public PacketType getType() {
         return PacketType.UDP_HANDSHAKE;

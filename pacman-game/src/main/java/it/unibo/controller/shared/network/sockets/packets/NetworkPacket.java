@@ -1,5 +1,7 @@
 package it.unibo.controller.shared.network.packets;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Represents a generic data packet transmitted over the network.
  * All specific packet types must implement this interface to define their payload type.
@@ -12,5 +14,6 @@ public interface NetworkPacket {
      *
      * @return the {@link PacketType} for this packet instance
      */
+    @JsonIgnore
     PacketType getType();
 }

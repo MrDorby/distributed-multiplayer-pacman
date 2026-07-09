@@ -4,6 +4,7 @@ import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import io.netty.buffer.ByteBufInputStream;
 import it.unibo.controller.server.network.transport.GameSessionRegistry;
 import it.unibo.controller.server.network.transport.GameUserSession;
+import it.unibo.controller.shared.network.UdpPacketHandler;
 import it.unibo.controller.shared.network.packets.UdpHandshakePacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,12 +26,14 @@ public class UdpHandshakeHandler implements UdpPacketHandler {
     @Override
     public void handle(InetSocketAddress sender, ByteBufInputStream payload) throws IOException {
         UdpHandshakePacket handshake = cborMapper.readValue((InputStream) payload, UdpHandshakePacket.class);
-        GameUserSession session = sessions.get(handshake.username());
+        String token = handshake.secret();
+        GameUserSession session = sessions.getByUdpToken(token);
         if (session != null) {
             session.setUdpAddress(sender);
-            logger.info("Player {} UDP bound to remote endpoint: {}", handshake.username(), sender);
+            session.setUdpToken(null);
+            logger.info("Player {} UDP bound to remote endpoint: {}", session.getUsername(), sender);
         } else {
-            logger.warn("Received UDP handshake for unknown user: {}", handshake.username());
+            logger.warn("Received UDP handshake with an invalid or expired token from endpoint: {}", sender);
         }
     }
 }

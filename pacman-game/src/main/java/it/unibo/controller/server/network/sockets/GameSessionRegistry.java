@@ -16,6 +16,16 @@ public class GameSessionRegistry {
         return session;
     }
 
+    public GameUserSession getByUdpToken(String token) {
+        if (token == null) {
+            return null;
+        }
+        return sessions.values().stream()
+                .filter(session -> token.equals(session.getUdpToken()))
+                .findFirst()
+                .orElse(null);
+    }
+
     public GameUserSession get(String username) {
         return sessions.get(username);
     }

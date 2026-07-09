@@ -13,8 +13,8 @@ import it.unibo.controller.server.persistence.results.GameResultsService;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
+import it.unibo.controller.shared.network.packets.GameContextPacket;
 import it.unibo.controller.shared.network.packets.GameStartPacket;
-import it.unibo.controller.shared.network.packets.PacketType;
 import it.unibo.controller.shared.network.translation.GameContextEncoder;
 import it.unibo.controller.shared.network.translation.GameContextEncoderImpl;
 import it.unibo.model.game.Game;
@@ -27,8 +27,8 @@ import java.util.List;
 /**
  * Top-level coordinator for a single authoritative game server session.
  */
-public class GameServerController implements GameServerNetworkListener, GameContextBroadcaster, GameLifecycleListener {
-    private static final Logger logger = LoggerFactory.getLogger(GameServerController.class);
+public class GameServerControllerImpl implements GameServerNetworkListener, GameContextBroadcaster, GameLifecycleListener {
+    private static final Logger logger = LoggerFactory.getLogger(GameServerControllerImpl.class);
     private static final int REQUIRED_PLAYERS = 4;
 
     private final NettyGameNetworkServer tcpUdpServer;
@@ -42,8 +42,8 @@ public class GameServerController implements GameServerNetworkListener, GameCont
     private final int udpPort;
     private final int httpPort;
 
-    public GameServerController(Game game, int tcpPort, int udpPort, int httpPort,
-                                GameBackupService backupService, GameResultsService resultsService) {
+    public GameServerControllerImpl(Game game, int tcpPort, int udpPort, int httpPort,
+                                    GameBackupService backupService, GameResultsService resultsService) {
         this.tcpPort = tcpPort;
         this.udpPort = udpPort;
         this.httpPort = httpPort;
@@ -84,8 +84,8 @@ public class GameServerController implements GameServerNetworkListener, GameCont
         logger.info("Required player count reached. Starting game with players: {}", players);
         engine.getGame().setPacmanNames(players);
         GameContextDTO initialDto = encoder.encode(engine.getGame().getContext());
-        tcpUdpServer.broadcastTcp(PacketType.GAME_CONTEXT.getId(), initialDto);
-        tcpUdpServer.broadcastTcp(PacketType.GAME_START.getId(), new GameStartPacket());
+        tcpUdpServer.broadcastTcp(new GameContextPacket(initialDto));
+        tcpUdpServer.broadcastTcp(new GameStartPacket());
         engine.start();
         persistenceCoordinator.start();
     }
@@ -107,7 +107,7 @@ public class GameServerController implements GameServerNetworkListener, GameCont
         if (lobby.lobbyIsPlaying()) {
             GameContextDTO dto = encoder.encode(context);
             persistenceCoordinator.updateContext(dto);
-            tcpUdpServer.broadcastUdp(PacketType.GAME_CONTEXT.getId(), dto);
+            tcpUdpServer.broadcastUdp(new GameContextPacket(dto));
             logger.debug("Broadcasted game context to all sessions.");
         }
     }

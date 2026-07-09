@@ -8,6 +8,7 @@ public class GameUserSession {
     private final String username;
     private final Channel tcpChannel;
     private InetSocketAddress udpAddress;
+    private String udpToken;
 
     public GameUserSession(String username, Channel tcpChannel) {
         this.username = username;
@@ -20,6 +21,14 @@ public class GameUserSession {
 
     public Channel getTcpChannel() {
         return tcpChannel;
+    }
+
+    public String getUdpToken() {
+        return udpToken;
+    }
+
+    public void setUdpToken(String udpToken) {
+        this.udpToken = udpToken;
     }
 
     public InetSocketAddress getUdpAddress() {
