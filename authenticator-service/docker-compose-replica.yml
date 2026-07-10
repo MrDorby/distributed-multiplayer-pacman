@@ -1,0 +1,115 @@
+services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/518
+# https://github.com/docker-library/mongo/issues/475
+# https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-with-keyfile-access-control/
+  auth-mongodb1:
+    image: mongo:latest
+    container_name: authdb1
+    restart: always
+    environment:
+      #MONGODB_REPLICA_SET_MODE: primary
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}  # Database to be created on startup
+      #MONGODB_REPLICA_SET_KEY: ${MONGODB_REPLICA_SET_KEY}
+      #MONGODB_REPLICA_SET_NAME: ${MONGODB_REPLICA_SET_NAME}
+    ports:
+      - ${MONGODB_PORT1}:27017 # Port changed due to possible conflict with MongoDb on local
+    volumes:
+      - ./replica.key:/data/replica.key
+      #- ./mongodb_create_collection.sh:/scritps/mongodb_create_collection.sh
+      #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
+      #- ./mongo-init-primary.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
+      #- ./mongo-init-primary.js:/init/mongo-init.js:ro
+    networks:
+      - auth_mongodb_network
+    #entrypoint: |
+    #  /bin/bash -c '
+    #  chmod 600 /data/replica.key &&
+    #  /usr/local/bin/docker-entrypoint.sh mongod --replSet replicaSet --keyFile /data/replica.key'
+    #command: ["--replSet", "replicaSet", "--bind_ip", "localhost,authdb1"]
+    #command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/data/replica.key", "--bind_ip", "localhost,authdb1"]
+    command: 
+      - /bin/bash
+      - -c
+      - |
+        mongosh -u ${MONGO_INITDB_ROOT_USERNAME} -p ${MONGO_INITDB_ROOT_PASSWORD} --eval "db.getSibling('authDB').createCollection('auth')"
+        mongod --replSet replicaSet --keyFile /data/replica.key --bind_ip localhost,authdb1
+
+  auth-mongodb2:
+    image: mongo:latest
+    container_name: authdb2
+    restart: always
+    #environment:
+      #MONGODB_REPLICA_SET_MODE: secondary
+      #MONGO_INITDB_ROOT_USERNAME: admin
+      #MONGO_INITDB_ROOT_PASSWORD: password
+      #MONGO_INITDB_DATABASE: authDB  # Database to be created on startup
+      #MONGODB_REPLICA_SET_KEY: ${MONGODB_REPLICA_SET_KEY}
+      #MONGODB_REPLICA_SET_NAME: ${MONGODB_REPLICA_SET_NAME}
+    ports:
+      - ${MONGODB_PORT2}:27017
+    depends_on:
+      - auth-mongodb1
+        #condition: service_healthy
+    volumes:
+      - ./replica.key:/data/replica.key
+      #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
+      #- ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
+    networks:
+      - auth_mongodb_network
+    command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/data/replica.key", "--bind_ip", "localhost,authdb2"]
+    
+    # command: 
+    #   - /bin/bash
+    #   - -c
+    #   - |
+    #     chmod 600 /data/replica.key
+    #     chown 999:999 /data/replica.key
+    #     mongod --replSet replicaSet --keyFile /data/replica.key --bind_ip localhost,authdb2
+
+  mongo-setup:
+    image: mongo:latest
+    container_name: mongo-setup
+    restart: on-failure
+    environment:
+      #MONGODB_REPLICA_SET_MODE: primary
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      #MONGO_INITDB_DATABASE: authDB  # Database to be created on startup
+      #MONGODB_REPLICA_SET_KEY: ${MONGODB_REPLICA_SET_KEY}
+      #MONGODB_REPLICA_SET_NAME: ${MONGODB_REPLICA_SET_NAME}
+    depends_on:
+      - auth-mongodb1
+      - auth-mongodb2
+    volumes:
+      - ./mongodb_init.sh:/scripts/mongodb_init.sh
+      #- ./replica.key:/data/replica.key
+      #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
+      #- ./mongo-init-primary.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
+      #- ./mongo-init-primary.js:/init/mongo-init.js:ro
+    networks:
+      - auth_mongodb_network
+    entrypoint: ["/bin/bash", "/scripts/mongodb_init.sh"] 
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: always
+    environment:
+      #ME_CONFIG_MONGODB_SERVER: authDB
+      #ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password@authdb1:27017,authdb2:27017/?replicaSet=replicaSet&authSource=admin
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - auth-mongodb1
+    networks:
+      - auth_mongodb_network
+
+networks:
+  auth_mongodb_network:
+    driver: bridge
