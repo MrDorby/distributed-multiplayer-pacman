@@ -6,6 +6,8 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import it.unibo.controller.server.network.sockets.session.GameSessionRegistry;
+import it.unibo.controller.server.network.sockets.session.GameSession;
 import it.unibo.controller.shared.network.sockets.channel.TcpChannelInitializer;
 import it.unibo.controller.shared.network.sockets.channel.UdpChannelInitializer;
 import it.unibo.controller.shared.network.sockets.handlers.TcpHandler;
@@ -81,30 +83,51 @@ public class NettyGameNetworkServer implements GameNetworkServer {
 
     @Override
     public void sendTcp(String username, NetworkPacket packet) {
-        Channel channel = sessions.get(username).getTcpChannel();
+        GameSession session = sessions.getByUsername(username);
+        if (session == null) {
+            logger.warn("Cannot send over TCP: no session for {}", username);
+            return;
+        }
+        Channel channel = session.getTcpChannel();
+        if (channel == null || !channel.isActive()) {
+            logger.warn("Cannot send over TCP: {} has no active TCP channel", username);
+            return;
+        }
         channel.writeAndFlush(packet);
     }
 
     @Override
     public void sendUdp(String username, NetworkPacket packet) {
-        GameUserSession session = sessions.get(username);
+        GameSession session = sessions.getByUsername(username);
+        if (session == null) {
+            logger.warn("Cannot send over UDP: no session for {}", username);
+            return;
+        }
         InetSocketAddress udpAddress = session.getUdpAddress();
+        if (udpAddress == null) {
+            logger.warn("Cannot send over UDP: {} has no bound UDP address yet", username);
+            return;
+        }
         udpChannel.writeAndFlush(new DefaultAddressedEnvelope<>(packet, udpAddress));
     }
 
     @Override
     public void broadcastTcp(NetworkPacket packet) {
-        for (GameUserSession session : sessions.all()) {
+        for (GameSession session : sessions.getSessions()) {
             Channel channel = session.getTcpChannel();
-            channel.writeAndFlush(packet);
+            if (channel != null && channel.isActive()) {
+                channel.writeAndFlush(packet);
+            }
         }
     }
 
     @Override
     public void broadcastUdp(NetworkPacket packet) {
-        for (GameUserSession session : sessions.all()) {
+        for (GameSession session : sessions.getSessions()) {
             InetSocketAddress udpAddress = session.getUdpAddress();
-            udpChannel.writeAndFlush(new DefaultAddressedEnvelope<>(packet, udpAddress));
+            if (udpAddress != null) {
+                udpChannel.writeAndFlush(new DefaultAddressedEnvelope<>(packet, udpAddress));
+            }
         }
     }
 }

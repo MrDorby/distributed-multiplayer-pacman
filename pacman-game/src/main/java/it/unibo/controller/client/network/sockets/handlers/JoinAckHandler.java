@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 public class JoinAckHandler implements TcpHandler {
     private static final Logger logger = LoggerFactory.getLogger(JoinAckHandler.class);
-    NettyGameNetworkClient client;
+    private final NettyGameNetworkClient client;
 
     public JoinAckHandler(NettyGameNetworkClient client) {
         this.client = client;
