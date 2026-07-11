@@ -1,20 +1,17 @@
 package it.unibo.controller.server;
 
-import it.unibo.controller.server.health.GameServerHealthCheckHandler;
-import it.unibo.controller.server.health.GameServerStatus;
-import it.unibo.controller.server.network.http.GameHttpServer;
-import it.unibo.controller.server.network.transport.NettyGameNetworkServer;
-import it.unibo.controller.server.network.transport.NettyGameNetworkServerFactory;
+import it.unibo.controller.server.network.sockets.GameNetworkServer;
+import it.unibo.controller.server.network.sockets.GameNetworkServerFactory;
+import it.unibo.controller.server.network.sockets.session.GameSession;
 import it.unibo.controller.server.persistence.GamePersistenceCoordinator;
 import it.unibo.controller.server.persistence.backup.GameBackupService;
 import it.unibo.controller.server.engine.ServerGameEngine;
-import it.unibo.controller.server.engine.GameLifecycleListener;
 import it.unibo.controller.server.persistence.results.GameResultsService;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
-import it.unibo.controller.shared.network.packets.GameContextPacket;
-import it.unibo.controller.shared.network.packets.GameStartPacket;
+import it.unibo.controller.shared.network.sockets.packets.GameContextPacket;
+import it.unibo.controller.shared.network.sockets.packets.GameStartPacket;
 import it.unibo.controller.shared.network.translation.GameContextEncoder;
 import it.unibo.controller.shared.network.translation.GameContextEncoderImpl;
 import it.unibo.model.game.Game;
@@ -27,60 +24,68 @@ import java.util.List;
 /**
  * Top-level coordinator for a single authoritative game server session.
  */
-public class GameServerControllerImpl implements GameServerNetworkListener, GameContextBroadcaster, GameLifecycleListener {
+public class GameServerControllerImpl implements GameServerController {
     private static final Logger logger = LoggerFactory.getLogger(GameServerControllerImpl.class);
     private static final int REQUIRED_PLAYERS = 4;
 
-    private final NettyGameNetworkServer tcpUdpServer;
+    private final GameNetworkServer tcpUdpServer;
     private final GameEngine engine;
     private final GamePersistenceCoordinator persistenceCoordinator;
-    private final GameHttpServer httpServer;
     private final GameContextEncoder encoder = new GameContextEncoderImpl();
     private final PlayerLobby lobby = new PlayerLobby(REQUIRED_PLAYERS);
 
     private final int tcpPort;
     private final int udpPort;
-    private final int httpPort;
 
-    public GameServerControllerImpl(Game game, int tcpPort, int udpPort, int httpPort,
-                                    GameBackupService backupService, GameResultsService resultsService) {
+    public GameServerControllerImpl(Game game, int tcpPort, int udpPort,
+                                    GameBackupService backupService, GameResultsService resultsService
+    ) {
         this.tcpPort = tcpPort;
         this.udpPort = udpPort;
-        this.httpPort = httpPort;
-        this.tcpUdpServer = NettyGameNetworkServerFactory.create(tcpPort, udpPort, this);
+        this.tcpUdpServer = GameNetworkServerFactory.create(tcpPort, udpPort, this);
         this.engine = new ServerGameEngine(game, this);
         this.persistenceCoordinator = new GamePersistenceCoordinator(backupService, resultsService);
-        this.httpServer = new GameHttpServer(httpPort);
-        this.httpServer.addGetEndpoint("/health", new GameServerHealthCheckHandler(this::getCurrentHealthStatus));
     }
 
+    @Override
     public void start() throws Exception {
         try {
-            httpServer.start();
             tcpUdpServer.start();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        logger.info("Server started. TCP port: {}, UDP port: {}, HTTP port: {}", tcpPort, udpPort, httpPort);
+        logger.info("Server started. TCP port: {}, UDP port: {}", tcpPort, udpPort);
     }
 
-    // TODO add shutdown
+    @Override
+    public void stop() throws Exception {
+        try {
+            tcpUdpServer.stop();
+            engine.stop();
+            persistenceCoordinator.shutdown();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // Session handling
 
     @Override
-    public void onPlayerJoined(String username) {
+    public void onPlayerConnected(GameSession session) {
+        String username = session.getUsername();
         if (lobby.lobbyIsPlaying()) {
-            logger.warn("Player {} tried to join after game already started.", username);
+            logger.info("Player {} tried to join after game already started", username);
             return;
         }
-        boolean lobbyFull = lobby.tryJoin(username);
-        logger.info("Player {} joined ({}/{}).", username, lobby.joinedCount(), lobby.requiredPlayers());
+        boolean lobbyFull = lobby.join(username);
+        logger.info("Player {} joined ({}/{})", username, lobby.joinedCount(), lobby.requiredPlayers());
         if (lobbyFull) {
             startGame();
         }
     }
 
     private void startGame() {
-        List<String> players = lobby.joinedUsernames();
+        List<String> players = lobby.joinedPlayers();
         logger.info("Required player count reached. Starting game with players: {}", players);
         engine.getGame().setPacmanNames(players);
         GameContextDTO initialDto = encoder.encode(engine.getGame().getContext());
@@ -91,10 +96,24 @@ public class GameServerControllerImpl implements GameServerNetworkListener, Game
     }
 
     @Override
-    public void onCommandReceived(String username, PacmanMoveCommand command) {
-        logger.debug("Received command from {}: {}", username, command);
+    public void onPlayerReconnected(GameSession session) {
+        // the game needs to know that it has to override the pacman status to human, not bot
+    }
+
+    @Override
+    public void onPlayerDisconnect(GameSession session) {
+        // the game needs to set the pacman originally controlled by the player as bot.
+    }
+
+    // Command handling
+
+    @Override
+    public void onCommandReceived(PacmanMoveCommand command) {
+        logger.debug("Received move command: {}", command);
         engine.enqueueCommand(command);
     }
+
+    // Game logic handling
 
     @Override
     public void onGameEnded(GameContext finalContext) {
@@ -110,9 +129,5 @@ public class GameServerControllerImpl implements GameServerNetworkListener, Game
             tcpUdpServer.broadcastUdp(new GameContextPacket(dto));
             logger.debug("Broadcasted game context to all sessions.");
         }
-    }
-
-    private GameServerStatus getCurrentHealthStatus() {
-        return new GameServerStatus(lobby.lobbyIsPlaying(), lobby.joinedCount(), lobby.requiredPlayers(), engine.isRunning());
     }
 }

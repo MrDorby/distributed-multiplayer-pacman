@@ -12,7 +12,7 @@ public class PlayerLobby {
         this.requiredPlayers = requiredPlayers;
     }
 
-    public boolean tryJoin(String playerName) {
+    public boolean join(String playerName) {
         if (started) {
             return false;
         }
@@ -36,7 +36,7 @@ public class PlayerLobby {
         return requiredPlayers;
     }
 
-    public List<String> joinedUsernames() {
+    public List<String> joinedPlayers() {
         return List.copyOf(joinedPlayers);
     }
 }
