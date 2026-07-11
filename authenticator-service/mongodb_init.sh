@@ -2,6 +2,7 @@
 
 m1=authdb1
 m2=authdb2
+m3=authdb3
 port=27017
 
 echo "###### Waiting for ${m1} instance startup.."
@@ -10,6 +11,14 @@ until mongosh --host ${m1}:${port} --eval 'quit(db.runCommand({ ping: 1 }).ok ? 
   sleep 1
 done
 echo "###### Working ${m1} instance found, initiating user setup & initializing rs setup.."
+
+mongo admin --eval <<END
+db.createUser({
+    user:'$MONGO_INITDB_ROOT_USERNAME',
+    pwd:'$MONGO_INITDB_ROOT_PASSWORD',
+    roles:[{role:'root',db:'admin'}]
+    })"
+END
 
 # setup user + pass and initialize replica sets
 mongosh --host ${m1}:${port} <<EOF
@@ -31,9 +40,15 @@ var config = {
             "_id": 2,
             "host": "${m2}:${port}",
             "priority": 1
+        },
+        {
+            "_id": 3,
+            "host": "${m3}:${port}",
+            "priority": 1,
+            "arbiterOnly": true
         }
     ]
 };
-rs.initiate(config);
+rs.initiate(config, { force: true });
 rs.status();
 EOF
