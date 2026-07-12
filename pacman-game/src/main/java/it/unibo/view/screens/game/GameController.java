@@ -8,7 +8,7 @@ import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
-import it.unibo.view.GameViewImpl;
+import it.unibo.view.SwingGameView;
 import it.unibo.view.navigation.AppNavigator;
 import it.unibo.view.navigation.AppState;
 import it.unibo.view.screens.ScreenController;
@@ -16,7 +16,7 @@ import it.unibo.view.screens.ScreenController;
 import javax.swing.*;
 
 public class GameController implements ScreenController {
-    private GameViewImpl gameView;
+    private SwingGameView gameView;
     private final AppNavigator navigator;
     private final String localPlayerUsername;
     private GameEngine engine;
@@ -32,7 +32,7 @@ public class GameController implements ScreenController {
         Game game = new GameImpl(context);
         this.engine = new ClientGameEngine(game, null, null);
         InputHandler inputHandler = new PlayerInputHandler(engine, localPlayerUsername);
-        this.gameView = new GameViewImpl(inputHandler);
+        this.gameView = new SwingGameView(inputHandler);
         this.engine.setView(gameView);
         ((GamePanel) this.gameView.getGamePanel()).onEscape(() -> navigator.goTo(AppState.MAIN_MENU));
         new Thread(engine::start).start();

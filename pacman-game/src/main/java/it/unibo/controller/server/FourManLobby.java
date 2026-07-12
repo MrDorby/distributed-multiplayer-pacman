@@ -15,12 +15,11 @@ public class FourManLobby implements PlayerLobby {
     }
 
     @Override
-    public boolean addPlayer(String playerName) {
+    public void addPlayer(String playerName) {
         if (isPlaying) {
-            return false;
+            return;
         }
         players.add(playerName);
-        return true;
     }
 
     @Override

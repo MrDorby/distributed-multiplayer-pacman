@@ -1,9 +1,14 @@
 package it.unibo.controller.server.engine;
 
 import it.unibo.controller.shared.engine.AbstractFixedTimeStepGameEngine;
+import it.unibo.controller.shared.engine.GameEndedEvent;
+import it.unibo.controller.shared.engine.GameLifecycleEvent;
 import it.unibo.controller.shared.input.PacmanCommand;
-import it.unibo.controller.server.GameContextBroadcaster;
 import it.unibo.model.game.Game;
+import it.unibo.model.game.GameContext;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Server-side implementation of the fixed-timestep game engine.
@@ -15,33 +20,44 @@ import it.unibo.model.game.Game;
 public class ServerGameEngine extends AbstractFixedTimeStepGameEngine {
     private static final int BROADCAST_RATE_IN_HZ = 16;
     private final TickThrottleGroup tickThrottleGroup;
-    private GameContextBroadcaster broadcaster;
+    private final List<GameEngineListener> listeners = new ArrayList<>();
 
     public ServerGameEngine(Game game) {
         super(game);
-        this.tickThrottleGroup = new TickThrottleGroup(getTickRate());
-
+        this.tickThrottleGroup = new TickThrottleGroup(super.getTickRate());
+        this.tickThrottleGroup.register(BROADCAST_RATE_IN_HZ, this::broadcastContextUpdate);
     }
 
-    public void setBroadcaster(GameContextBroadcaster broadcaster) {
-        this.broadcaster = broadcaster;
-        tickThrottleGroup.register(BROADCAST_RATE_IN_HZ, () -> broadcaster.broadcast(this.game.getContext()));
-    }
-
-    @Override
-    protected void beforeTick() {
-
+    public void addListener(GameEngineListener listener) {
+        this.listeners.add(listener);
     }
 
     @Override
-    protected void afterCommandExecuted(PacmanCommand command) {
+    protected void beforeTick() {}
 
-    }
+    @Override
+    protected void afterCommandExecuted(PacmanCommand command) {}
 
     @Override
     protected void afterTick() {
-        if (broadcaster != null) {
+        if (this.getGame().getContext().getGameState().isGameOver()) {
+            this.stop();
+            broadcastLifecycleEvent(new GameEndedEvent(this.getGame().getContext()));
+        } else {
             tickThrottleGroup.tick();
+        }
+    }
+
+    private void broadcastContextUpdate() {
+        GameContext context = this.getGame().getContext();
+        for (GameEngineListener listener : listeners) {
+            listener.onGameContextUpdate(context);
+        }
+    }
+
+    private void broadcastLifecycleEvent(GameLifecycleEvent event) {
+        for (GameEngineListener listener : listeners) {
+            listener.onGameEvent(event);
         }
     }
 }

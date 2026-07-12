@@ -3,21 +3,14 @@ package it.unibo.controller.client;
 import it.unibo.controller.client.engine.ClientGameEngine;
 import it.unibo.controller.client.network.sockets.NettyGameNetworkClient;
 import it.unibo.controller.client.network.sockets.NettyGameNetworkClientFactory;
-import it.unibo.controller.shared.engine.GameEngine;
-import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.controller.shared.input.PacmanCommand;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
-import it.unibo.controller.shared.input.PlayerInputHandler;
 import it.unibo.controller.shared.network.sockets.packets.JoinGamePacket;
 import it.unibo.controller.shared.network.sockets.packets.PacmanMovePacket;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
-import it.unibo.model.game.GameImpl;
-import it.unibo.view.GameViewImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.swing.*;
 
 public class GameClientControllerImpl implements GameClientController {
     private static final Logger logger = LoggerFactory.getLogger(GameClientControllerImpl.class);

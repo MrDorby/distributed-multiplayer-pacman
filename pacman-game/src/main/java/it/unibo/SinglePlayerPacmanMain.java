@@ -9,7 +9,7 @@ import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
-import it.unibo.view.GameViewImpl;
+import it.unibo.view.SwingGameView;
 
 import javax.swing.*;
 
@@ -22,7 +22,7 @@ public class SinglePlayerPacmanMain {
             Game game = new GameImpl(context);
             GameEngine engine = new LocalGameEngine(game, playerName);
             InputHandler inputHandler = new PlayerInputHandler(engine, playerName);
-            GameViewImpl view = new GameViewImpl(inputHandler);
+            SwingGameView view = new SwingGameView(inputHandler);
             engine.setView(view);
             JFrame testFrame = new JFrame("Pacman Standalone Test");
             testFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

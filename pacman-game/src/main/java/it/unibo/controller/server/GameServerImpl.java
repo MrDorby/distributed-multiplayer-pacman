@@ -2,40 +2,45 @@ package it.unibo.controller.server;
 
 import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.session.GameSession;
-import it.unibo.controller.server.persistence.GamePersistenceController;
+import it.unibo.controller.server.persistence.GamePersistenceManager;
+import it.unibo.controller.shared.engine.GameEndedEvent;
 import it.unibo.controller.shared.engine.GameEngine;
+import it.unibo.controller.shared.engine.GameLifecycleEvent;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
 import it.unibo.controller.shared.network.sockets.packets.GameContextPacket;
+import it.unibo.controller.shared.network.sockets.packets.GameEndedPacket;
 import it.unibo.controller.shared.network.sockets.packets.GameStartPacket;
 import it.unibo.controller.shared.network.translation.GameContextEncoder;
 import it.unibo.controller.shared.network.translation.GameContextEncoderImpl;
+import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.List;
 
 public class GameServerImpl implements GameServer {
     private static final Logger logger = LoggerFactory.getLogger(GameServerImpl.class);
 
-    private final GameServerGateway tcpUdpServer;
+    private final GameServerGateway gateway;
     private final GameEngine engine;
-    private final GamePersistenceController persistenceCoordinator;
+    private final GamePersistenceManager persistenceManager;
     private final GameContextEncoder encoder = new GameContextEncoderImpl();
 
     private final FourManLobby lobby = new FourManLobby();
 
-    public GameServerImpl(GameEngine engine, GameServerGateway server, GamePersistenceController persistenceCoordinator) {
-        this.tcpUdpServer = server;
+    public GameServerImpl(GameEngine engine, GameServerGateway gateway, GamePersistenceManager persistenceManager) {
+        this.gateway = gateway;
         this.engine = engine;
-        this.persistenceCoordinator = persistenceCoordinator;
+        this.persistenceManager = persistenceManager;
     }
 
     @Override
     public void start() throws Exception {
         try {
-            tcpUdpServer.start();
+            gateway.start();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -45,14 +50,16 @@ public class GameServerImpl implements GameServer {
     public void stop() throws Exception {
         try {
             engine.stop();
-            tcpUdpServer.stop();
-            persistenceCoordinator.stop();
+            gateway.stop();
+            persistenceManager.stop();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    // Session handling
+    /* ********************************** *
+     * Session lifecycle listener methods *
+     * ********************************** */
 
     @Override
     public void onPlayerConnected(GameSession session) {
@@ -74,23 +81,29 @@ public class GameServerImpl implements GameServer {
         logger.info("Required player count reached. Starting game with players: {}", players);
         engine.getGame().setPacmanNames(players);
         GameContextDTO dto = encoder.encode(engine.getGame().getContext());
-        tcpUdpServer.broadcastTcp(new GameContextPacket(dto));
-        tcpUdpServer.broadcastTcp(new GameStartPacket());
+        gateway.broadcastTcp(new GameContextPacket(dto));
+        gateway.broadcastTcp(new GameStartPacket());
         engine.start();
-        persistenceCoordinator.start();
+        persistenceManager.start();
     }
 
     @Override
     public void onPlayerReconnected(GameSession session) {
-        // the game needs to know that it has to override the pacman status to human, not bot
+        logger.info("Player {} has reconnected, restoring human control", session.getUsername());
+        Game game = engine.getGame();
+        game.changePacmanBehaviour(session.getUsername(), true);
     }
 
     @Override
-    public void onPlayerDisconnect(GameSession session) {
-        // the game needs to set the pacman originally controlled by the player as bot.
+    public void onPlayerDisconnected(GameSession session) {
+        logger.info("Player {} has disconnected, substituting with a bot", session.getUsername());
+        Game game = engine.getGame();
+        game.changePacmanBehaviour(session.getUsername(), false);
     }
 
-    // Command handling
+    /* ******************************** *
+     * Network command listener methods *
+     * ******************************** */
 
     @Override
     public void onCommandReceived(PacmanMoveCommand command) {
@@ -98,21 +111,49 @@ public class GameServerImpl implements GameServer {
         engine.enqueueCommand(command);
     }
 
-    // Game logic handling
+    /* **************************** *
+     * Game engine listener methods *
+     * **************************** */
 
+    /*
+     * When a new game snapshot is available it has to be broadcast to all clients via UDP.
+     * Such snapshot also needs to be provided to the persistence manager
+     */
     @Override
-    public void onGameEnded(GameContext finalContext) {
-        GameContextDTO dto = encoder.encode(finalContext);
-        persistenceCoordinator.onGameEnded(dto);
+    public void onGameContextUpdate(GameContext context) {
+        logger.debug("Broadcasting game context to all clients");
+        GameContextDTO dto = encoder.encode(context);
+        persistenceManager.updateContext(dto);
+        gateway.broadcastUdp(new GameContextPacket(dto));
     }
 
+    /*
+     * Once a game has ended, the persistence manager needs to save the results.
+     * The clients need to receive the last authoritative game state and be notified that the game has ended via TCP.
+     */
     @Override
-    public void broadcast(GameContext context) {
-        if (lobby.isPlaying()) {
+    public void onGameEvent(GameLifecycleEvent event) {
+        if (event instanceof GameEndedEvent(GameContext context)) {
+            logger.info("Game has ended");
             GameContextDTO dto = encoder.encode(context);
-            persistenceCoordinator.updateContext(dto);
-            tcpUdpServer.broadcastUdp(new GameContextPacket(dto));
-            logger.debug("Broadcasted game context to all sessions.");
+            persistenceManager.saveFinalSnapshot(dto);
+            gateway.broadcastTcp(new GameContextPacket(dto));
+            gateway.broadcastTcp(new GameEndedPacket());
+            lobby.setPlaying(false);
+            scheduleServerShutdown(Duration.ofSeconds(10));
+        }
+    }
+
+    private void scheduleServerShutdown(Duration delay) {
+        logger.info("Server process scheduled to terminate in {} seconds", delay.getSeconds());
+        try {
+            Thread.sleep(delay.toMillis());
+            stop();
+            logger.info("Exiting JVM process cleanly");
+            System.exit(0);
+        } catch (Exception e) {
+            logger.error("Error occurred while shutting down the server components", e);
+            System.exit(1);
         }
     }
 }

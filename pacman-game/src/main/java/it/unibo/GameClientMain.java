@@ -6,7 +6,7 @@ import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.controller.shared.input.PlayerInputHandler;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameImpl;
-import it.unibo.view.GameViewImpl;
+import it.unibo.view.SwingGameView;
 
 import javax.swing.*;
 import java.util.UUID;
@@ -30,7 +30,7 @@ public class GameClientMain {
         GameClientControllerImpl controller = new GameClientControllerImpl(game, host, tcpPort, udpPort, username);
         GameEngine engine = controller.getEngine();
         InputHandler inputHandler = new PlayerInputHandler(engine, username);
-        GameViewImpl view = new GameViewImpl(inputHandler);
+        SwingGameView view = new SwingGameView(inputHandler);
         engine.setView(view);
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Pacman Client");

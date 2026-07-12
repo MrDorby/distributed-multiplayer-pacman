@@ -1,5 +1,6 @@
 package it.unibo.view;
 
+import it.unibo.controller.shared.engine.GameLifecycleEvent;
 import it.unibo.model.game.GameContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,17 +14,7 @@ public class HeadlessView implements GameView {
     }
 
     @Override
-    public void show() {
-        logger.info("Headless view initialized. No window will be displayed.");
-    }
+    public void onLifecycleEvent(GameLifecycleEvent event) {
 
-    @Override
-    public void displayWinView(Runnable onExit) {
-        logger.info("Headless winView initialized. No window will be displayed.");
-    }
-
-    @Override
-    public void displayGameOverView() {
-        logger.info("Headless gameOverView initialized. No window will be displayed.");
     }
 }

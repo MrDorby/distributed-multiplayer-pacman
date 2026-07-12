@@ -8,10 +8,10 @@ import java.util.List;
 public interface PlayerLobby {
     /**
      * Attempts to add a player to the lobby.
+     *
      * @param playerName the unique identifier of the player joining
-     * @return true if the addition of the player is successful, false otherwise
      */
-    boolean addPlayer(String playerName);
+    void addPlayer(String playerName);
 
     /**
      * Checks whether the lobby has been moved into the active playing state.
@@ -34,6 +34,10 @@ public interface PlayerLobby {
      */
     int getRequiredPlayerCount();
 
+    /**
+     * Returns whether the lobby is at full capacity.
+     * @return a boolean
+     */
     boolean isFull();
 
     /**

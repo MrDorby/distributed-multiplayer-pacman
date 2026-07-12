@@ -8,7 +8,7 @@ import it.unibo.controller.server.network.sockets.handlers.MoveCommandHandler;
 import it.unibo.controller.server.network.sockets.handlers.UdpHandshakeHandler;
 import it.unibo.controller.server.network.sockets.session.GameSessionController;
 import it.unibo.controller.server.network.sockets.session.GameSessionRegistry;
-import it.unibo.controller.server.persistence.GamePersistenceController;
+import it.unibo.controller.server.persistence.GamePersistenceManager;
 import it.unibo.controller.server.persistence.backup.DummyGameBackupService;
 import it.unibo.controller.server.persistence.backup.HttpGameBackupService;
 import it.unibo.controller.server.persistence.results.DummyGameResultsService;
@@ -34,7 +34,7 @@ public class GameServerFactory {
             URI resultsEndpoint
     ) {
         HttpClient httpClient = HttpClient.newHttpClient();
-        GamePersistenceController persistence = new GamePersistenceController(
+        GamePersistenceManager persistence = new GamePersistenceManager(
                 new HttpGameBackupService(httpClient, backupEndpoint),
                 new HttpGameResultsService(httpClient, resultsEndpoint)
         );
@@ -42,14 +42,14 @@ public class GameServerFactory {
     }
 
     public static GameServer createWithoutPersistence(String mapName, int tcpPort, int udpPort) {
-        GamePersistenceController persistence = new GamePersistenceController(
+        GamePersistenceManager persistence = new GamePersistenceManager(
                 new DummyGameBackupService(),
                 new DummyGameResultsService()
         );
         return assemble(mapName, tcpPort, udpPort, persistence);
     }
 
-    private static GameServer assemble(String mapName, int tcpPort, int udpPort, GamePersistenceController persistence) {
+    private static GameServer assemble(String mapName, int tcpPort, int udpPort, GamePersistenceManager persistence) {
         String mapPath = MAP_PATH_FORMAT.formatted(mapName);
         GameContext gameContext = GameContextFactory.createFromMap(mapPath, new GameEntityFactoryImpl());
         Game game = new GameImpl(gameContext);
@@ -61,7 +61,7 @@ public class GameServerFactory {
         ServerGameEngine engine = new ServerGameEngine(game);
 
         GameServerImpl server = new GameServerImpl(engine, networkServer, persistence);
-        engine.setBroadcaster(server);
+        engine.addListener(server);
 
         sessionController.addListener(server);
         HandlerContext context = new HandlerContext(sessionController, server, networkServer);

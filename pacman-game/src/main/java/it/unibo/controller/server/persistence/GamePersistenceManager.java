@@ -16,8 +16,8 @@ import java.util.concurrent.*;
  * schedule and concurrently saves a final backup and the game's results via
  * {@link GameResultsService}.
  */
-public class GamePersistenceController {
-    private static final Logger logger = LoggerFactory.getLogger(GamePersistenceController.class);
+public class GamePersistenceManager {
+    private static final Logger logger = LoggerFactory.getLogger(GamePersistenceManager.class);
     private static final long PERIOD_IN_SECONDS = 10;
 
     private final GameBackupService backupService;
@@ -27,7 +27,7 @@ public class GamePersistenceController {
     private volatile GameContextDTO lastContext;
     private ScheduledFuture<?> periodicTask;
 
-    public GamePersistenceController(GameBackupService backupService, GameResultsService resultsService) {
+    public GamePersistenceManager(GameBackupService backupService, GameResultsService resultsService) {
         this.backupService = backupService;
         this.resultsService = resultsService;
     }
@@ -44,14 +44,13 @@ public class GamePersistenceController {
     private void saveSnapShot() {
         GameContextDTO dto = lastContext;
         if (dto == null) return;
-        backupService.saveSnapshot(dto)
-                .exceptionally(ex -> {
-                    logger.warn("Periodic snapshot failed", ex);
-                    return null;
-                });
+        backupService.saveSnapshot(dto).exceptionally(ex -> {
+            logger.warn("Periodic snapshot failed", ex);
+            return null;
+        });
     }
 
-    public void onGameEnded(GameContextDTO dto) {
+    public void saveFinalSnapshot(GameContextDTO dto) {
         if (periodicTask != null) {
             periodicTask.cancel(false);
         }
@@ -59,11 +58,10 @@ public class GamePersistenceController {
         CompletableFuture<Void> resultsSaved = resultsService.saveResults(dto);
         try {
             CompletableFuture.allOf(backupSaved, resultsSaved).get(5, TimeUnit.SECONDS);
-            logger.info("Final game context and results persisted.");
+            logger.info("Final game context and results saved.");
         } catch (Exception e) {
             logger.error("Final backup and/or results save failed or timed out", e);
         }
-        stop();
     }
 
     public void stop() {
