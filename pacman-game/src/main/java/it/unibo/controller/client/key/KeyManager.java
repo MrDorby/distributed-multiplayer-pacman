@@ -1,6 +1,5 @@
-package it.unibo.key;
+package it.unibo.controller.client.key;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -28,7 +27,6 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO: make a general class for both clients and auth?
 /**
  * Handles the generation of the RSA key pair and save on files, if not done yet, the two keys.
  */
@@ -37,12 +35,11 @@ public class KeyManager {
     // TODO: FILE FOR CONSTANTS.
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyPairGenerator.class);
     //private static final String PATH = "authenticator-service" + File.separator + "keys" + File.separator;
-    // private static final String PATH1 = "authenticator-service";  //TODO: define the correct path for the keys.
-    // private static final String PATH2 = "src";
-    // private static final String PATH3 = "main";
-    // private static final String PATH4 = "resources";
-    // private static final String PATH5 = "keys";
-    private static final String PATH = "keys";
+    private static final String PATH1 = "pacman-game";  //TODO: define the correct path for the keys.
+    private static final String PATH2 = "src";
+    private static final String PATH3 = "main";
+    private static final String PATH4 = "resources";
+    private static final String PATH5 = "keys";
     private static final String PUBLIC_KEY_FILE = "public_key.der";
     private static final String PRIVATE_KEY_FILE = "private_key.der";
     // TODO: For the variable on top define them better?
@@ -62,13 +59,13 @@ public class KeyManager {
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA_ALGORITHM);
             keyPairGenerator.initialize(RSA_KEYSIZE);
             KeyPair keyPair = keyPairGenerator.genKeyPair();
-            Path keyDir = Paths.get(PATH);
+            Path keyDir = Paths.get(PATH1, PATH2, PATH3, PATH4, PATH5);
             if (!Files.exists(keyDir)) {
                 Files.createDirectory(keyDir);
             }
-            Path publicKey = Paths.get(PATH, PUBLIC_KEY_FILE);
+            Path publicKey = Paths.get(PATH1, PATH2, PATH3, PATH4, PATH5, PUBLIC_KEY_FILE);
             Files.write(publicKey, keyPair.getPublic().getEncoded());
-            Path privateKey = Paths.get(PATH, PRIVATE_KEY_FILE);
+            Path privateKey = Paths.get(PATH1, PATH2, PATH3, PATH4, PATH5, PRIVATE_KEY_FILE);
             Files.write(privateKey, keyPair.getPrivate().getEncoded());
 
         } catch (NoSuchAlgorithmException | IOException e) {
@@ -119,7 +116,7 @@ public class KeyManager {
      * @throws NoSuchAlgorithmException
      */
     public static PublicKey loadAuthenticatorPublicKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        Path path = Path.of(PATH, PUBLIC_KEY_FILE);
+        Path path = Path.of(PATH2, PATH3, PATH4, PATH5, PUBLIC_KEY_FILE);
         try (InputStream inputStream = Files.newInputStream(path)) {
             X509EncodedKeySpec spec = new X509EncodedKeySpec(inputStream.readAllBytes());
             return KeyFactory.getInstance(RSA_ALGORITHM).generatePublic(spec);
@@ -133,7 +130,7 @@ public class KeyManager {
      * @throws NoSuchAlgorithmException
      */
     public static PrivateKey loadAuthenticatorPrivateKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        Path path = Path.of(PATH, PRIVATE_KEY_FILE);
+        Path path = Path.of(PATH2, PATH3, PATH4, PATH5, PRIVATE_KEY_FILE);
         try (InputStream inputStream = Files.newInputStream(path)) {
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(inputStream.readAllBytes());
             return KeyFactory.getInstance(RSA_ALGORITHM).generatePrivate(spec);

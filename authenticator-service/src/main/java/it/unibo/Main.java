@@ -1,42 +1,11 @@
 package it.unibo;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Base64;
-
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
-
-import org.bson.json.JsonObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
-
-import com.auth0.jwt.JWT;
-
-import it.unibo.dto.EncryptedTokenDTO;
-import it.unibo.dto.TokenDTO;
-import it.unibo.key.Hash;
-import it.unibo.key.KeyManager;
-import it.unibo.mongodb.AuthRepository;
-import it.unibo.token.TokenService;
-import tools.jackson.databind.ObjectMapper;
 
 //@EnableMongoRepositories(basePackages = "it.unibo.mongodb")
 @SpringBootApplication
 public class Main {
-    private static final String RSA_ALGORITHM = "RSA";
-    private static final String AES_ALGORITHM = "AES";
-    private static final String RSA_INSTANCE = "RSA/ECB/PKCS1Padding";
-    private static final String AES_INSTANCE = "AES/CBC/PKCS5Padding";
 
     public static void main(String[] args) throws Exception {
         SpringApplication.run(Main.class, args);

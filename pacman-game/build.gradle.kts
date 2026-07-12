@@ -1,6 +1,8 @@
 plugins {
     java
     application
+    id("org.springframework.boot") version "4.1.0"
+    id("io.spring.dependency-management") version "1.1.7"
 }
 
 group = "it.unibo"
@@ -23,6 +25,13 @@ dependencies {
     implementation("io.netty:netty-all:4.2.15.Final")
     // Source: https://mvnrepository.com/artifact/io.javalin/javalin
     implementation("io.javalin:javalin:7.2.2")
+    // Source: https://mvnrepository.com/artifact/com.auth0/java-jwt
+    implementation("com.auth0:java-jwt:4.5.2") //TODO: check io.jsonwebtoken
+
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    implementation("org.springframework.boot:spring-boot-starter-restclient")
+    testImplementation("org.springframework.boot:spring-boot-starter-restclient-test")
 }
 
 java {
