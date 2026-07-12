@@ -17,19 +17,19 @@ import org.eclipse.jetty.http.HttpStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.controller.client.dto.EncryptedLoginResponseDTO;
-import it.unibo.controller.client.dto.PublicKeyDTO;
+import it.unibo.controller.client.dto.PublicKeyRequestDTO;
+import it.unibo.controller.client.dto.PublicKeyResponseDTO;
 import it.unibo.controller.client.dto.RegisterLoginDTO;
 import it.unibo.controller.client.key.Hash;
 
 import it.unibo.controller.client.key.KeyManager;
 
 /**
- * 
- * AuthClient
+ * Manages the authentication aspect on the client side.
  */
 public class AuthClient {
     
-    // TODO: Write the docs.
+    // TODO: Change the domain depending on the container info and network connected.
     private static final String SYN_REQUEST = "http://localhost:8080/auth/syn";
     private static final String LOGIN_REQUEST = "http://localhost:8080/auth/login";
     private static final String REGISTER_REQUEST = "http://localhost:8080/auth/register";
@@ -45,17 +45,20 @@ public class AuthClient {
         this.httpClient = httpClient;
         KeyManager.generateRSAKeys();
         this.objectMapper = new ObjectMapper();
+        this.token = "";
     }
 
     /**
-     * 
-     * @param username
-     * @param password
-     * @return
+     * Executes the login procedure.
+     * @param username of the known user.
+     * @param password of the known user for the specified username.
      * @throws Exception
      */
     public void login(String username, String password) throws Exception {
-        PublicKeyDTO authPublicKeyDTO = syn();
+        PublicKeyResponseDTO authPublicKeyDTO = syn();
+        if (!Hash.checkHash(authPublicKeyDTO.hash(), authPublicKeyDTO.hashType(), authPublicKeyDTO.publicKey())) {
+            throw new Exception("Integrity check failed!");
+        }
         this.publicKeyAuth = KeyManager.getPublicKeyFromString(authPublicKeyDTO.publicKey());
         String encryptedString = encryptedRegisterLoginRequest(username, password, publicKeyAuth);
         HttpRequest httpLoginRequest = HttpRequest.newBuilder()
@@ -76,7 +79,7 @@ public class AuthClient {
         this.token = token;
     }
 
-    /* */
+    /* Decrypt the encrypted message from the incoming connetion.*/
     private String encryptedRegisterLoginRequest(String username, String password, PublicKey key) throws Exception {
         RegisterLoginDTO registerLoginDTO = new RegisterLoginDTO(username, password);
         String registerLogiString = objectMapper.writeValueAsString(registerLoginDTO);
@@ -85,14 +88,17 @@ public class AuthClient {
 
 
     /**
-     * 
-     * @param username
-     * @param password
-     * @return
+     * Executes the procedure to register a new user in the database.
+     * @param username of the new user.
+     * @param password of the new user binded with the username inserted.
+     * @return a String containing the message from the authenticator.
      * @throws Exception
      */
     public String register(String username, String password) throws Exception {
-        PublicKeyDTO authPublicKeyDTO = syn();
+        PublicKeyResponseDTO authPublicKeyDTO = syn();
+        if (!Hash.checkHash(authPublicKeyDTO.hash(), authPublicKeyDTO.hashType(), authPublicKeyDTO.publicKey())) {
+            throw new Exception("Integrity check failed!");
+        }
         String encryptedString = encryptedRegisterLoginRequest(username, password, KeyManager.getPublicKeyFromString(authPublicKeyDTO.publicKey()));
         HttpRequest httpRegisterRequest = HttpRequest.newBuilder()
                                     .uri(URI.create(REGISTER_REQUEST))
@@ -107,13 +113,13 @@ public class AuthClient {
         return registerResponse.body();
     }
 
-    /* */
-    private PublicKeyDTO syn() throws Exception {
+    /* Executes the syn procedure where the two services exchange their public key. */
+    private PublicKeyResponseDTO syn() throws Exception {
         PublicKey publicKey = KeyManager.loadAuthenticatorPublicKey();
         String publicKeyString = Base64.getEncoder().encodeToString(publicKey.getEncoded());
         String hash = Hash.hashing(publicKey.getEncoded(), HASH_TYPE);
         
-        PublicKeyDTO publicKeyDTO = new PublicKeyDTO(publicKeyString, hash, HASH_TYPE, username);
+        PublicKeyRequestDTO publicKeyDTO = new PublicKeyRequestDTO(publicKeyString, hash, HASH_TYPE, username);
         String publicKeyDTOString = objectMapper.writeValueAsString(publicKeyDTO);
         
         HttpRequest httpSynRequest = HttpRequest.newBuilder()
@@ -127,20 +133,20 @@ public class AuthClient {
             throw new Exception(synResponse.body());
         }
 
-        return objectMapper.readValue(synResponse.body(), PublicKeyDTO.class);
+        return objectMapper.readValue(synResponse.body(), PublicKeyResponseDTO.class);
     }
 
     /**
-     * 
-     * @return
+     * The username of the client.
+     * @return a String for the username.
      */
     public String getUsername() {
         return this.username;
     }
 
     /**
-     * 
-     * @return
+     * The token of the user and it can be "" if the user has no token at the moment.
+     * @return the String representing the token.
      */
     public String getToken() {
         return this.token;

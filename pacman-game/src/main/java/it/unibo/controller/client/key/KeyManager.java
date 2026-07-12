@@ -27,7 +27,6 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO: make a general class for both clients and auth?
 /**
  * Handles the generation of the RSA key pair and save on files, if not done yet, the two keys.
  */

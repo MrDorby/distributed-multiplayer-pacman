@@ -5,7 +5,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
-
+/**
+ * Manages the operations with the hashes.
+ */
 public class Hash {
     
     /**

@@ -22,7 +22,6 @@ public class ServiceManagerImpl implements ServiceManager {
         return this.authClient.getToken();
     }
 
-    // TODO: Create a Auth Client.
     @Override
     public void login(String username, String password) throws Exception {
         this.authClient.login(username, password);

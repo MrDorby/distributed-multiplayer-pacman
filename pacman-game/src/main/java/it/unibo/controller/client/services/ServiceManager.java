@@ -1,37 +1,35 @@
 package it.unibo.controller.client.services;
 
 /**
- * 
- * ServiceManager
+ * Manager for the services that the client needs to connect with.
  */
 public interface ServiceManager {
     
     /**
-     * 
-     * @return
+     * Obtain the username of the client once it has logged in.
+     * @return the String for the username.
      */
     String getUsername();
 
     /**
-     * 
-     * @return
+     * Obtain the token of the client once it has logged in.
+     * @return the String for the token.
      */
     String getToken();
 
     /**
-     * 
-     * @param username
-     * @param password
-     * @return
+     * Starts the procedure to login in the user.
+     * @param username of the user.
+     * @param password of the user for that username.
      * @throws Exception
      */
     void login(String username, String password) throws Exception;
 
     /**
-     * 
-     * @param username
-     * @param password
-     * @return
+     * Starts the procedure to register the user in the database.
+     * @param username of the new user.
+     * @param password of the new user for that username.
+     * @return a String containing the return's message.
      * @throws Exception
      */
     String register(String username, String password) throws Exception;
