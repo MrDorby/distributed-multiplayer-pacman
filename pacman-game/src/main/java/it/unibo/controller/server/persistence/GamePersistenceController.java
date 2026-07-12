@@ -16,8 +16,8 @@ import java.util.concurrent.*;
  * schedule and concurrently saves a final backup and the game's results via
  * {@link GameResultsService}.
  */
-public class GamePersistenceCoordinator {
-    private static final Logger logger = LoggerFactory.getLogger(GamePersistenceCoordinator.class);
+public class GamePersistenceController {
+    private static final Logger logger = LoggerFactory.getLogger(GamePersistenceController.class);
     private static final long PERIOD_IN_SECONDS = 10;
 
     private final GameBackupService backupService;
@@ -27,7 +27,7 @@ public class GamePersistenceCoordinator {
     private volatile GameContextDTO lastContext;
     private ScheduledFuture<?> periodicTask;
 
-    public GamePersistenceCoordinator(GameBackupService backupService, GameResultsService resultsService) {
+    public GamePersistenceController(GameBackupService backupService, GameResultsService resultsService) {
         this.backupService = backupService;
         this.resultsService = resultsService;
     }
@@ -63,10 +63,10 @@ public class GamePersistenceCoordinator {
         } catch (Exception e) {
             logger.error("Final backup and/or results save failed or timed out", e);
         }
-        shutdown();
+        stop();
     }
 
-    public void shutdown() {
+    public void stop() {
         scheduler.shutdown();
         try {
             if (!scheduler.awaitTermination(2, TimeUnit.SECONDS)) {

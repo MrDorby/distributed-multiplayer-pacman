@@ -21,6 +21,6 @@ public class MoveCommandHandler implements UdpHandler {
     public void handle(InetSocketAddress sender, NetworkPacket packet) {
         PacmanMovePacket movePacket = (PacmanMovePacket) packet;
         logger.debug("Received {} over UDP from {}", movePacket.getType(), sender);
-        ctx.gameServerController().onCommandReceived(new PacmanMoveCommand(movePacket.pacmanId(), movePacket.direction()));
+        ctx.server().onCommandReceived(new PacmanMoveCommand(movePacket.pacmanId(), movePacket.direction()));
     }
 }

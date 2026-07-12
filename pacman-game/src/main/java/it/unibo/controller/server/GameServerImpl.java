@@ -1,12 +1,8 @@
 package it.unibo.controller.server;
 
-import it.unibo.controller.server.network.sockets.GameNetworkServer;
-import it.unibo.controller.server.network.sockets.GameNetworkServerFactory;
+import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.session.GameSession;
-import it.unibo.controller.server.persistence.GamePersistenceCoordinator;
-import it.unibo.controller.server.persistence.backup.GameBackupService;
-import it.unibo.controller.server.engine.ServerGameEngine;
-import it.unibo.controller.server.persistence.results.GameResultsService;
+import it.unibo.controller.server.persistence.GamePersistenceController;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
@@ -14,37 +10,26 @@ import it.unibo.controller.shared.network.sockets.packets.GameContextPacket;
 import it.unibo.controller.shared.network.sockets.packets.GameStartPacket;
 import it.unibo.controller.shared.network.translation.GameContextEncoder;
 import it.unibo.controller.shared.network.translation.GameContextEncoderImpl;
-import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-/**
- * Top-level coordinator for a single authoritative game server session.
- */
-public class GameServerControllerImpl implements GameServerController {
-    private static final Logger logger = LoggerFactory.getLogger(GameServerControllerImpl.class);
-    private static final int REQUIRED_PLAYERS = 4;
+public class GameServerImpl implements GameServer {
+    private static final Logger logger = LoggerFactory.getLogger(GameServerImpl.class);
 
-    private final GameNetworkServer tcpUdpServer;
+    private final GameServerGateway tcpUdpServer;
     private final GameEngine engine;
-    private final GamePersistenceCoordinator persistenceCoordinator;
+    private final GamePersistenceController persistenceCoordinator;
     private final GameContextEncoder encoder = new GameContextEncoderImpl();
-    private final PlayerLobby lobby = new PlayerLobby(REQUIRED_PLAYERS);
 
-    private final int tcpPort;
-    private final int udpPort;
+    private final FourManLobby lobby = new FourManLobby();
 
-    public GameServerControllerImpl(Game game, int tcpPort, int udpPort,
-                                    GameBackupService backupService, GameResultsService resultsService
-    ) {
-        this.tcpPort = tcpPort;
-        this.udpPort = udpPort;
-        this.tcpUdpServer = GameNetworkServerFactory.create(tcpPort, udpPort, this);
-        this.engine = new ServerGameEngine(game, this);
-        this.persistenceCoordinator = new GamePersistenceCoordinator(backupService, resultsService);
+    public GameServerImpl(GameEngine engine, GameServerGateway server, GamePersistenceController persistenceCoordinator) {
+        this.tcpUdpServer = server;
+        this.engine = engine;
+        this.persistenceCoordinator = persistenceCoordinator;
     }
 
     @Override
@@ -54,15 +39,14 @@ public class GameServerControllerImpl implements GameServerController {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        logger.info("Server started. TCP port: {}, UDP port: {}", tcpPort, udpPort);
     }
 
     @Override
     public void stop() throws Exception {
         try {
-            tcpUdpServer.stop();
             engine.stop();
-            persistenceCoordinator.shutdown();
+            tcpUdpServer.stop();
+            persistenceCoordinator.stop();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -73,23 +57,24 @@ public class GameServerControllerImpl implements GameServerController {
     @Override
     public void onPlayerConnected(GameSession session) {
         String username = session.getUsername();
-        if (lobby.lobbyIsPlaying()) {
+        if (lobby.isPlaying()) {
             logger.info("Player {} tried to join after game already started", username);
             return;
         }
-        boolean lobbyFull = lobby.join(username);
-        logger.info("Player {} joined ({}/{})", username, lobby.joinedCount(), lobby.requiredPlayers());
-        if (lobbyFull) {
+        lobby.addPlayer(username);
+        logger.info("Player {} joined ({}/{})", username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
+        if (lobby.isFull()) {
+            lobby.setPlaying(true);
             startGame();
         }
     }
 
     private void startGame() {
-        List<String> players = lobby.joinedPlayers();
+        List<String> players = lobby.getPlayers();
         logger.info("Required player count reached. Starting game with players: {}", players);
         engine.getGame().setPacmanNames(players);
-        GameContextDTO initialDto = encoder.encode(engine.getGame().getContext());
-        tcpUdpServer.broadcastTcp(new GameContextPacket(initialDto));
+        GameContextDTO dto = encoder.encode(engine.getGame().getContext());
+        tcpUdpServer.broadcastTcp(new GameContextPacket(dto));
         tcpUdpServer.broadcastTcp(new GameStartPacket());
         engine.start();
         persistenceCoordinator.start();
@@ -123,7 +108,7 @@ public class GameServerControllerImpl implements GameServerController {
 
     @Override
     public void broadcast(GameContext context) {
-        if (lobby.lobbyIsPlaying()) {
+        if (lobby.isPlaying()) {
             GameContextDTO dto = encoder.encode(context);
             persistenceCoordinator.updateContext(dto);
             tcpUdpServer.broadcastUdp(new GameContextPacket(dto));

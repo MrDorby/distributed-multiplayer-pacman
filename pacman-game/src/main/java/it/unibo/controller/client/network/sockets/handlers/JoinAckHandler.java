@@ -1,10 +1,10 @@
-package it.unibo.controller.shared.network.sockets.handlers;
+package it.unibo.controller.client.network.sockets.handlers;
 
 import io.netty.channel.Channel;
 import it.unibo.controller.client.network.sockets.NettyGameNetworkClient;
+import it.unibo.controller.shared.network.sockets.handlers.TcpHandler;
 import it.unibo.controller.shared.network.sockets.packets.JoinGameAckPacket;
 import it.unibo.controller.shared.network.sockets.packets.NetworkPacket;
-import it.unibo.controller.shared.network.sockets.packets.PacketType;
 import it.unibo.controller.shared.network.sockets.packets.UdpHandshakePacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +20,10 @@ public class JoinAckHandler implements TcpHandler {
     @Override
     public void handle(Channel channel, NetworkPacket packet) {
         JoinGameAckPacket ackPacket = (JoinGameAckPacket) packet;
-        logger.debug("Received {} over TCP from {}", PacketType.JOIN_GAME_ACK, channel.remoteAddress());
+        logger.debug("Received {} over TCP from {}", ackPacket.getType(), channel.remoteAddress());
         String token = ackPacket.token();
-        logger.debug("Sending {} over UDP with token {} to {}", PacketType.UDP_HANDSHAKE, token, channel.remoteAddress());
+        NetworkPacket udpHandshakePacket = new UdpHandshakePacket(token);
+        logger.debug("Sending {} over UDP with token {} to {}", udpHandshakePacket.getType(), token, channel.remoteAddress());
         client.sendUdp(new UdpHandshakePacket(token));
     }
 }

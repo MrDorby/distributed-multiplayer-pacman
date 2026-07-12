@@ -1,11 +1,12 @@
-package it.unibo.controller.shared.network.sockets.handlers;
+package it.unibo.controller.client.network.sockets.handlers;
 
 import io.netty.channel.Channel;
 import it.unibo.controller.client.GameClientController;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
+import it.unibo.controller.shared.network.sockets.handlers.TcpHandler;
+import it.unibo.controller.shared.network.sockets.handlers.UdpHandler;
 import it.unibo.controller.shared.network.sockets.packets.GameContextPacket;
 import it.unibo.controller.shared.network.sockets.packets.NetworkPacket;
-import it.unibo.controller.shared.network.sockets.packets.PacketType;
 import it.unibo.controller.shared.network.translation.GameContextDecoder;
 import it.unibo.controller.shared.network.translation.GameContextDecoderImpl;
 import it.unibo.model.entities.SpeculativeEntityFactoryImpl;
@@ -27,7 +28,7 @@ public class GameContextHandler implements TcpHandler, UdpHandler {
     public void handle(Channel channel, NetworkPacket packet) {
         GameContextPacket gameContextPacket = (GameContextPacket) packet;
         GameContextDTO contextDTO = gameContextPacket.context();
-        logger.debug("Received {} over TCP from {}", PacketType.GAME_CONTEXT, channel.remoteAddress());
+        logger.debug("Received {} over TCP from {}", gameContextPacket.getType(), channel.remoteAddress());
         controller.onGameContext(decoder.decode(contextDTO));
     }
 
@@ -35,7 +36,7 @@ public class GameContextHandler implements TcpHandler, UdpHandler {
     public void handle(InetSocketAddress sender, NetworkPacket packet) {
         GameContextPacket gameContextPacket = (GameContextPacket) packet;
         GameContextDTO contextDTO = gameContextPacket.context();
-        logger.debug("Received {} over UDP from {}", PacketType.GAME_CONTEXT, sender);
+        logger.debug("Received {} over UDP from {}", gameContextPacket.getType(), sender);
         controller.onGameContext(decoder.decode(contextDTO));
     }
 }

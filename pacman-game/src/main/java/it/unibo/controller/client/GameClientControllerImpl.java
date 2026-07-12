@@ -1,16 +1,15 @@
 package it.unibo.controller.client;
 
 import it.unibo.controller.client.engine.ClientGameEngine;
-import it.unibo.controller.client.network.NettyGameNetworkClientFactory;
+import it.unibo.controller.client.network.sockets.NettyGameNetworkClient;
+import it.unibo.controller.client.network.sockets.NettyGameNetworkClientFactory;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.InputHandler;
-import it.unibo.controller.client.network.GameCommandDispatcher;
-import it.unibo.controller.client.network.GameClientNetworkListener;
-import it.unibo.controller.client.network.NettyGameNetworkClient;
 import it.unibo.controller.shared.input.PacmanCommand;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
 import it.unibo.controller.shared.input.PlayerInputHandler;
-import it.unibo.controller.shared.network.packets.PacmanMovePacket;
+import it.unibo.controller.shared.network.sockets.packets.JoinGamePacket;
+import it.unibo.controller.shared.network.sockets.packets.PacmanMovePacket;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameImpl;
@@ -19,20 +18,36 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.util.UUID;
 
-public class GameClientController implements GameClientNetworkListener, GameCommandDispatcher {
-    private static final Logger logger = LoggerFactory.getLogger(GameClientController.class);
+public class GameClientControllerImpl implements GameClientController {
+    private static final Logger logger = LoggerFactory.getLogger(GameClientControllerImpl.class);
 
     private final NettyGameNetworkClient client;
     private final ClientGameEngine engine;
     private final GameContextBuffer contextBuffer = new GameContextBuffer();
 
-    public GameClientController(Game game, String host, int tcpPort, int udpPort, String username) throws InterruptedException {
+    private final String username;
+
+    public GameClientControllerImpl(Game game, String host, int tcpPort, int udpPort, String username) {
         this.client = NettyGameNetworkClientFactory.create(host, tcpPort, udpPort, this);
         this.engine = new ClientGameEngine(game, contextBuffer, this);
-        logger.info("Client controller initialized for user '{}', connecting to {}:{} (TCP) / {} (UDP).",
-                username, host, tcpPort, udpPort);
+        this.username = username;
+        logger.info("Client controller initialized for user '{}', connecting to {}:{} (TCP) / {} (UDP).", username, host, tcpPort, udpPort);
+    }
+
+    @Override
+    public void start() {
+        try {
+            client.start();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void stop() {
+        engine.stop();
+        client.stop();
     }
 
     @Override
@@ -54,28 +69,14 @@ public class GameClientController implements GameClientNetworkListener, GameComm
         client.sendUdp(new PacmanMovePacket(moveCommand.pacmanId(), moveCommand.direction()));
     }
 
-    public ClientGameEngine getEngine() {
-        return engine;
+    @Override
+    public void connectToServer() {
+        client.sendTcp(new JoinGamePacket(username));
+        logger.info("Sent JOIN_MATCH for user '{}'", username);
     }
 
-     static void main(String[] args) throws InterruptedException {
-        String username = UUID.randomUUID().toString();
-        Game game = new GameImpl(null);
-
-        GameClientController controller = new GameClientController(game, "localhost", 700, 701, username);
-        GameEngine engine = controller.getEngine();
-
-        InputHandler inputHandler = new PlayerInputHandler(engine, username);
-        GameViewImpl view = new GameViewImpl(inputHandler);
-        engine.setView(view);
-
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Pacman Client");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setContentPane(view.getGamePanel());
-            frame.pack();
-            frame.setVisible(true);
-            view.getGamePanel().requestFocusInWindow();
-        });
+    @Override
+    public ClientGameEngine getEngine() {
+        return engine;
     }
 }

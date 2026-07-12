@@ -1,6 +1,6 @@
 package it.unibo;
 
-import it.unibo.controller.client.GameClientController;
+import it.unibo.controller.client.GameClientControllerImpl;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.controller.shared.input.PlayerInputHandler;
@@ -14,7 +14,7 @@ import java.util.UUID;
 public class GameClientMain {
     private static final String DEFAULT_SERVER_HOST = "localhost";
     private static final int DEFAULT_SERVER_TCP_PORT = 7777;
-    private static final int DEFAULT_SERVER_UDP_PORT = 7778;
+    private static final int DEFAULT_SERVER_UDP_PORT = 7777;
 
     /**
      * Launches the game client.
@@ -27,7 +27,7 @@ public class GameClientMain {
         int udpPort = args.length > 2 ? Integer.parseInt(args[2]) : DEFAULT_SERVER_UDP_PORT;
         String username = args.length > 3 ? args[3] : UUID.randomUUID().toString();
         Game game = new GameImpl(null);
-        GameClientController controller = new GameClientController(game, host, tcpPort, udpPort, username);
+        GameClientControllerImpl controller = new GameClientControllerImpl(game, host, tcpPort, udpPort, username);
         GameEngine engine = controller.getEngine();
         InputHandler inputHandler = new PlayerInputHandler(engine, username);
         GameViewImpl view = new GameViewImpl(inputHandler);
@@ -40,5 +40,8 @@ public class GameClientMain {
             frame.setVisible(true);
             view.getGamePanel().requestFocusInWindow();
         });
+        Thread.sleep(1000);
+        controller.start();
+        controller.connectToServer();
     }
 }

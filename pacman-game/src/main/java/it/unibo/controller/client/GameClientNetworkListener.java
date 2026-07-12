@@ -1,4 +1,4 @@
-package it.unibo.controller.client.network;
+package it.unibo.controller.client;
 
 import it.unibo.model.game.GameContext;
 

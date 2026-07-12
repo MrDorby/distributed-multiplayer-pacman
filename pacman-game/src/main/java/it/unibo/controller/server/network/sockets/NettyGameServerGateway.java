@@ -21,8 +21,8 @@ import java.net.InetSocketAddress;
 import java.util.EnumMap;
 import java.util.Map;
 
-public class NettyGameNetworkServer implements GameNetworkServer {
-    private static final Logger logger = LoggerFactory.getLogger(NettyGameNetworkServer.class);
+public class NettyGameServerGateway implements GameServerGateway {
+    private static final Logger logger = LoggerFactory.getLogger(NettyGameServerGateway.class);
 
     private final int tcpPort;
     private final int udpPort;
@@ -39,7 +39,7 @@ public class NettyGameNetworkServer implements GameNetworkServer {
     private Channel udpChannel;
     private final GameSessionRegistry sessions;
 
-    public NettyGameNetworkServer(int tcpPort, int udpPort, GameSessionRegistry sessions) {
+    public NettyGameServerGateway(int tcpPort, int udpPort, GameSessionRegistry sessions) {
         this.tcpPort = tcpPort;
         this.udpPort = udpPort;
         this.sessions = sessions;
@@ -69,7 +69,7 @@ public class NettyGameNetworkServer implements GameNetworkServer {
 
         this.udpChannel = udpBootstrap.bind(udpPort).sync().channel();
         this.tcpChannel = tcpBootstrap.bind(tcpPort).sync().channel();
-        logger.info("TCP/UDP server is now running. TCP Port: {}, UDP Port: {}", tcpPort, udpPort);
+        logger.info("TCP/UDP gateway is now running. TCP Port: {}, UDP Port: {}", tcpPort, udpPort);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class NettyGameNetworkServer implements GameNetworkServer {
         udpChannel.close();
         bossGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
-        logger.info("TCP/UDP server is shutting down");
+        logger.info("TCP/UDP gateway is shutting down");
     }
 
     @Override

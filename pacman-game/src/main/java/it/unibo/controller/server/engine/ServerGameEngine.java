@@ -15,10 +15,16 @@ import it.unibo.model.game.Game;
 public class ServerGameEngine extends AbstractFixedTimeStepGameEngine {
     private static final int BROADCAST_RATE_IN_HZ = 16;
     private final TickThrottleGroup tickThrottleGroup;
+    private GameContextBroadcaster broadcaster;
 
-    public ServerGameEngine(Game game, GameContextBroadcaster broadcaster) {
+    public ServerGameEngine(Game game) {
         super(game);
         this.tickThrottleGroup = new TickThrottleGroup(getTickRate());
+
+    }
+
+    public void setBroadcaster(GameContextBroadcaster broadcaster) {
+        this.broadcaster = broadcaster;
         tickThrottleGroup.register(BROADCAST_RATE_IN_HZ, () -> broadcaster.broadcast(this.game.getContext()));
     }
 
@@ -34,6 +40,8 @@ public class ServerGameEngine extends AbstractFixedTimeStepGameEngine {
 
     @Override
     protected void afterTick() {
-        tickThrottleGroup.tick();
+        if (broadcaster != null) {
+            tickThrottleGroup.tick();
+        }
     }
 }

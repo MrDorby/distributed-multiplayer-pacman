@@ -6,10 +6,10 @@ import it.unibo.controller.shared.network.sockets.packets.NetworkPacket;
 import it.unibo.controller.shared.network.sockets.packets.PacketType;
 
 /**
- * Defines the contract for a game network server utilizing both
+ * Defines the contract for a game network gateway utilizing both
  * TCP and UDP protocols to handle real-time game communications.
  */
-public interface GameNetworkServer {
+public interface GameServerGateway {
     /**
      * Registers a specific handler to process incoming TCP packets of a given type.
      */
@@ -21,12 +21,12 @@ public interface GameNetworkServer {
     void addUdpHandler(PacketType type, UdpHandler handler);
 
     /**
-     * Starts the game network server.
+     * Starts the game network gateway.
      */
     void start() throws InterruptedException;
 
     /**
-     * Stops the game network server.
+     * Stops the game network gateway.
      */
     void stop();
 

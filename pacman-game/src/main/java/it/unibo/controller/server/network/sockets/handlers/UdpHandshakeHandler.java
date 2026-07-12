@@ -21,6 +21,6 @@ public class UdpHandshakeHandler implements UdpHandler {
         UdpHandshakePacket udpHandshakePacket = (UdpHandshakePacket) packet;
         String token = udpHandshakePacket.token();
         logger.debug("Received {} over UDP from {}", udpHandshakePacket.getType(), sender);
-        ctx.sessionController().onUdpHandshake(token, sender);
+        ctx.sessions().onUdpHandshake(token, sender);
     }
 }

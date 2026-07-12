@@ -1,42 +1,45 @@
 package it.unibo.controller.server;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-public class PlayerLobby {
-    private final int requiredPlayers;
-    private final List<String> joinedPlayers = new CopyOnWriteArrayList<>();
-    private volatile boolean started = false;
+/**
+ * Represents a lobby responsible for managing a collection of players waiting for a game to start.
+ */
+public interface PlayerLobby {
+    /**
+     * Attempts to add a player to the lobby.
+     * @param playerName the unique identifier of the player joining
+     * @return true if the addition of the player is successful, false otherwise
+     */
+    boolean addPlayer(String playerName);
 
-    public PlayerLobby(int requiredPlayers) {
-        this.requiredPlayers = requiredPlayers;
-    }
+    /**
+     * Checks whether the lobby has been moved into the active playing state.
+     *
+     * @return true if the lobby is currently playing, false otherwise
+     */
+    boolean isPlaying();
 
-    public boolean join(String playerName) {
-        if (started) {
-            return false;
-        }
-        joinedPlayers.add(playerName);
-        if (joinedPlayers.size() == requiredPlayers) {
-            started = true;
-            return true;
-        }
-        return false;
-    }
+    /**
+     * Retrieves the number of players currently sitting in the lobby.
+     *
+     * @return the current player count
+     */
+    int getCurrentPlayerCount();
 
-    public boolean lobbyIsPlaying() {
-        return started;
-    }
+    /**
+     * Retrieves the total number of players required for this lobby.
+     *
+     * @return the target player capacity
+     */
+    int getRequiredPlayerCount();
 
-    public int joinedCount() {
-        return joinedPlayers.size();
-    }
+    boolean isFull();
 
-    public int requiredPlayers() {
-        return requiredPlayers;
-    }
-
-    public List<String> joinedPlayers() {
-        return List.copyOf(joinedPlayers);
-    }
+    /**
+     * Returns the players currently in the lobby.
+     *
+     * @return a {@code List} containing the names of all joined players
+     */
+    List<String> getPlayers();
 }
