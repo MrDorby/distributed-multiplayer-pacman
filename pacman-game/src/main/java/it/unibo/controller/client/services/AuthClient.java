@@ -24,6 +24,8 @@ import it.unibo.controller.client.key.Hash;
 
 import it.unibo.controller.client.key.KeyManager;
 
+// TODO: Change the code and base it on what written in QueriesImpl in queries-service
+// because the code here doesn't use the ResponseEntity type of Spring (or maybe it still works).
 /**
  * Manages the authentication aspect on the client side.
  */
