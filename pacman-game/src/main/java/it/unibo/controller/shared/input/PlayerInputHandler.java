@@ -4,12 +4,15 @@ import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.model.common.Direction;
 
 public class PlayerInputHandler implements InputHandler {
-    private final GameEngine engine;
+    private GameEngine engine;
     private final String localPlayerUsername;
 
-    public PlayerInputHandler(GameEngine engine, String localPlayerUsername) {
-        this.engine = engine;
+    public PlayerInputHandler(String localPlayerUsername) {
         this.localPlayerUsername = localPlayerUsername;
+    }
+
+    public void setEngine(GameEngine engine) {
+        this.engine = engine;
     }
 
     @Override

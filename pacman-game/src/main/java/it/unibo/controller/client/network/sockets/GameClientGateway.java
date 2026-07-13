@@ -1,4 +1,4 @@
-package it.unibo.controller.server.network.sockets;
+package it.unibo.controller.client.network.sockets;
 
 import it.unibo.controller.shared.network.sockets.handlers.TcpHandler;
 import it.unibo.controller.shared.network.sockets.handlers.UdpHandler;
@@ -6,10 +6,10 @@ import it.unibo.controller.shared.network.sockets.packets.NetworkPacket;
 import it.unibo.controller.shared.network.sockets.packets.PacketType;
 
 /**
- * Defines the contract for a game server gateway utilizing both
+ * Defines the contract for a game client gateway utilizing both
  * TCP and UDP protocols to handle real-time game communications.
  */
-public interface GameServerGateway {
+public interface GameClientGateway {
     /**
      * Registers a specific handler to process incoming TCP packets of a given type.
      */
@@ -31,22 +31,12 @@ public interface GameServerGateway {
     void stop();
 
     /**
-     * Sends a packet to a specific connected player via TCP.
+     * Sends a packet to a remote host via TCP.
      */
-    void sendTcp(String username, NetworkPacket packet);
+    void sendTcp(NetworkPacket packet);
 
     /**
-     * Sends a packet to a specific player via UDP.
+     * Sends a packet to a remote host via UDP.
      */
-    void sendUdp(String username, NetworkPacket packet);
-
-    /**
-     * Broadcasts a packet to all currently connected players via TCP.
-     */
-    void broadcastTcp(NetworkPacket packet);
-
-    /**
-     * Broadcasts a packet to all currently connected players via UDP.
-     */
-    void broadcastUdp(NetworkPacket packet);
+    void sendUdp(NetworkPacket packet);
 }

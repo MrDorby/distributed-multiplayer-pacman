@@ -1,11 +1,8 @@
 package it.unibo;
 
-import it.unibo.controller.client.GameClientControllerImpl;
-import it.unibo.controller.shared.engine.GameEngine;
-import it.unibo.controller.shared.input.InputHandler;
+import it.unibo.controller.client.GameClient;
+import it.unibo.controller.client.GameClientFactory;
 import it.unibo.controller.shared.input.PlayerInputHandler;
-import it.unibo.model.game.Game;
-import it.unibo.model.game.GameImpl;
 import it.unibo.view.SwingGameView;
 
 import javax.swing.*;
@@ -26,22 +23,23 @@ public class GameClientMain {
         int tcpPort = args.length > 1 ? Integer.parseInt(args[1]) : DEFAULT_SERVER_TCP_PORT;
         int udpPort = args.length > 2 ? Integer.parseInt(args[2]) : DEFAULT_SERVER_UDP_PORT;
         String username = args.length > 3 ? args[3] : UUID.randomUUID().toString();
-        Game game = new GameImpl(null);
-        GameClientControllerImpl controller = new GameClientControllerImpl(game, host, tcpPort, udpPort, username);
-        GameEngine engine = controller.getEngine();
-        InputHandler inputHandler = new PlayerInputHandler(engine, username);
+
+        PlayerInputHandler inputHandler = new PlayerInputHandler(username);
         SwingGameView view = new SwingGameView(inputHandler);
-        engine.setView(view);
+        GameClient client = GameClientFactory.create(host, tcpPort, udpPort, username, view);
+        inputHandler.setEngine(client.getEngine());
+
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Pacman Client");
+            JFrame frame = new JFrame("Pacman Client" + username);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setContentPane(view.getGamePanel());
             frame.setSize(800, 600);
+            frame.setLocationRelativeTo(null);
             frame.setVisible(true);
             view.getGamePanel().requestFocusInWindow();
         });
         Thread.sleep(1000);
-        controller.start();
-        controller.connectToServer();
+        client.start();
+        client.connectToServer();
     }
 }

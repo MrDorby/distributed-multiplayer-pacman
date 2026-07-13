@@ -3,6 +3,7 @@ package it.unibo.controller.server.engine;
 import it.unibo.controller.shared.engine.AbstractFixedTimeStepGameEngine;
 import it.unibo.controller.shared.engine.GameEndedEvent;
 import it.unibo.controller.shared.engine.GameLifecycleEvent;
+import it.unibo.controller.shared.engine.RemoteGameEngineListener;
 import it.unibo.controller.shared.input.PacmanCommand;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
@@ -20,7 +21,7 @@ import java.util.List;
 public class ServerGameEngine extends AbstractFixedTimeStepGameEngine {
     private static final int BROADCAST_RATE_IN_HZ = 16;
     private final TickThrottleGroup tickThrottleGroup;
-    private final List<GameEngineListener> listeners = new ArrayList<>();
+    private final List<RemoteGameEngineListener> listeners = new ArrayList<>();
 
     public ServerGameEngine(Game game) {
         super(game);
@@ -28,7 +29,7 @@ public class ServerGameEngine extends AbstractFixedTimeStepGameEngine {
         this.tickThrottleGroup.register(BROADCAST_RATE_IN_HZ, this::broadcastContextUpdate);
     }
 
-    public void addListener(GameEngineListener listener) {
+    public void addListener(RemoteGameEngineListener listener) {
         this.listeners.add(listener);
     }
 
@@ -50,13 +51,13 @@ public class ServerGameEngine extends AbstractFixedTimeStepGameEngine {
 
     private void broadcastContextUpdate() {
         GameContext context = this.getGame().getContext();
-        for (GameEngineListener listener : listeners) {
+        for (RemoteGameEngineListener listener : listeners) {
             listener.onGameContextUpdate(context);
         }
     }
 
     private void broadcastLifecycleEvent(GameLifecycleEvent event) {
-        for (GameEngineListener listener : listeners) {
+        for (RemoteGameEngineListener listener : listeners) {
             listener.onGameEvent(event);
         }
     }

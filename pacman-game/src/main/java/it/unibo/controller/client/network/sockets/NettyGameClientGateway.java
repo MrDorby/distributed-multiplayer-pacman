@@ -18,67 +18,73 @@ import java.net.InetSocketAddress;
 import java.util.EnumMap;
 import java.util.Map;
 
-public class NettyGameNetworkClient {
-    private static final Logger logger = LoggerFactory.getLogger(NettyGameNetworkClient.class);
+public class NettyGameClientGateway implements GameClientGateway {
+    private static final Logger logger = LoggerFactory.getLogger(NettyGameClientGateway.class);
     private static final int TIMEOUT_IN_MILLIS = 5000;
+    public static final int MAX_UDP_PAYLOAD_SIZE_IN_BYTES = 65535; // TODO reduce later on once the max payload size is known
 
+    // Shared pool for active TCP/UDP input handling
     private final EventLoopGroup workerGroup = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
 
     private final Map<PacketType, TcpHandler> tcpHandlers = new EnumMap<>(PacketType.class);
     private final Map<PacketType, UdpHandler> udpHandlers = new EnumMap<>(PacketType.class);
 
-    private final int tcpPort;
     private final int udpPort;
-    private final InetSocketAddress serverAddress;
+    private final InetSocketAddress remoteAddress;
 
     private Channel tcpChannel;
     private Channel udpChannel;
 
+    @Override
     public void addTcpHandler(PacketType type, TcpHandler handler) {
         this.tcpHandlers.put(type, handler);
     }
 
+    @Override
     public void addUdpHandler(PacketType type, UdpHandler handler) {
         this.udpHandlers.put(type, handler);
     }
 
-    public NettyGameNetworkClient(String host, int tcpPort, int udpPort) {
-        this.tcpPort = tcpPort;
+    public NettyGameClientGateway(String host, int tcpPort, int udpPort) {
         this.udpPort = udpPort;
-        this.serverAddress = new InetSocketAddress(host, tcpPort);
+        this.remoteAddress = new InetSocketAddress(host, tcpPort);
     }
 
+    @Override
     public void start() throws InterruptedException {
         Bootstrap udpBootstrap = new Bootstrap()
                 .group(workerGroup)
                 .channel(NioDatagramChannel.class)
-                .option(ChannelOption.RECVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(65535))
+                .option(ChannelOption.RECVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(MAX_UDP_PAYLOAD_SIZE_IN_BYTES))
                 .handler(new UdpChannelInitializer(udpHandlers));
 
         Bootstrap tcpBootstrap = new Bootstrap()
                 .group(workerGroup)
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT_IN_MILLIS)
-                .option(ChannelOption.TCP_NODELAY, true) // Disable Nagle's algorithm
+                .option(ChannelOption.TCP_NODELAY, true) // Disables Nagle's algorithm
                 .handler(new TcpChannelInitializer(tcpHandlers));
 
         this.udpChannel = udpBootstrap.bind(0).sync().channel();
-        this.tcpChannel = tcpBootstrap.connect(serverAddress).sync().channel();
-        logger.info("UDP listener running on port {}. TCP connection established with {}", udpPort, serverAddress);
+        this.tcpChannel = tcpBootstrap.connect(remoteAddress).sync().channel();
+        logger.info("UDP port {} opened. TCP connection established with {}", udpPort, remoteAddress);
     }
 
+    @Override
     public void stop() {
         tcpChannel.close();
         udpChannel.close();
         workerGroup.shutdownGracefully();
-        logger.info("Closing TCP and UDP port connections");
+        logger.info("Closing TCP and UDP connections");
     }
 
+    @Override
     public void sendTcp(NetworkPacket packet) {
         tcpChannel.writeAndFlush(packet);
     }
 
+    @Override
     public void sendUdp(NetworkPacket packet) {
-        udpChannel.writeAndFlush(new DefaultAddressedEnvelope<>(packet, serverAddress));
+        udpChannel.writeAndFlush(new DefaultAddressedEnvelope<>(packet, remoteAddress));
     }
 }

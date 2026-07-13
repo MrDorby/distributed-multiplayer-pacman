@@ -30,8 +30,9 @@ public class GameController implements ScreenController {
     public void onEnter() {
         GameContext context = GameContextFactory.getTestContext();
         Game game = new GameImpl(context);
-        this.engine = new ClientGameEngine(game, null, null);
-        InputHandler inputHandler = new PlayerInputHandler(engine, localPlayerUsername);
+        this.engine = new ClientGameEngine(game);
+        PlayerInputHandler inputHandler = new PlayerInputHandler(localPlayerUsername);
+        inputHandler.setEngine(engine);
         this.gameView = new SwingGameView(inputHandler);
         this.engine.setView(gameView);
         ((GamePanel) this.gameView.getGamePanel()).onEscape(() -> navigator.goTo(AppState.MAIN_MENU));

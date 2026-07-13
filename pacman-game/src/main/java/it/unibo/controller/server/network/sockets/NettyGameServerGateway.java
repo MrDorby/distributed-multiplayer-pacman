@@ -24,9 +24,6 @@ import java.util.Map;
 public class NettyGameServerGateway implements GameServerGateway {
     private static final Logger logger = LoggerFactory.getLogger(NettyGameServerGateway.class);
 
-    private final int tcpPort;
-    private final int udpPort;
-
     // 1 thread dedicated strictly to TCP handshakes
     private final EventLoopGroup bossGroup = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
     // Shared pool for active TCP/UDP input handling
@@ -35,6 +32,8 @@ public class NettyGameServerGateway implements GameServerGateway {
     private final Map<PacketType, TcpHandler> tcpHandlers = new EnumMap<>(PacketType.class);
     private final Map<PacketType, UdpHandler> udpHandlers = new EnumMap<>(PacketType.class);
 
+    private final int tcpPort;
+    private final int udpPort;
     private Channel tcpChannel;
     private Channel udpChannel;
     private final GameSessionRegistry sessions;
