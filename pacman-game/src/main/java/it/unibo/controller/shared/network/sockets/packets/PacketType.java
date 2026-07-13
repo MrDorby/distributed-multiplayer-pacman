@@ -16,7 +16,7 @@ public enum PacketType {
     GAME_START(4, GameStartPacket.class),
     PACMAN_MOVE_COMMAND(5, PacmanMovePacket.class),
     GAME_CONTEXT(6, GameContextPacket.class),
-    GAME_ENDED(7, GameEndedPacket.class);
+    GAME_ENDED(7, GameEndPacket.class);
 
     private static final Map<Byte, PacketType> PACKET_TYPE_BY_ID = new HashMap<>();
 

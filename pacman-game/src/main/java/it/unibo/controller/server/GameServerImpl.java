@@ -9,7 +9,7 @@ import it.unibo.controller.shared.engine.GameLifecycleEvent;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
 import it.unibo.controller.shared.network.sockets.packets.GameContextPacket;
-import it.unibo.controller.shared.network.sockets.packets.GameEndedPacket;
+import it.unibo.controller.shared.network.sockets.packets.GameEndPacket;
 import it.unibo.controller.shared.network.sockets.packets.GameStartPacket;
 import it.unibo.controller.shared.network.translation.GameContextEncoder;
 import it.unibo.controller.shared.network.translation.GameContextEncoderImpl;
@@ -138,7 +138,7 @@ public class GameServerImpl implements GameServer {
             GameContextDTO dto = encoder.encode(context);
             persistenceManager.saveFinalSnapshot(dto);
             gateway.broadcastTcp(new GameContextPacket(dto));
-            gateway.broadcastTcp(new GameEndedPacket());
+            gateway.broadcastTcp(new GameEndPacket());
             lobby.setPlaying(false);
             scheduleServerShutdown(Duration.ofSeconds(10));
         }
