@@ -7,7 +7,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.time.Instant;
+import java.util.Objects;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +18,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import it.unibo.mongodb.PlayerInfoMongoDB;
+import it.unibo.mongodb.PlayerInfoRepository;
 
 /**
  * 
@@ -29,6 +35,9 @@ public class QueriesImpl implements Queries {
     private static final String AUTHENTICATOR_REQUEST = "http://localhost:8080/auth/token";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
+
+    @Autowired
+    private PlayerInfoRepository playerInfoRepository;  // TODO: Define a service?
 
     public QueriesImpl() {
         this.httpClient = HttpClient.newHttpClient();
@@ -56,12 +65,20 @@ public class QueriesImpl implements Queries {
         }
     }
 
+    // TODO: Add docs and use RSA key for communication with user.
     @Override
     @PostMapping(value = "/info", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getPlayerInfo(@RequestBody String username) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPlayerInfo'");
+        PlayerInfoMongoDB player = this.playerInfoRepository.findByUsername(username).orElse(null);
+        if (Objects.isNull(player)) {
+            return ResponseEntity.notFound().build();
+        }
+        try {
+            String playerString = this.objectMapper.writeValueAsString(player);
+            return ResponseEntity.ok(playerString);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
-    
     
 }

@@ -45,7 +45,7 @@ public class AuthClient {
 
     public AuthClient(HttpClient httpClient) {
         this.httpClient = httpClient;
-        KeyManager.generateRSAKeys();
+        KeyManager.generateRSAKeys();       // TODO Create a directory with username
         this.objectMapper = new ObjectMapper();
         this.token = "";
     }
