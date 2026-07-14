@@ -7,11 +7,18 @@ import java.util.List;
  */
 public interface PlayerLobby {
     /**
-     * Attempts to add a player to the lobby.
+     * Adds a player to the lobby.
      *
      * @param playerName the unique identifier of the player joining
      */
     void addPlayer(String playerName);
+
+    /**
+     * Remove a player to the lobby.
+     *
+     * @param playerName the unique identifier of the player to be removed
+     */
+    void removePlayer(String playerName);
 
     /**
      * Checks whether the lobby has been moved into the active playing state.

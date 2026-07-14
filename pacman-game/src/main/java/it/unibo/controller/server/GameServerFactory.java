@@ -7,7 +7,6 @@ import it.unibo.controller.server.network.sockets.handlers.JoinGameHandler;
 import it.unibo.controller.server.network.sockets.handlers.MoveCommandHandler;
 import it.unibo.controller.server.network.sockets.handlers.UdpHandshakeHandler;
 import it.unibo.controller.server.network.sockets.session.GameSessionController;
-import it.unibo.controller.server.network.sockets.session.GameSessionRegistry;
 import it.unibo.controller.server.persistence.GamePersistenceManager;
 import it.unibo.controller.server.persistence.backup.DummyGameBackupService;
 import it.unibo.controller.server.persistence.backup.HttpGameBackupService;
@@ -54,9 +53,8 @@ public class GameServerFactory {
         GameContext gameContext = GameContextFactory.createFromMap(mapPath, new GameEntityFactoryImpl());
         Game game = new GameImpl(gameContext);
 
-        GameSessionRegistry sessionRegistry = new GameSessionRegistry();
-        GameSessionController sessionController = new GameSessionController(sessionRegistry);
-        NettyGameServerGateway networkServer = new NettyGameServerGateway(tcpPort, udpPort, sessionRegistry);
+        GameSessionController sessionController = new GameSessionController();
+        NettyGameServerGateway networkServer = new NettyGameServerGateway(tcpPort, udpPort, sessionController);
 
         ServerGameEngine engine = new ServerGameEngine(game);
 

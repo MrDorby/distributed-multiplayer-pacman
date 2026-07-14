@@ -76,6 +76,38 @@ public class GameServerImpl implements GameServer {
         }
     }
 
+    @Override
+    public void onPlayerReconnected(GameSession session) {
+        String username = session.getUsername();
+        if (lobby.isPlaying()) {
+            logger.info("Player {} has reconnected mid-game, restoring human control", username);
+            Game game = engine.getGame();
+            game.changePacmanBehaviour(session.getUsername(), true);
+        } else {
+            lobby.addPlayer(username);
+            logger.info("Player {} has reconnected to the lobby before the game started {}/{}",
+                    username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
+            if (lobby.isFull()) {
+                lobby.setPlaying(true);
+                startGame();
+            }
+        }
+    }
+
+    @Override
+    public void onPlayerDisconnected(GameSession session) {
+        String username = session.getUsername();
+        if (lobby.isPlaying()) {
+            logger.info("Player {} has disconnected mid-game, substituting with a bot", username);
+            Game game = engine.getGame();
+            game.changePacmanBehaviour(username, false);
+        } else {
+            lobby.removePlayer(username);
+            logger.info("Player {} has left the lobby before game started {}/{}",
+                    username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
+        }
+    }
+
     private void startGame() {
         List<String> players = lobby.getPlayers();
         logger.info("Required player count reached. Starting game with players: {}", players);
@@ -85,20 +117,6 @@ public class GameServerImpl implements GameServer {
         gateway.broadcastTcp(new GameStartPacket());
         engine.start();
         persistenceManager.start();
-    }
-
-    @Override
-    public void onPlayerReconnected(GameSession session) {
-        logger.info("Player {} has reconnected, restoring human control", session.getUsername());
-        Game game = engine.getGame();
-        game.changePacmanBehaviour(session.getUsername(), true);
-    }
-
-    @Override
-    public void onPlayerDisconnected(GameSession session) {
-        logger.info("Player {} has disconnected, substituting with a bot", session.getUsername());
-        Game game = engine.getGame();
-        game.changePacmanBehaviour(session.getUsername(), false);
     }
 
     /* ******************************** *
