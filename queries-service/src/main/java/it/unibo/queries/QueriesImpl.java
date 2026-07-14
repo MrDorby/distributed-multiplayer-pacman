@@ -5,11 +5,16 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.net.http.HttpRequest.BodyPublishers;
-import java.time.Instant;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.crypto.Cipher;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,30 +23,37 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import it.unibo.QueriesDetailsService;
+import it.unibo.dto.PublicKeyRequestDTO;
+import it.unibo.dto.PublicKeyResponseDTO;
+import it.unibo.key.Hash;
+import it.unibo.key.KeyManager;
 import it.unibo.mongodb.PlayerInfoMongoDB;
-import it.unibo.mongodb.PlayerInfoRepository;
 
 /**
- * 
  * QueriesImpl
+ * <p>
+ * Service that manages the requests to get players informations.
  */
 @RestController
 @RequestMapping(value = "/queries")
 public class QueriesImpl implements Queries {
 
+    // TODO: Modify the HTTP REQUEST
     private static final String AUTHENTICATOR_REQUEST = "http://localhost:8080/auth/token";
+    private final Map<String, PublicKey> users;  // Username and PublicKey
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
+    private final QueriesDetailsService queriesDetailsService;
 
-    @Autowired
-    private PlayerInfoRepository playerInfoRepository;  // TODO: Define a service?
-
-    public QueriesImpl() {
+    public QueriesImpl(QueriesDetailsService queriesDetailsService) {
+        this.queriesDetailsService = queriesDetailsService;
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
+        this.users = new HashMap<>();
+        KeyManager.generateRSAKeys();
     }
 
     // TODO: check https://spring.io/guides/gs/consuming-rest
@@ -65,20 +77,53 @@ public class QueriesImpl implements Queries {
         }
     }
 
-    // TODO: Add docs and use RSA key for communication with user.
     @Override
     @PostMapping(value = "/info", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> getPlayerInfo(@RequestBody String username) {
-        PlayerInfoMongoDB player = this.playerInfoRepository.findByUsername(username).orElse(null);
-        if (Objects.isNull(player)) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<String> getPlayerInfo(@RequestBody String encrytpedRequest) {
         try {
+            /* Decrypting the incoming message and authenticating the user. */
+            String username = KeyManager.encryptDecryptDataRSA(encrytpedRequest, Cipher.DECRYPT_MODE, KeyManager.loadAuthenticatorPrivateKey());
+            
+            PlayerInfoMongoDB player = this.queriesDetailsService.loadUserByUsername(username);
+            if (Objects.isNull(player)) {
+                return ResponseEntity.notFound().build();
+            }
             String playerString = this.objectMapper.writeValueAsString(player);
-            return ResponseEntity.ok(playerString);
+            String encryptedResponse = KeyManager.encryptDecryptDataRSA(playerString, Cipher.ENCRYPT_MODE, this.users.get(username));
+            return ResponseEntity.ok(encryptedResponse);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
-    
+
+    @Override
+    @PostMapping(value = "/syn", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> syn(@RequestBody PublicKeyRequestDTO publicKeyClientDTO) {
+        try {
+            ResponseEntity<String> responseEntity = ResponseEntity.badRequest().build();
+            boolean integrity = Hash.checkHash(publicKeyClientDTO.hash(), publicKeyClientDTO.hashType(), publicKeyClientDTO.publicKey());
+            /* Checking the integrity of the message. */
+            if (integrity) {
+                /* Creating the hash of the Public Key. */
+                PublicKey authPub = KeyManager.loadAuthenticatorPublicKey();
+                byte[] authPubByte = authPub.getEncoded();
+                String hash = Hash.hashing(authPubByte, publicKeyClientDTO.hashType());
+                
+                /* Storaging the Public Key of the user. */
+                String publicKey = Base64.getEncoder().encodeToString(authPubByte);
+                this.users.put(publicKeyClientDTO.username(), KeyManager.getPublicKeyFromString(publicKeyClientDTO.publicKey()));
+                
+                /* Mapping the Message to a String in JSON format. */
+                ObjectMapper mapper = new ObjectMapper();
+                String json = mapper.writeValueAsString(new PublicKeyResponseDTO(publicKey, hash, publicKeyClientDTO.hashType()));
+                responseEntity = ResponseEntity.ok(json);
+            }
+            return responseEntity;
+        } catch (Exception e) {
+            if (e instanceof NoSuchAlgorithmException) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
 }

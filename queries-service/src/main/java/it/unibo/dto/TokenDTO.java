@@ -3,7 +3,8 @@ package it.unibo.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @param token
+ * Defines the message containing the token of the user.
+ * @param token represented as a String.
  */
 
 public record TokenDTO(
