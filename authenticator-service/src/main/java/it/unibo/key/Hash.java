@@ -16,10 +16,10 @@ public class Hash {
      * @throws NoSuchAlgorithmException
      */
     public static boolean checkHash(PublicKeyClientDTO publicKeyClientDTO) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance(publicKeyClientDTO.hashType());
-        byte[] hashByte = digest.digest(publicKeyClientDTO.publicKey().getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(hashByte).equals(publicKeyClientDTO.hash());
-        //return MessageDigest.isEqual(hashByte, publicKeyClientDTO.hash().getBytes());
+        String cleanPublicKey = publicKeyClientDTO.publicKey().trim().replaceAll("\\s+", "");
+        byte[] keyByte = Base64.getDecoder().decode(cleanPublicKey);
+        String diff = hashing(keyByte, publicKeyClientDTO.hashType());
+        return MessageDigest.isEqual(diff.getBytes(StandardCharsets.UTF_8), publicKeyClientDTO.hash().getBytes());
     }
 
     /**

@@ -104,7 +104,7 @@ public class LoginRegisterPanel extends JPanel {
 
         emailPanel.setLayout(new BoxLayout(emailPanel, BoxLayout.Y_AXIS));
         emailPanel.setBorder(panelBorder);
-        JLabel emailLabel = new JLabel("Email");
+        JLabel emailLabel = new JLabel("Username");
         emailLabel.setFont(FontManager.addingFont(15f, FONT_NAME));
         emailLabelPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         emailLabelPanel.add(emailLabel);

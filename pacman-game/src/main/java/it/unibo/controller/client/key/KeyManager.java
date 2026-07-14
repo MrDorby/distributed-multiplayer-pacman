@@ -1,11 +1,6 @@
 package it.unibo.controller.client.key;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -14,7 +9,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
@@ -32,17 +26,7 @@ import org.slf4j.LoggerFactory;
  */
 public class KeyManager {
     
-    // TODO: FILE FOR CONSTANTS.
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyPairGenerator.class);
-    //private static final String PATH = "authenticator-service" + File.separator + "keys" + File.separator;
-    private static final String PATH1 = "pacman-game";  //TODO: define the correct path for the keys.
-    private static final String PATH2 = "src";
-    private static final String PATH3 = "main";
-    private static final String PATH4 = "resources";
-    private static final String PATH5 = "keys";
-    private static final String PUBLIC_KEY_FILE = "public_key.der";
-    private static final String PRIVATE_KEY_FILE = "private_key.der";
-    // TODO: For the variable on top define them better?
 
     private static final String RSA_ALGORITHM = "RSA";
     private static final String AES_ALGORITHM = "AES";
@@ -51,24 +35,18 @@ public class KeyManager {
     private static final int RSA_KEYSIZE = 4096; // 2048
     private static final int AES_KEYSIZE = 256;
 
+    private static KeyPair keyPair;
+
     /**
      * Generates the key pair for the RSA algorithm and save them on files.
      */
-    public static void generateRSAKeys() {
+    public KeyManager() {
         try {
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA_ALGORITHM);
             keyPairGenerator.initialize(RSA_KEYSIZE);
-            KeyPair keyPair = keyPairGenerator.genKeyPair();
-            Path keyDir = Paths.get(PATH1, PATH2, PATH3, PATH4, PATH5);
-            if (!Files.exists(keyDir)) {
-                Files.createDirectory(keyDir);
-            }
-            Path publicKey = Paths.get(PATH1, PATH2, PATH3, PATH4, PATH5, PUBLIC_KEY_FILE);
-            Files.write(publicKey, keyPair.getPublic().getEncoded());
-            Path privateKey = Paths.get(PATH1, PATH2, PATH3, PATH4, PATH5, PRIVATE_KEY_FILE);
-            Files.write(privateKey, keyPair.getPrivate().getEncoded());
+            keyPair = keyPairGenerator.genKeyPair();
 
-        } catch (NoSuchAlgorithmException | IOException e) {
+        } catch (NoSuchAlgorithmException e) {
             LOGGER.error(e.getMessage());
         }
     }
@@ -111,30 +89,16 @@ public class KeyManager {
 
     /**
      * @return the Public key of the authentication service.
-     * @throws IOException
-     * @throws InvalidKeySpecException
-     * @throws NoSuchAlgorithmException
      */
-    public static PublicKey loadAuthenticatorPublicKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        Path path = Path.of(PATH2, PATH3, PATH4, PATH5, PUBLIC_KEY_FILE);
-        try (InputStream inputStream = Files.newInputStream(path)) {
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(inputStream.readAllBytes());
-            return KeyFactory.getInstance(RSA_ALGORITHM).generatePublic(spec);
-        }
+    public PublicKey loadAuthenticatorPublicKey() {
+        return keyPair.getPublic();
     }
 
     /**
      * @return the Private key of the authentication service.
-     * @throws IOException
-     * @throws InvalidKeySpecException
-     * @throws NoSuchAlgorithmException
      */
-    public static PrivateKey loadAuthenticatorPrivateKey() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        Path path = Path.of(PATH2, PATH3, PATH4, PATH5, PRIVATE_KEY_FILE);
-        try (InputStream inputStream = Files.newInputStream(path)) {
-            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(inputStream.readAllBytes());
-            return KeyFactory.getInstance(RSA_ALGORITHM).generatePrivate(spec);
-        }
+    public PrivateKey loadAuthenticatorPrivateKey() {
+        return keyPair.getPrivate();
     }
 
     //toPem("PUBLIC KEY", keyPair.getPublic().getEncoded())
@@ -209,27 +173,3 @@ public class KeyManager {
         }
     }
 }
-
-
-// TODO: EXAMPLE
-// PublicKey public_key = CryptographyHelper.ellipticCurveCrypto().getPublic();     
-// System.out.println("PUBLIC KEY::" + public_key);
-
-// //converting public key to byte            
-// byte[] byte_pubkey = public_key.getEncoded();
-// System.out.println("\nBYTE KEY::: " + byte_pubkey);
-
-// //converting byte to String 
-// String str_key = Base64.getEncoder().encodeToString(byte_pubkey);
-// // String str_key = new String(byte_pubkey,Charset.);
-// System.out.println("\nSTRING KEY::" + str_key);
-
-// //converting string to Bytes
-// byte_pubkey  = Base64.getDecoder().decode(str_key);
-// System.out.println("BYTE KEY::" + byte_pubkey);
-
-
-// //converting it back to public key
-// KeyFactory factory = KeyFactory.getInstance("ECDSA", "BC");
-// public_key = (ECPublicKey) factory.generatePublic(new X509EncodedKeySpec(byte_pubkey));
-// System.out.println("FINAL OUTPUT" + public_key);
