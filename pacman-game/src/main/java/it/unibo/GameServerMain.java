@@ -17,7 +17,7 @@ public class GameServerMain {
         String mapName = args.length > 0 ? args[0] : DEFAULT_MAP_NAME;
         int tcpPort = args.length > 1 ? Integer.parseInt(args[1]) : DEFAULT_TCP_PORT;
         int udpPort = args.length > 2 ? Integer.parseInt(args[2]) : DEFAULT_UDP_PORT;
-        GameServer controller = GameServerFactory.createWithoutPersistence(mapName, tcpPort, udpPort);
+        GameServer controller = GameServerFactory.createWithDummyExtraServices(mapName, tcpPort, udpPort);
         controller.start();
     }
 }

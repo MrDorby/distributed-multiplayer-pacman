@@ -2,6 +2,7 @@ package it.unibo.controller.server;
 
 import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.session.GameSession;
+import it.unibo.controller.server.orchestration.GameServerOrchestrator;
 import it.unibo.controller.server.persistence.GamePersistenceManager;
 import it.unibo.controller.shared.engine.GameEndedEvent;
 import it.unibo.controller.shared.engine.GameEngine;
@@ -29,18 +30,27 @@ public class GameServerImpl implements GameServer {
     private final GamePersistenceManager persistenceManager;
     private final GameContextEncoder encoder = new GameContextEncoderImpl();
 
+    private final GameServerOrchestrator orchestrator;
+
     private final FourManLobby lobby = new FourManLobby();
 
-    public GameServerImpl(GameEngine engine, GameServerGateway gateway, GamePersistenceManager persistenceManager) {
+    public GameServerImpl(GameEngine engine,
+                          GameServerGateway gateway,
+                          GamePersistenceManager persistenceManager,
+                          GameServerOrchestrator orchestrator
+    ) {
         this.gateway = gateway;
         this.engine = engine;
         this.persistenceManager = persistenceManager;
+        this.orchestrator = orchestrator;
     }
 
     @Override
     public void start() throws Exception {
         try {
             gateway.start();
+            orchestrator.ready();
+            orchestrator.startHeartbeat();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -49,6 +59,7 @@ public class GameServerImpl implements GameServer {
     @Override
     public void stop() throws Exception {
         try {
+            orchestrator.stopHeartbeat();
             engine.stop();
             gateway.stop();
             persistenceManager.stop();
@@ -76,6 +87,38 @@ public class GameServerImpl implements GameServer {
         }
     }
 
+    @Override
+    public void onPlayerReconnected(GameSession session) {
+        String username = session.getUsername();
+        if (lobby.isPlaying()) {
+            logger.info("Player {} has reconnected mid-game, restoring human control", username);
+            Game game = engine.getGame();
+            game.changePacmanBehaviour(session.getUsername(), true);
+        } else {
+            lobby.addPlayer(username);
+            logger.info("Player {} has reconnected to the lobby before the game started {}/{}",
+                    username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
+            if (lobby.isFull()) {
+                lobby.setPlaying(true);
+                startGame();
+            }
+        }
+    }
+
+    @Override
+    public void onPlayerDisconnected(GameSession session) {
+        String username = session.getUsername();
+        if (lobby.isPlaying()) {
+            logger.info("Player {} has disconnected mid-game, substituting with a bot", username);
+            Game game = engine.getGame();
+            game.changePacmanBehaviour(username, false);
+        } else {
+            lobby.removePlayer(username);
+            logger.info("Player {} has left the lobby before game started {}/{}",
+                    username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
+        }
+    }
+
     private void startGame() {
         List<String> players = lobby.getPlayers();
         logger.info("Required player count reached. Starting game with players: {}", players);
@@ -85,20 +128,6 @@ public class GameServerImpl implements GameServer {
         gateway.broadcastTcp(new GameStartPacket());
         engine.start();
         persistenceManager.start();
-    }
-
-    @Override
-    public void onPlayerReconnected(GameSession session) {
-        logger.info("Player {} has reconnected, restoring human control", session.getUsername());
-        Game game = engine.getGame();
-        game.changePacmanBehaviour(session.getUsername(), true);
-    }
-
-    @Override
-    public void onPlayerDisconnected(GameSession session) {
-        logger.info("Player {} has disconnected, substituting with a bot", session.getUsername());
-        Game game = engine.getGame();
-        game.changePacmanBehaviour(session.getUsername(), false);
     }
 
     /* ******************************** *
@@ -121,7 +150,7 @@ public class GameServerImpl implements GameServer {
      */
     @Override
     public void onGameContextUpdate(GameContext context) {
-        logger.debug("Broadcasting game context to all clients");
+        logger.trace("Broadcasting game context to all clients");
         GameContextDTO dto = encoder.encode(context);
         persistenceManager.updateContext(dto);
         gateway.broadcastUdp(new GameContextPacket(dto));
@@ -140,6 +169,7 @@ public class GameServerImpl implements GameServer {
             gateway.broadcastTcp(new GameContextPacket(dto));
             gateway.broadcastTcp(new GameEndPacket());
             lobby.setPlaying(false);
+            orchestrator.shutdown();
             scheduleServerShutdown(Duration.ofSeconds(10));
         }
     }

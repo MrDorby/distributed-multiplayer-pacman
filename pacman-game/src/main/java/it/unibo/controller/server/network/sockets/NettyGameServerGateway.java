@@ -6,9 +6,9 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import it.unibo.controller.server.network.sockets.session.GameSessionRegistry;
+import it.unibo.controller.server.network.sockets.session.GameSessionController;
 import it.unibo.controller.server.network.sockets.session.GameSession;
-import it.unibo.controller.shared.network.sockets.channel.TcpChannelInitializer;
+import it.unibo.controller.server.network.sockets.channel.GameServerChannelInitializer;
 import it.unibo.controller.shared.network.sockets.channel.UdpChannelInitializer;
 import it.unibo.controller.shared.network.sockets.handlers.TcpHandler;
 import it.unibo.controller.shared.network.sockets.handlers.UdpHandler;
@@ -36,12 +36,12 @@ public class NettyGameServerGateway implements GameServerGateway {
     private final int udpPort;
     private Channel tcpChannel;
     private Channel udpChannel;
-    private final GameSessionRegistry sessions;
+    private final GameSessionController sessionController;
 
-    public NettyGameServerGateway(int tcpPort, int udpPort, GameSessionRegistry sessions) {
+    public NettyGameServerGateway(int tcpPort, int udpPort, GameSessionController sessionController) {
         this.tcpPort = tcpPort;
         this.udpPort = udpPort;
-        this.sessions = sessions;
+        this.sessionController = sessionController;
     }
 
     @Override
@@ -64,7 +64,7 @@ public class NettyGameServerGateway implements GameServerGateway {
         ServerBootstrap tcpBootstrap = new ServerBootstrap()
                 .group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new TcpChannelInitializer(tcpHandlers));
+                .childHandler(new GameServerChannelInitializer(tcpHandlers, sessionController));
 
         this.udpChannel = udpBootstrap.bind(udpPort).sync().channel();
         this.tcpChannel = tcpBootstrap.bind(tcpPort).sync().channel();
@@ -82,7 +82,7 @@ public class NettyGameServerGateway implements GameServerGateway {
 
     @Override
     public void sendTcp(String username, NetworkPacket packet) {
-        GameSession session = sessions.getByUsername(username);
+        GameSession session = sessionController.getSessionByUsername(username);
         if (session == null) {
             logger.warn("Cannot send over TCP: no session for {}", username);
             return;
@@ -97,7 +97,7 @@ public class NettyGameServerGateway implements GameServerGateway {
 
     @Override
     public void sendUdp(String username, NetworkPacket packet) {
-        GameSession session = sessions.getByUsername(username);
+        GameSession session = sessionController.getSessionByUsername(username);
         if (session == null) {
             logger.warn("Cannot send over UDP: no session for {}", username);
             return;
@@ -112,7 +112,7 @@ public class NettyGameServerGateway implements GameServerGateway {
 
     @Override
     public void broadcastTcp(NetworkPacket packet) {
-        for (GameSession session : sessions.getSessions()) {
+        for (GameSession session : sessionController.getAllSessions()) {
             Channel channel = session.getTcpChannel();
             if (channel != null && channel.isActive()) {
                 channel.writeAndFlush(packet);
@@ -122,7 +122,7 @@ public class NettyGameServerGateway implements GameServerGateway {
 
     @Override
     public void broadcastUdp(NetworkPacket packet) {
-        for (GameSession session : sessions.getSessions()) {
+        for (GameSession session : sessionController.getAllSessions()) {
             InetSocketAddress udpAddress = session.getUdpAddress();
             if (udpAddress != null) {
                 udpChannel.writeAndFlush(new DefaultAddressedEnvelope<>(packet, udpAddress));

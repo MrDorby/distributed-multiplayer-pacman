@@ -5,7 +5,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import it.unibo.controller.shared.network.sockets.channel.TcpChannelInitializer;
+import it.unibo.controller.client.network.sockets.channel.GameClientChannelInitializer;
 import it.unibo.controller.shared.network.sockets.channel.UdpChannelInitializer;
 import it.unibo.controller.shared.network.sockets.handlers.TcpHandler;
 import it.unibo.controller.shared.network.sockets.handlers.UdpHandler;
@@ -63,7 +63,7 @@ public class NettyGameClientGateway implements GameClientGateway {
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT_IN_MILLIS)
                 .option(ChannelOption.TCP_NODELAY, true) // Disables Nagle's algorithm
-                .handler(new TcpChannelInitializer(tcpHandlers));
+                .handler(new GameClientChannelInitializer(tcpHandlers));
 
         this.udpChannel = udpBootstrap.bind(0).sync().channel();
         this.tcpChannel = tcpBootstrap.connect(remoteAddress).sync().channel();

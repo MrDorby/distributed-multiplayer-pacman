@@ -13,6 +13,8 @@ public class GameSession {
     private InetSocketAddress udpAddress;
     private String udpToken;
 
+    private volatile SessionState state = SessionState.CONNECTED;
+
     /**
      * Constructs a new session initialized via a TCP connection.
      * @param username      the unique username of the connected player
@@ -73,10 +75,11 @@ public class GameSession {
         this.udpToken = udpToken;
     }
 
-    /**
-     * Verifies whether the session is ready for full bidirectional communication.
-     */
-    public synchronized boolean isFullyBound() {
-        return tcpChannel != null && tcpChannel.isActive() && udpAddress != null;
+    public SessionState getState() {
+        return state;
+    }
+
+    public void setState(SessionState state) {
+        this.state = state;
     }
 }

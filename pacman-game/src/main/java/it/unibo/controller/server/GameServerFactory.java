@@ -7,7 +7,8 @@ import it.unibo.controller.server.network.sockets.handlers.JoinGameHandler;
 import it.unibo.controller.server.network.sockets.handlers.MoveCommandHandler;
 import it.unibo.controller.server.network.sockets.handlers.UdpHandshakeHandler;
 import it.unibo.controller.server.network.sockets.session.GameSessionController;
-import it.unibo.controller.server.network.sockets.session.GameSessionRegistry;
+import it.unibo.controller.server.orchestration.DummyGameServerOrchestrator;
+import it.unibo.controller.server.orchestration.GameServerOrchestrator;
 import it.unibo.controller.server.persistence.GamePersistenceManager;
 import it.unibo.controller.server.persistence.backup.DummyGameBackupService;
 import it.unibo.controller.server.persistence.backup.HttpGameBackupService;
@@ -31,43 +32,46 @@ public class GameServerFactory {
             int tcpPort,
             int udpPort,
             URI backupEndpoint,
-            URI resultsEndpoint
+            URI resultsEndpoint,
+            GameServerOrchestrator orchestrator
     ) {
         HttpClient httpClient = HttpClient.newHttpClient();
         GamePersistenceManager persistence = new GamePersistenceManager(
                 new HttpGameBackupService(httpClient, backupEndpoint),
                 new HttpGameResultsService(httpClient, resultsEndpoint)
         );
-        return assemble(mapName, tcpPort, udpPort, persistence);
+        return assemble(mapName, tcpPort, udpPort, persistence, orchestrator);
     }
 
-    public static GameServer createWithoutPersistence(String mapName, int tcpPort, int udpPort) {
+    public static GameServer createWithDummyExtraServices(String mapName, int tcpPort, int udpPort) {
         GamePersistenceManager persistence = new GamePersistenceManager(
                 new DummyGameBackupService(),
                 new DummyGameResultsService()
         );
-        return assemble(mapName, tcpPort, udpPort, persistence);
+        GameServerOrchestrator dummyOrchestrator = new DummyGameServerOrchestrator();
+        return assemble(mapName, tcpPort, udpPort, persistence, dummyOrchestrator);
     }
 
-    private static GameServer assemble(String mapName, int tcpPort, int udpPort, GamePersistenceManager persistence) {
+    private static GameServer assemble(
+            String mapName,
+            int tcpPort,
+            int udpPort,
+            GamePersistenceManager persistence,
+            GameServerOrchestrator orchestrator
+    ) {
         String mapPath = MAP_PATH_FORMAT.formatted(mapName);
         GameContext gameContext = GameContextFactory.createFromMap(mapPath, new GameEntityFactoryImpl());
         Game game = new GameImpl(gameContext);
-
-        GameSessionRegistry sessionRegistry = new GameSessionRegistry();
-        GameSessionController sessionController = new GameSessionController(sessionRegistry);
-        NettyGameServerGateway networkServer = new NettyGameServerGateway(tcpPort, udpPort, sessionRegistry);
-
+        GameSessionController sessionController = new GameSessionController();
+        NettyGameServerGateway gateway = new NettyGameServerGateway(tcpPort, udpPort, sessionController);
         ServerGameEngine engine = new ServerGameEngine(game);
-
-        GameServerImpl server = new GameServerImpl(engine, networkServer, persistence);
+        GameServer server = new GameServerImpl(engine, gateway, persistence, orchestrator);
         engine.addListener(server);
-
         sessionController.addListener(server);
-        HandlerContext context = new HandlerContext(sessionController, server, networkServer);
-        networkServer.addTcpHandler(PacketType.JOIN_GAME, new JoinGameHandler(context));
-        networkServer.addUdpHandler(PacketType.UDP_HANDSHAKE, new UdpHandshakeHandler(context));
-        networkServer.addUdpHandler(PacketType.PACMAN_MOVE_COMMAND, new MoveCommandHandler(context));
+        HandlerContext context = new HandlerContext(sessionController, server, gateway);
+        gateway.addTcpHandler(PacketType.JOIN_GAME, new JoinGameHandler(context));
+        gateway.addUdpHandler(PacketType.UDP_HANDSHAKE, new UdpHandshakeHandler(context));
+        gateway.addUdpHandler(PacketType.PACMAN_MOVE_COMMAND, new MoveCommandHandler(context));
         return server;
     }
 }
