@@ -23,7 +23,7 @@ public class AuthDetailsService {
         throw new UsernameNotFoundException("User not found.");
     }
 
-    public AuthMongoDB loadUserByUsername(String username) throws UsernameNotFoundException {
+    public AuthMongoDB loadUserByUsername(String username) {
         return authRepository.findByUsername(username).orElse(null);
             //.orElseThrow(() -> new UsernameNotFoundException("Username not found!"));
     }

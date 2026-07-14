@@ -34,7 +34,6 @@ public class Hash {
      */
     public static String hashing(byte[] message, String hashType) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance(hashType);
-        System.out.println(message.length);
         byte[] hashByte = digest.digest(message);
         String hash = Base64.getEncoder().encodeToString(hashByte);
         return hash;

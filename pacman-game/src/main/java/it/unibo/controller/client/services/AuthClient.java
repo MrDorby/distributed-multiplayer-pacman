@@ -74,7 +74,7 @@ public class AuthClient {
         String secret = KeyManager.encryptDecryptDataRSA(encryptedResponse.secretKey(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
         SecretKey secretKey = KeyManager.getSecretKeyFromString(secret);
         String ivParameters = KeyManager.encryptDecryptDataRSA(encryptedResponse.ivParameter(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
-        String token = KeyManager.encryptDecryptDataAES(encryptedResponse.encryptedToken(), Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(ivParameters.getBytes()));
+        String token = KeyManager.encryptDecryptDataAES(encryptedResponse.encryptedToken(), Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(Base64.getDecoder().decode(ivParameters)));
         this.token = token;
     }
 
