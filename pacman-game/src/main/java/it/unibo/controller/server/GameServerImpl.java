@@ -2,6 +2,7 @@ package it.unibo.controller.server;
 
 import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.session.GameSession;
+import it.unibo.controller.server.orchestration.GameServerOrchestrator;
 import it.unibo.controller.server.persistence.GamePersistenceManager;
 import it.unibo.controller.shared.engine.GameEndedEvent;
 import it.unibo.controller.shared.engine.GameEngine;
@@ -29,18 +30,27 @@ public class GameServerImpl implements GameServer {
     private final GamePersistenceManager persistenceManager;
     private final GameContextEncoder encoder = new GameContextEncoderImpl();
 
+    private final GameServerOrchestrator orchestrator;
+
     private final FourManLobby lobby = new FourManLobby();
 
-    public GameServerImpl(GameEngine engine, GameServerGateway gateway, GamePersistenceManager persistenceManager) {
+    public GameServerImpl(GameEngine engine,
+                          GameServerGateway gateway,
+                          GamePersistenceManager persistenceManager,
+                          GameServerOrchestrator orchestrator
+    ) {
         this.gateway = gateway;
         this.engine = engine;
         this.persistenceManager = persistenceManager;
+        this.orchestrator = orchestrator;
     }
 
     @Override
     public void start() throws Exception {
         try {
             gateway.start();
+            orchestrator.ready();
+            orchestrator.startHeartbeat();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -49,6 +59,7 @@ public class GameServerImpl implements GameServer {
     @Override
     public void stop() throws Exception {
         try {
+            orchestrator.stopHeartbeat();
             engine.stop();
             gateway.stop();
             persistenceManager.stop();
@@ -158,6 +169,7 @@ public class GameServerImpl implements GameServer {
             gateway.broadcastTcp(new GameContextPacket(dto));
             gateway.broadcastTcp(new GameEndPacket());
             lobby.setPlaying(false);
+            orchestrator.shutdown();
             scheduleServerShutdown(Duration.ofSeconds(10));
         }
     }

@@ -12,8 +12,6 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
-import org.eclipse.jetty.http.HttpStatus;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.controller.client.dto.EncryptedLoginResponseDTO;
@@ -68,7 +66,7 @@ public class AuthClient {
                                     .build();
 
         HttpResponse<String> loginResponse = httpClient.send(httpLoginRequest, HttpResponse.BodyHandlers.ofString());
-        if (loginResponse.statusCode() != HttpStatus.OK_200) {
+        if (loginResponse.statusCode() != 200) {
             throw new Exception(loginResponse.body());
         }
         EncryptedLoginResponseDTO encryptedResponse = objectMapper.readValue(loginResponse.body(), EncryptedLoginResponseDTO.class);
@@ -107,7 +105,7 @@ public class AuthClient {
                                     .build();
         
         HttpResponse<String> registerResponse = httpClient.send(httpRegisterRequest, HttpResponse.BodyHandlers.ofString());
-        if (registerResponse.statusCode() != HttpStatus.OK_200) {
+        if (registerResponse.statusCode() != 200) {
             throw new Exception(registerResponse.body());
         }
         return registerResponse.body();
@@ -129,7 +127,7 @@ public class AuthClient {
                                     .build();
         
         HttpResponse<String> synResponse = httpClient.send(httpSynRequest, HttpResponse.BodyHandlers.ofString());
-        if (synResponse.statusCode() != HttpStatus.OK_200) {
+        if (synResponse.statusCode() != 200) {
             throw new Exception(synResponse.body());
         }
 
