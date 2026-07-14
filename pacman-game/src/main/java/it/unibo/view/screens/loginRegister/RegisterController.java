@@ -17,9 +17,9 @@ public class RegisterController implements ScreenController {
             String password = registerView.getPassword();
             if (!username.isEmpty() && !password.isEmpty()) {
                 try {
-                    String result = serviceManager.register(username, password);  // TODO: manage the display message.
+                    String result = serviceManager.register(username, password);
                     registerView.showMessage(result);
-                    navigator.goTo(AppState.LOGIN);  //TODO: informing the user that the registration went good.
+                    navigator.goTo(AppState.LOGIN);
                 } catch (Exception e) {
                     registerView.showMessage(e.getMessage());
                 }

@@ -22,5 +22,10 @@ public class LocalGameEngine extends AbstractFixedTimeStepGameEngine {
     protected void afterCommandExecuted(PacmanCommand command) {}
 
     @Override
-    protected void afterTick() {}
+    protected void afterTick() {
+        if (this.game.getContext().getGameState().isGameOver()) {
+            super.stop();
+            super.view.onLifecycleEvent(new GameEndedEvent(game.getContext()));
+        }
+    }
 }

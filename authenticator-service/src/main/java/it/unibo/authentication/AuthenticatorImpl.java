@@ -2,6 +2,7 @@ package it.unibo.authentication;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.util.Base64;
@@ -108,6 +109,7 @@ public class AuthenticatorImpl implements Authenticator {
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> login(@RequestBody String encryptedLoginDTO) {
         ObjectMapper mapper = new ObjectMapper();
+        int ivSize = 16;
         try {
             /* Decrypting the incoming message and authenticating the user. */
             String decryptedLoginDTO = KeyManager.encryptDecryptDataRSA(encryptedLoginDTO, Cipher.DECRYPT_MODE, KeyManager.loadAuthenticatorPrivateKey());
@@ -123,7 +125,10 @@ public class AuthenticatorImpl implements Authenticator {
             TokenDTO tokenDTO = new TokenDTO(token);
             String jsonToken = mapper.writeValueAsString(tokenDTO);
             SecretKey secretKey = KeyManager.randomSecretKey();
-            IvParameterSpec ivParameterSpec = new IvParameterSpec(new byte[16]);
+            byte[] iv = new byte[ivSize];
+            SecureRandom random = new SecureRandom();
+            random.nextBytes(iv);
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
             String encryptedJsonToken = KeyManager.encryptDecryptDataAES(jsonToken, Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
 
             /* Encrypting the secret key. */
@@ -158,7 +163,7 @@ public class AuthenticatorImpl implements Authenticator {
             /* Encrypting the password and creating a user for MongoDB. */
             String encryptedPassword = this.bCryptPasswordEncoder.encode(registerDTO.password());
             AuthMongoDB user = new AuthMongoDB(registerDTO.username(), encryptedPassword, "");
-            
+
             /* Checking if no user with the given username is on the database. */
             if (this.authDetailsService.loadUserByUsername(user.getUsername()) == null) {
                 AuthMongoDB rg = this.authDetailsService.register(user);

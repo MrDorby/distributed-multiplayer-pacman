@@ -19,10 +19,10 @@ public class Hash {
      * @throws NoSuchAlgorithmException
      */
     public static boolean checkHash(String hash, String hashType, String publicKey) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance(hashType);
-        byte[] hashByte = digest.digest(publicKey.getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(hashByte).equals(hash);
-        //return MessageDigest.isEqual(hashByte, publicKeyClientDTO.hash().getBytes());
+        String cleanPublicKey = publicKey.trim().replaceAll("\\s+", ""); 
+        byte[] keyByte = Base64.getDecoder().decode(cleanPublicKey);
+        String diff = hashing(keyByte, hashType);
+        return MessageDigest.isEqual(diff.getBytes(StandardCharsets.UTF_8), hash.getBytes());
     }
 
     /**

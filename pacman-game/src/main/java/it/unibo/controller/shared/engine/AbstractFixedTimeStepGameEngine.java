@@ -31,7 +31,7 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine, Run
     private static final int MAX_CATCHUP_TICKS = 5;
 
     protected Game game;
-    private GameView view = new HeadlessView();
+    protected GameView view = new HeadlessView();
     private final Queue<PacmanCommand> commandQueue = new ConcurrentLinkedQueue<>();
 
     private volatile boolean running = true;

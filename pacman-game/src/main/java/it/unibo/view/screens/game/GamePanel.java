@@ -5,7 +5,9 @@ import it.unibo.view.font.FontManager;
 import it.unibo.view.font.FontName;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -84,8 +86,16 @@ public class GamePanel extends JPanel {
         private GameContext gameContext;
 
         void setGameContext(GameContext gameContext) {
+            setDoubleBuffered(true);
             this.gameContext = gameContext;
-            this.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+            this.setBorder(
+                BorderFactory.createTitledBorder(
+                    BorderFactory.createEmptyBorder(20, 0, 20, 0), 
+                    "Lives", 
+                    TitledBorder.CENTER, 
+                    TitledBorder.ABOVE_TOP, 
+                    FontManager.addingFont(15f, FontName.S2P.getFontName()))
+                );
         }
 
         // TODO: Change when Pacman ID will be present.
@@ -159,7 +169,7 @@ public class GamePanel extends JPanel {
         private final Map<Integer, Triple> scoreLabels = new HashMap<>();
 
         ScoreboardPanel() {
-            this.setLayout(new GridLayout(0, 2));
+            this.setLayout(new GridLayout(0, 3));
             this.setOpaque(false);
             this.setBorder(BorderFactory.createEmptyBorder(50, 10, 0, 10));
             float titleScoreboardFontSize = 18f;
@@ -168,6 +178,11 @@ public class GamePanel extends JPanel {
             playerName.setForeground(Color.BLACK);
             playerName.setBorder(new EmptyBorder(20, 0, 20, 0));
             this.add(playerName);
+            JLabel livesPLayers = new JLabel("Lives", SwingConstants.CENTER);
+            livesPLayers.setFont(FontManager.addingFont(titleScoreboardFontSize, FONT_NAME));
+            livesPLayers.setForeground(Color.BLACK);
+            livesPLayers.setBorder(new EmptyBorder(20, 0, 20, 0));
+            this.add(livesPLayers);
             JLabel scores = new JLabel("Scores", SwingConstants.CENTER);
             scores.setFont(FontManager.addingFont(titleScoreboardFontSize, FONT_NAME));
             scores.setForeground(Color.BLACK);
@@ -219,28 +234,6 @@ public class GamePanel extends JPanel {
                 scoreLabels.get(i).lives.setText(lives);
                 scoreLabels.get(i).points.setText(points);
             }
-            /*{
-                    String playerId = x.getKey();
-                    JLabel scoreLabel = scoreLabels.get(playerId);
-                    if (scoreLabel == null) {
-                        String displayName = playerId.length() > PLAYER_NAME_LENGTH
-                                ? playerId.substring(0, PLAYER_NAME_LENGTH) + "..."
-                                : playerId;
-                        JLabel nameLabel = new JLabel(displayName, SwingConstants.CENTER);
-                        nameLabel.setFont(FontManager.addingFont(14f, FONT_NAME));
-                        nameLabel.setForeground(Color.BLACK);
-                        nameLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
-                        scoreLabel = new JLabel(String.valueOf(x.getValue()), SwingConstants.CENTER);
-                        scoreLabel.setFont(FontManager.addingFont(14f, FONT_NAME));
-                        scoreLabel.setForeground(Color.BLACK);
-                        scoreLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
-                        this.add(nameLabel);
-                        this.add(scoreLabel);
-                        scoreLabels.put(playerId, scoreLabel);
-                    } else {
-                        scoreLabel.setText(String.valueOf(x.getValue()));
-                    }
-                } */
         }
     }
 

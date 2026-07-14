@@ -1,6 +1,5 @@
 package it.unibo;
 
-import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.controller.shared.input.PlayerInputHandler;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.engine.LocalGameEngine;
@@ -9,7 +8,7 @@ import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
-import it.unibo.view.GameViewImpl;
+import it.unibo.view.SwingGameView;
 
 import javax.swing.*;
 
@@ -21,8 +20,9 @@ public class SinglePlayerPacmanMain {
             GameContext context = GameContextFactory.createFromMap("maps/map1.json", new GameEntityFactoryImpl());
             Game game = new GameImpl(context);
             GameEngine engine = new LocalGameEngine(game, playerName);
-            InputHandler inputHandler = new PlayerInputHandler(engine, playerName);
-            GameViewImpl view = new GameViewImpl(inputHandler);
+            PlayerInputHandler inputHandler = new PlayerInputHandler(playerName);
+            inputHandler.setEngine(engine);
+            SwingGameView view = new SwingGameView(inputHandler);
             engine.setView(view);
             JFrame testFrame = new JFrame("Pacman Standalone Test");
             testFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

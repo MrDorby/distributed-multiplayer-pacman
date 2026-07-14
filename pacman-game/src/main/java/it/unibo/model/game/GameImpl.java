@@ -51,7 +51,10 @@ public class GameImpl implements Game {
     }
 
     @Override
-    public void changePacmanBehaviour(Pacman pacman, boolean isPlayer) {
-        // TODO
+    public void changePacmanBehaviour(String pacmanId, boolean isPlayer) {
+        this.context.getPacmans().stream()
+                .filter(pacman -> pacman.getId().equals(pacmanId))
+                .findFirst()
+                .ifPresent(pacman -> pacman.changeBehaviour(isPlayer));
     }
 }

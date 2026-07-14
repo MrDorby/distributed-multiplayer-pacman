@@ -12,8 +12,6 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
-import org.eclipse.jetty.http.HttpStatus;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.controller.client.dto.EncryptedLoginResponseDTO;
@@ -39,13 +37,14 @@ public class AuthClient {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
+    private final KeyManager keyManager;
     private PublicKey publicKeyAuth;
     private String token;
     private String username;
 
     public AuthClient(HttpClient httpClient) {
         this.httpClient = httpClient;
-        KeyManager.generateRSAKeys();       // TODO Create a directory with username
+        this.keyManager = new KeyManager();
         this.objectMapper = new ObjectMapper();
         this.token = "";
     }
@@ -57,7 +56,7 @@ public class AuthClient {
      * @throws Exception
      */
     public void login(String username, String password) throws Exception {
-        PublicKeyResponseDTO authPublicKeyDTO = syn();
+        PublicKeyResponseDTO authPublicKeyDTO = syn(username);
         if (!Hash.checkHash(authPublicKeyDTO.hash(), authPublicKeyDTO.hashType(), authPublicKeyDTO.publicKey())) {
             throw new Exception("Integrity check failed!");
         }
@@ -70,14 +69,14 @@ public class AuthClient {
                                     .build();
 
         HttpResponse<String> loginResponse = httpClient.send(httpLoginRequest, HttpResponse.BodyHandlers.ofString());
-        if (loginResponse.statusCode() != HttpStatus.OK_200) {
+        if (loginResponse.statusCode() != 200) {
             throw new Exception(loginResponse.body());
         }
         EncryptedLoginResponseDTO encryptedResponse = objectMapper.readValue(loginResponse.body(), EncryptedLoginResponseDTO.class);
-        String secret = KeyManager.encryptDecryptDataRSA(encryptedResponse.secretKey(), Cipher.DECRYPT_MODE, KeyManager.loadAuthenticatorPrivateKey());
+        String secret = KeyManager.encryptDecryptDataRSA(encryptedResponse.secretKey(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
         SecretKey secretKey = KeyManager.getSecretKeyFromString(secret);
-        String ivParameters = KeyManager.encryptDecryptDataRSA(encryptedResponse.ivParameter(), Cipher.DECRYPT_MODE, KeyManager.loadAuthenticatorPrivateKey());
-        String token = KeyManager.encryptDecryptDataAES(encryptedResponse.encryptedToken(), Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(ivParameters.getBytes()));
+        String ivParameters = KeyManager.encryptDecryptDataRSA(encryptedResponse.ivParameter(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
+        String token = KeyManager.encryptDecryptDataAES(encryptedResponse.encryptedToken(), Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(Base64.getDecoder().decode(ivParameters)));
         this.token = token;
     }
 
@@ -97,7 +96,7 @@ public class AuthClient {
      * @throws Exception
      */
     public String register(String username, String password) throws Exception {
-        PublicKeyResponseDTO authPublicKeyDTO = syn();
+        PublicKeyResponseDTO authPublicKeyDTO = syn(username);
         if (!Hash.checkHash(authPublicKeyDTO.hash(), authPublicKeyDTO.hashType(), authPublicKeyDTO.publicKey())) {
             throw new Exception("Integrity check failed!");
         }
@@ -109,21 +108,21 @@ public class AuthClient {
                                     .build();
         
         HttpResponse<String> registerResponse = httpClient.send(httpRegisterRequest, HttpResponse.BodyHandlers.ofString());
-        if (registerResponse.statusCode() != HttpStatus.OK_200) {
+        if (registerResponse.statusCode() != 200) {
             throw new Exception(registerResponse.body());
         }
         return registerResponse.body();
     }
 
     /* Executes the syn procedure where the two services exchange their public key. */
-    private PublicKeyResponseDTO syn() throws Exception {
-        PublicKey publicKey = KeyManager.loadAuthenticatorPublicKey();
+    private PublicKeyResponseDTO syn(String username) throws Exception {
+        PublicKey publicKey = keyManager.loadAuthenticatorPublicKey();
         String publicKeyString = Base64.getEncoder().encodeToString(publicKey.getEncoded());
+        //String publicKeyString = byteToHexString(publicKey.getEncoded());
         String hash = Hash.hashing(publicKey.getEncoded(), HASH_TYPE);
-        
         PublicKeyRequestDTO publicKeyDTO = new PublicKeyRequestDTO(publicKeyString, hash, HASH_TYPE, username);
         String publicKeyDTOString = objectMapper.writeValueAsString(publicKeyDTO);
-        
+
         HttpRequest httpSynRequest = HttpRequest.newBuilder()
                                     .uri(URI.create(SYN_REQUEST))
                                     .header("Content-Type", "application/json")
@@ -131,7 +130,7 @@ public class AuthClient {
                                     .build();
         
         HttpResponse<String> synResponse = httpClient.send(httpSynRequest, HttpResponse.BodyHandlers.ofString());
-        if (synResponse.statusCode() != HttpStatus.OK_200) {
+        if (synResponse.statusCode() != 200) {
             throw new Exception(synResponse.body());
         }
 
