@@ -139,7 +139,7 @@ public class GameServerImpl implements GameServer {
      */
     @Override
     public void onGameContextUpdate(GameContext context) {
-        logger.debug("Broadcasting game context to all clients");
+        logger.trace("Broadcasting game context to all clients");
         GameContextDTO dto = encoder.encode(context);
         persistenceManager.updateContext(dto);
         gateway.broadcastUdp(new GameContextPacket(dto));

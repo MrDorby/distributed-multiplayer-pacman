@@ -36,7 +36,7 @@ public class GameContextHandler implements TcpHandler, UdpHandler {
     public void handle(InetSocketAddress sender, NetworkPacket packet) {
         GameContextPacket gameContextPacket = (GameContextPacket) packet;
         GameContextDTO contextDTO = gameContextPacket.context();
-        logger.debug("Received {} over UDP from {}", gameContextPacket.getType(), sender);
+        logger.trace("Received {} over UDP from {}", gameContextPacket.getType(), sender);
         client.onGameContext(decoder.decode(contextDTO));
     }
 }
