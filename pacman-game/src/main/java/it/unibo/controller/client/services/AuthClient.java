@@ -22,8 +22,6 @@ import it.unibo.controller.client.key.Hash;
 
 import it.unibo.controller.client.key.KeyManager;
 
-// TODO: Change the code and base it on what written in QueriesImpl in queries-service
-// because the code here doesn't use the ResponseEntity type of Spring (or maybe it still works).
 /**
  * Manages the authentication aspect on the client side.
  */
@@ -38,13 +36,12 @@ public class AuthClient {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final KeyManager keyManager;
-    private PublicKey publicKeyAuth;
     private String token;
     private String username;
 
-    public AuthClient(HttpClient httpClient) {
+    public AuthClient(HttpClient httpClient, KeyManager keyManager) {
         this.httpClient = httpClient;
-        this.keyManager = new KeyManager();
+        this.keyManager = keyManager;
         this.objectMapper = new ObjectMapper();
         this.token = "";
     }
@@ -60,7 +57,7 @@ public class AuthClient {
         if (!Hash.checkHash(authPublicKeyDTO.hash(), authPublicKeyDTO.hashType(), authPublicKeyDTO.publicKey())) {
             throw new Exception("Integrity check failed!");
         }
-        this.publicKeyAuth = KeyManager.getPublicKeyFromString(authPublicKeyDTO.publicKey());
+        PublicKey publicKeyAuth = keyManager.getPublicKeyFromString(authPublicKeyDTO.publicKey());
         String encryptedString = encryptedRegisterLoginRequest(username, password, publicKeyAuth);
         HttpRequest httpLoginRequest = HttpRequest.newBuilder()
                                     .uri(URI.create(LOGIN_REQUEST))
@@ -73,10 +70,10 @@ public class AuthClient {
             throw new Exception(loginResponse.body());
         }
         EncryptedLoginResponseDTO encryptedResponse = objectMapper.readValue(loginResponse.body(), EncryptedLoginResponseDTO.class);
-        String secret = KeyManager.encryptDecryptDataRSA(encryptedResponse.secretKey(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
-        SecretKey secretKey = KeyManager.getSecretKeyFromString(secret);
-        String ivParameters = KeyManager.encryptDecryptDataRSA(encryptedResponse.ivParameter(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
-        String token = KeyManager.encryptDecryptDataAES(encryptedResponse.encryptedToken(), Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(Base64.getDecoder().decode(ivParameters)));
+        String secret = keyManager.encryptDecryptDataRSA(encryptedResponse.secretKey(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
+        SecretKey secretKey = keyManager.getSecretKeyFromString(secret);
+        String ivParameters = keyManager.encryptDecryptDataRSA(encryptedResponse.ivParameter(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
+        String token = keyManager.encryptDecryptDataAES(encryptedResponse.encryptedToken(), Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(Base64.getDecoder().decode(ivParameters)));
         this.token = token;
     }
 
@@ -84,7 +81,7 @@ public class AuthClient {
     private String encryptedRegisterLoginRequest(String username, String password, PublicKey key) throws Exception {
         RegisterLoginDTO registerLoginDTO = new RegisterLoginDTO(username, password);
         String registerLogiString = objectMapper.writeValueAsString(registerLoginDTO);
-        return KeyManager.encryptDecryptDataRSA(registerLogiString, Cipher.ENCRYPT_MODE, key);
+        return keyManager.encryptDecryptDataRSA(registerLogiString, Cipher.ENCRYPT_MODE, key);
     }
 
 
@@ -100,7 +97,7 @@ public class AuthClient {
         if (!Hash.checkHash(authPublicKeyDTO.hash(), authPublicKeyDTO.hashType(), authPublicKeyDTO.publicKey())) {
             throw new Exception("Integrity check failed!");
         }
-        String encryptedString = encryptedRegisterLoginRequest(username, password, KeyManager.getPublicKeyFromString(authPublicKeyDTO.publicKey()));
+        String encryptedString = encryptedRegisterLoginRequest(username, password, keyManager.getPublicKeyFromString(authPublicKeyDTO.publicKey()));
         HttpRequest httpRegisterRequest = HttpRequest.newBuilder()
                                     .uri(URI.create(REGISTER_REQUEST))
                                     .header("Content-Type", "application/json")

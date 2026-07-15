@@ -1,5 +1,6 @@
 package it.unibo.view.screens.game;
 
+import it.unibo.model.entities.Pacman;
 import it.unibo.model.game.GameContext;
 import it.unibo.view.font.FontManager;
 import it.unibo.view.font.FontName;
@@ -217,16 +218,17 @@ public class GamePanel extends JPanel {
                 .sorted((x, y) -> x.getValue().compareTo(y.getValue()))
                 .collect(Collectors.toList()).reversed();
             for (int i = 0; i < list.size(); i++) {
-                String playerId = list.get(i).getKey();
-                String lives = String.valueOf(gameContext
+                String id =  list.get(i).getKey();
+                Pacman pc = gameContext
                     .getPacmans()
                     .stream()
                     .filter(
-                        x -> x.getId().equals(playerId))
+                        x -> x.getId().equals(id))
                     .findFirst()
-                    .get()
-                    .getLives());
+                    .get();
+                String lives = String.valueOf(pc.getLives());
                 String points = String.valueOf(list.get(i).getValue());
+                String playerId = pc.isPlayer() ? id : "BOT";
                 String displayName = playerId.length() > PLAYER_NAME_LENGTH
                         ? playerId.substring(0, PLAYER_NAME_LENGTH) + "..."
                         : playerId;

@@ -59,7 +59,7 @@ public class KeyManager {
      * @return the String of the encrypted/decrypted message.
      * @throws Exception
      */
-    public static String encryptDecryptDataRSA(String data, int cipherMode, Key key) throws Exception {
+    public String encryptDecryptDataRSA(String data, int cipherMode, Key key) throws Exception {
         if (cipherMode != Cipher.ENCRYPT_MODE && cipherMode != Cipher.DECRYPT_MODE) {
             throw new IllegalArgumentException("Cipher mode accepted only: ENCRYPT and DECRYPT!");
         }
@@ -77,7 +77,7 @@ public class KeyManager {
      * @return the String of the encrypted/decrypted message.
      * @throws Exception
      */
-    public static String encryptDecryptDataAES(String data, int cipherMode, SecretKey key, IvParameterSpec ivParameterSpec) throws Exception {
+    public String encryptDecryptDataAES(String data, int cipherMode, SecretKey key, IvParameterSpec ivParameterSpec) throws Exception {
         if (cipherMode != Cipher.ENCRYPT_MODE && cipherMode != Cipher.DECRYPT_MODE) {
             throw new IllegalArgumentException("Cipher mode accepted only: ENCRYPT and DECRYPT!");
         }
@@ -108,7 +108,7 @@ public class KeyManager {
      * @param der the byte[] read from the .der file.
      * @return a String version of the key in Pem format.
      */
-    public static String toPem(String type, byte[] der) {
+    public String toPem(String type, byte[] der) {
         String b64 = Base64.getMimeEncoder(64, new byte[]{'\n'}).encodeToString(der);
         return "-----BEGIN " + type + "-----\n" + b64 + "\n-----END " + type + "-----\n";
     }
@@ -118,7 +118,7 @@ public class KeyManager {
      * @return the new Random Secret Key.
      * @throws Exception
      */
-    public static SecretKey randomSecretKey() throws Exception {
+    public SecretKey randomSecretKey() throws Exception {
         javax.crypto.KeyGenerator keyGenerator = javax.crypto.KeyGenerator.getInstance(AES_ALGORITHM);
         keyGenerator.init(AES_KEYSIZE, new SecureRandom());
         return keyGenerator.generateKey();
@@ -130,7 +130,7 @@ public class KeyManager {
      * @return the related Public Key.
      * @throws Exception
      */
-    public static PublicKey getPublicKeyFromString(String key) throws Exception {
+    public PublicKey getPublicKeyFromString(String key) throws Exception {
         byte[] keyByte = Base64.getDecoder().decode(key);
         X509EncodedKeySpec spec = new X509EncodedKeySpec(keyByte);
         return KeyFactory.getInstance(RSA_ALGORITHM).generatePublic(spec);
@@ -142,7 +142,7 @@ public class KeyManager {
      * @return the related Private Key.
      * @throws Exception
      */
-    public static PrivateKey getPrivateKeyFromString(String key) throws Exception {
+    public PrivateKey getPrivateKeyFromString(String key) throws Exception {
         byte[] keyByte = Base64.getDecoder().decode(key);
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyByte);
         return KeyFactory.getInstance(RSA_ALGORITHM).generatePrivate(spec);
@@ -153,14 +153,14 @@ public class KeyManager {
      * @param key the String version of the original secret key.
      * @return the SecretKey.
      */
-    public static SecretKey getSecretKeyFromString(String key) {
+    public SecretKey getSecretKeyFromString(String key) {
         byte[] keyByte = Base64.getDecoder().decode(key);
         SecretKey secretKey = new SecretKeySpec(keyByte, AES_ALGORITHM);
         return secretKey;
     }
 
     /* Encrypts and decrypts data based on the key received in input. */
-    private static String encryptDecrypt(String data, int cipherMode, Cipher cipher) throws Exception {
+    private String encryptDecrypt(String data, int cipherMode, Cipher cipher) throws Exception {
         if (cipherMode == Cipher.DECRYPT_MODE) {
             String cleanedData = data.trim().replaceAll("\\s+", ""); 
             byte[] encryptedDataBytes = Base64.getMimeDecoder().decode(cleanedData);

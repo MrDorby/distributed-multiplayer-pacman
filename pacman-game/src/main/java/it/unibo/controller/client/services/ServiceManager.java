@@ -1,5 +1,7 @@
 package it.unibo.controller.client.services;
 
+import it.unibo.controller.client.common.Stats;
+
 /**
  * Manager for the services that the client needs to connect with.
  */
@@ -34,6 +36,13 @@ public interface ServiceManager {
      */
     String register(String username, String password) throws Exception;
 
+    /**
+     * Gets the statistics for the player stored in the long-term databases.
+     * @return The Stats relative to the player.
+     * @throws Exception
+     */
+    Stats getPlayerInfo() throws Exception;
+    
     // TODO: add for matchmaker and queries.
     
 }

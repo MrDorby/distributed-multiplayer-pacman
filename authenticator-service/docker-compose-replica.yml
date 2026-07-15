@@ -1,9 +1,8 @@
 services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/518
 # https://github.com/docker-library/mongo/issues/475
 # https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-with-keyfile-access-control/
-# https://gist.github.com/harveyconnor/518e088bad23a273cae6ba7fc4643549
+#  THIS LINK IS ESSENTIAL: https://gist.github.com/harveyconnor/518e088bad23a273cae6ba7fc4643549
   
-  # TODO: after every changes in auth do ./gradlew build
   authenticator:
     depends_on:
       - auth-mongodb1
@@ -39,23 +38,9 @@ services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/
     volumes:
       - ./replica.key:/data/replica.key
       #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
-      #- ./mongo-init-primary.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
     networks:
       - auth_mongodb_network
-    #entrypoint: |
-    #  /bin/bash -c '
-    #  chmod 600 /data/replica.key &&
-    #  /usr/local/bin/docker-entrypoint.sh mongod --replSet replicaSet --keyFile /data/replica.key'
-    #command: ["--replSet", "replicaSet", "--bind_ip", "localhost,authdb1"]
-    #command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/data/replica.key", "--bind_ip", "localhost,authdb1"]
     command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/data/replica.key", "--bind_ip_all"]
-    #command: 
-    #  - /bin/bash
-    #  - -c
-    #  - |
-    #    mongosh -u ${MONGO_INITDB_ROOT_USERNAME} -p ${MONGO_INITDB_ROOT_PASSWORD} --eval "db.getSibling('authDB').createCollection('auth')"
-    #    mongod --replSet replicaSet --keyFile /data/replica.key --bind_ip localhost,authdb1
-
 
   # Secondary
   auth-mongodb2:
