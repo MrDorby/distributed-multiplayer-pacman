@@ -1,6 +1,7 @@
 package it.unibo;
 
-import it.unibo.controller.shared.input.PlayerInputHandler;
+import it.unibo.controller.shared.input.InputHandler;
+import it.unibo.controller.shared.input.InputHandlerImpl;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.engine.LocalGameEngine;
 import it.unibo.model.entities.GameEntityFactoryImpl;
@@ -8,6 +9,7 @@ import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
+import it.unibo.view.GameView;
 import it.unibo.view.SwingGameView;
 
 import javax.swing.*;
@@ -20,18 +22,19 @@ public class SinglePlayerPacmanMain {
             GameContext context = GameContextFactory.createFromMap("maps/map1.json", new GameEntityFactoryImpl());
             Game game = new GameImpl(context);
             GameEngine engine = new LocalGameEngine(game, playerName);
-            PlayerInputHandler inputHandler = new PlayerInputHandler(playerName);
+            InputHandler inputHandler = new InputHandlerImpl(playerName);
             inputHandler.setEngine(engine);
-            SwingGameView view = new SwingGameView(inputHandler);
+            GameView view = new SwingGameView();
             engine.setView(view);
-            JFrame testFrame = new JFrame("Pacman Standalone Test");
-            testFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            testFrame.setSize(1200, 800);
+            view.setInputHandler(inputHandler);
+            JFrame frame = new JFrame("Pacman Standalone Test");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1200, 800);
             JPanel gamePanel = view.getGamePanel();
-            testFrame.add(gamePanel);
-            testFrame.setVisible(true);
+            frame.add(gamePanel);
+            frame.setVisible(true);
             gamePanel.requestFocusInWindow();
-            new Thread(engine::start).start();
+            engine.start();
         });
     }
 }

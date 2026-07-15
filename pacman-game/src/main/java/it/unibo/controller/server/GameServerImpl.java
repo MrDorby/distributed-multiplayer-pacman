@@ -93,7 +93,10 @@ public class GameServerImpl implements GameServer {
         if (lobby.isPlaying()) {
             logger.info("Player {} has reconnected mid-game, restoring human control", username);
             Game game = engine.getGame();
-            game.changePacmanBehaviour(session.getUsername(), true);
+            game.changePacmanBehaviour(username, true);
+            GameContextDTO currentDto = encoder.encode(game.getContext());
+            gateway.sendTcp(username, new GameContextPacket(currentDto));
+            gateway.sendTcp(username, new GameStartPacket());
         } else {
             lobby.addPlayer(username);
             logger.info("Player {} has reconnected to the lobby before the game started {}/{}",

@@ -8,9 +8,15 @@ import it.unibo.controller.shared.engine.GameEngine;
  * and forwarding locally registered player commands back to the server.
  */
 public interface GameClient extends GameClientNetworkListener, GameCommandListener {
-    void connectToServer();
+    String getUsername();
+
+    void joinGameServer();
+
+    void disconnect();
 
     GameEngine getEngine();
+
+    void addListener(GameClientListener listener);
 
     void start();
 

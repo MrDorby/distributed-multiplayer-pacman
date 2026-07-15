@@ -6,11 +6,15 @@ import it.unibo.controller.shared.engine.GameEndedEvent;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.PacmanCommand;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
+import it.unibo.controller.shared.network.sockets.packets.ExplicitDisconnectPacket;
 import it.unibo.controller.shared.network.sockets.packets.JoinGamePacket;
 import it.unibo.controller.shared.network.sockets.packets.PacmanMovePacket;
 import it.unibo.model.game.GameContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameClientImpl implements GameClient {
     private static final Logger logger = LoggerFactory.getLogger(GameClientImpl.class);
@@ -18,6 +22,13 @@ public class GameClientImpl implements GameClient {
     private final GameClientGateway gateway;
     private final ClientGameEngine engine;
     private final String username;
+
+    private final List<GameClientListener> listeners = new ArrayList<>();
+
+    @Override
+    public void addListener(GameClientListener listener) {
+        this.listeners.add(listener);
+    }
 
     public GameClientImpl(ClientGameEngine engine, GameClientGateway gateway, String username) {
         this.engine = engine;
@@ -54,6 +65,9 @@ public class GameClientImpl implements GameClient {
     public void onGameStart() {
         logger.debug("Received signal to start the game. Starting the engine");
         engine.start();
+        for (GameClientListener listener : listeners) {
+            listener.onGameStarted();
+        }
     }
 
     @Override
@@ -79,9 +93,19 @@ public class GameClientImpl implements GameClient {
      * *********************** */
 
     @Override
-    public void connectToServer() {
+    public String getUsername() {
+        return username;
+    }
+
+    @Override
+    public void joinGameServer() {
         gateway.sendTcp(new JoinGamePacket(username));
-        logger.info("Sent JOIN_MATCH for user '{}'", username);
+    }
+
+    @Override
+    public void disconnect() {
+        gateway.sendTcp(new ExplicitDisconnectPacket());
+        this.stop();
     }
 
     @Override

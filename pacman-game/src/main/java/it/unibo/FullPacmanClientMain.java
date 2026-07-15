@@ -26,7 +26,7 @@ public class FullPacmanClientMain {
         // TODO: Instantiate AuthClient (Controller/Client + package) and pass it to other constructors.
         router.register(AppState.LOGIN, new LoginController(router, serviceManager));
         router.register(AppState.MAIN_MENU, new MainMenuController(router));
-        router.register(AppState.IN_GAME, new GameController(router, "LocalPlayer"));
+        router.register(AppState.IN_GAME, new GameController(router));
         router.register(AppState.REGISTER, new RegisterController(router, serviceManager));
         router.goTo(AppState.LOGIN);
     }

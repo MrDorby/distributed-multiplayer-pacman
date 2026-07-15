@@ -66,8 +66,17 @@ public class NettyGameClientGateway implements GameClientGateway {
                 .handler(new GameClientChannelInitializer(tcpHandlers));
 
         this.udpChannel = udpBootstrap.bind(0).sync().channel();
-        this.tcpChannel = tcpBootstrap.connect(remoteAddress).sync().channel();
-        logger.info("UDP port {} opened. TCP connection established with {}", udpPort, remoteAddress);
+
+        try {
+            this.tcpChannel = tcpBootstrap.connect(remoteAddress).sync().channel();
+            logger.info("UDP port {} opened. TCP connection established with {}", udpPort, remoteAddress);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
+        } catch (Exception e) {
+            logger.error("Failed to establish TCP connection to {}", remoteAddress, e);
+            throw new RuntimeException("Could not connect to game server", e);
+        }
     }
 
     @Override

@@ -3,20 +3,21 @@ package it.unibo.controller.shared.input;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.model.common.Direction;
 
-public class PlayerInputHandler implements InputHandler {
+public class InputHandlerImpl implements InputHandler {
     private GameEngine engine;
-    private final String localPlayerUsername;
+    private final String username;
 
-    public PlayerInputHandler(String localPlayerUsername) {
-        this.localPlayerUsername = localPlayerUsername;
+    public InputHandlerImpl(String username) {
+        this.username = username;
     }
 
+    @Override
     public void setEngine(GameEngine engine) {
         this.engine = engine;
     }
 
     @Override
     public void onDirectionPressed(Direction direction) {
-        engine.enqueueCommand(new PacmanMoveCommand(localPlayerUsername, direction));
+        engine.enqueueCommand(new PacmanMoveCommand(username, direction));
     }
 }
