@@ -9,6 +9,10 @@ plugins {
 group = "it.unibo"
 version = "1.0"
 
+val mockitoAgent = configurations.create("mockitoAgent") {
+    isTransitive = false
+}
+
 repositories {
     mavenCentral()
 }
@@ -17,6 +21,7 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
     implementation("tools.jackson.core:jackson-databind:3.1.2")
     // Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-cbor
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.22.0")
@@ -24,6 +29,8 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.32")
     // Source: https://mvnrepository.com/artifact/io.netty/netty-all
     implementation("io.netty:netty-all:4.2.15.Final")
+    // Source: https://mvnrepository.com/artifact/org.mockito/mockito-core
+    mockitoAgent("org.mockito:mockito-core:5.23.0")
 
     // Source: https://mvnrepository.com/artifact/com.auth0/java-jwt
     implementation("com.auth0:java-jwt:4.5.2") //TODO: check io.jsonwebtoken
@@ -88,4 +95,5 @@ application {
 
 tasks.test {
     useJUnitPlatform()
+    jvmArgs.add("-javaagent:${mockitoAgent.asPath}")
 }

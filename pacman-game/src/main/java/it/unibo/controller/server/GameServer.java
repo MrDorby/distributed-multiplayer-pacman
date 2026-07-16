@@ -1,10 +1,10 @@
 package it.unibo.controller.server;
 
 import it.unibo.controller.shared.engine.RemoteGameEngineListener;
-import it.unibo.controller.server.network.sockets.session.SessionLifecycleListener;
+import it.unibo.controller.server.network.sockets.session.GameSessionLifecycleListener;
 
 public interface GameServer extends GameServerNetworkListener,
-        RemoteGameEngineListener, SessionLifecycleListener {
+        RemoteGameEngineListener, GameSessionLifecycleListener {
 
     void start() throws Exception;
 

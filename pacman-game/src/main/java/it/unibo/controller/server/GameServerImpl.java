@@ -73,52 +73,61 @@ public class GameServerImpl implements GameServer {
      * ********************************** */
 
     @Override
-    public void onPlayerConnected(GameSession session) {
+    public synchronized void onPlayerConnected(GameSession session) {
         String username = session.getUsername();
-        if (lobby.isPlaying()) {
-            logger.info("Player {} tried to join after game already started", username);
-            return;
-        }
-        lobby.addPlayer(username);
-        logger.info("Player {} joined ({}/{})", username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
-        if (lobby.isFull()) {
-            lobby.setPlaying(true);
-            startGame();
-        }
-    }
-
-    @Override
-    public void onPlayerReconnected(GameSession session) {
-        String username = session.getUsername();
-        if (lobby.isPlaying()) {
-            logger.info("Player {} has reconnected mid-game, restoring human control", username);
-            Game game = engine.getGame();
-            game.changePacmanBehaviour(username, true);
-            GameContextDTO currentDto = encoder.encode(game.getContext());
-            gateway.sendTcp(username, new GameContextPacket(currentDto));
-            gateway.sendTcp(username, new GameStartPacket());
-        } else {
-            lobby.addPlayer(username);
-            logger.info("Player {} has reconnected to the lobby before the game started {}/{}",
-                    username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
-            if (lobby.isFull()) {
-                lobby.setPlaying(true);
-                startGame();
+        switch (lobby.getState()) {
+            case WAITING -> {
+                lobby.addPlayer(username);
+                logger.info("Player {} joined ({}/{})", username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
+                if (lobby.isFull()) {
+                    lobby.setState(LobbyState.PLAYING);
+                    startGame();
+                }
             }
+            case PLAYING -> logger.info("Player {} tried to join after game already started", username);
+            case FINISHED -> logger.info("Player {} tried to join, but the game has already finished", username);
         }
     }
 
     @Override
-    public void onPlayerDisconnected(GameSession session) {
+    public synchronized void onPlayerReconnected(GameSession session) {
         String username = session.getUsername();
-        if (lobby.isPlaying()) {
-            logger.info("Player {} has disconnected mid-game, substituting with a bot", username);
-            Game game = engine.getGame();
-            game.changePacmanBehaviour(username, false);
-        } else {
-            lobby.removePlayer(username);
-            logger.info("Player {} has left the lobby before game started {}/{}",
-                    username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
+        switch (lobby.getState()) {
+            case WAITING -> {
+                lobby.addPlayer(username);
+                logger.info("Player {} has reconnected to the lobby before the game started ({}/{})",
+                        username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
+                if (lobby.isFull()) {
+                    lobby.setState(LobbyState.PLAYING);
+                    startGame();
+                }
+            }
+            case PLAYING -> {
+                logger.info("Player {} has reconnected mid-game, restoring human control", username);
+                Game game = engine.getGame();
+                game.changePacmanBehaviour(username, true);
+                GameContextDTO context = encoder.encode(game.getContext());
+                gateway.sendTcp(username, new GameContextPacket(context));
+                gateway.sendTcp(username, new GameStartPacket());
+            }
+            case FINISHED -> logger.info("Player {} tried to reconnect, but the game has already finished", username);
+        }
+    }
+
+    @Override
+    public synchronized void onPlayerDisconnected(GameSession session) {
+        String username = session.getUsername();
+        switch (lobby.getState()) {
+            case WAITING -> {
+                lobby.removePlayer(username);
+                logger.info("Player {} has left the lobby before game started ({}/{})",
+                        username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
+            }
+            case PLAYING -> {
+                logger.info("Player {} has disconnected mid-game, substituting with a bot", username);
+                engine.getGame().changePacmanBehaviour(username, false);
+            }
+            case FINISHED -> logger.info("Player {} disconnected after the game was already finished", username);
         }
     }
 
@@ -126,8 +135,8 @@ public class GameServerImpl implements GameServer {
         List<String> players = lobby.getPlayers();
         logger.info("Required player count reached. Starting game with players: {}", players);
         engine.getGame().setPacmanNames(players);
-        GameContextDTO dto = encoder.encode(engine.getGame().getContext());
-        gateway.broadcastTcp(new GameContextPacket(dto));
+        GameContextDTO context = encoder.encode(engine.getGame().getContext());
+        gateway.broadcastTcp(new GameContextPacket(context));
         gateway.broadcastTcp(new GameStartPacket());
         engine.start();
         persistenceManager.start();
@@ -171,7 +180,7 @@ public class GameServerImpl implements GameServer {
             persistenceManager.saveFinalSnapshot(dto);
             gateway.broadcastTcp(new GameContextPacket(dto));
             gateway.broadcastTcp(new GameEndPacket());
-            lobby.setPlaying(false);
+            lobby.setState(LobbyState.FINISHED);
             orchestrator.shutdown();
             scheduleServerShutdown(Duration.ofSeconds(10));
         }
