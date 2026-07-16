@@ -23,7 +23,7 @@ public class JoinGameHandler implements TcpHandler {
         String username = joinGamePacket.username();
         GameSession session = ctx.sessions().onTcpConnect(username, channel);
         logger.debug("Player {} successfully connected via TCP.", username);
-        String token = session.getUdpToken();
+        String token = session.getUdpToken().value();
         NetworkPacket joinGameAckPacket = new JoinGameAckPacket(token);
         ctx.gateway().sendTcp(username, joinGameAckPacket);
         logger.debug("Sent {} with token to {}", joinGamePacket.getType(), username);

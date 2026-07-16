@@ -18,7 +18,8 @@ public enum PacketType {
     GAME_CONTEXT(6, GameContextPacket.class),
     GAME_ENDED(7, GameEndPacket.class),
     HEARTBEAT(8, HeartbeatPacket.class),
-    EXPLICIT_DISCONNECT(9, ExplicitDisconnectPacket.class);
+    EXPLICIT_DISCONNECT(9, ExplicitDisconnectPacket.class),
+    UDP_HANDSHAKE_ACK(10, UdpHandshakeAckPacket.class);
 
     private static final Map<Byte, PacketType> PACKET_TYPE_BY_ID = new HashMap<>();
 
