@@ -6,6 +6,7 @@ import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import it.unibo.controller.client.network.sockets.channel.GameClientChannelInitializer;
+import it.unibo.controller.client.network.sockets.session.ClientGameSessionManager;
 import it.unibo.controller.shared.network.sockets.channel.UdpChannelInitializer;
 import it.unibo.controller.shared.network.sockets.handlers.TcpHandler;
 import it.unibo.controller.shared.network.sockets.handlers.UdpHandler;
@@ -35,6 +36,13 @@ public class NettyGameClientGateway implements GameClientGateway {
     private Channel tcpChannel;
     private Channel udpChannel;
 
+    private ClientGameSessionManager sessionManager;
+
+    @Override
+    public void setSessionManager(ClientGameSessionManager sessionManager) {
+        this.sessionManager = sessionManager;
+    }
+
     @Override
     public void addTcpHandler(PacketType type, TcpHandler handler) {
         this.tcpHandlers.put(type, handler);
@@ -63,11 +71,20 @@ public class NettyGameClientGateway implements GameClientGateway {
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT_IN_MILLIS)
                 .option(ChannelOption.TCP_NODELAY, true) // Disables Nagle's algorithm
-                .handler(new GameClientChannelInitializer(tcpHandlers));
+                .handler(new GameClientChannelInitializer(tcpHandlers, sessionManager));
 
         this.udpChannel = udpBootstrap.bind(0).sync().channel();
-        this.tcpChannel = tcpBootstrap.connect(remoteAddress).sync().channel();
-        logger.info("UDP port {} opened. TCP connection established with {}", udpPort, remoteAddress);
+
+        try {
+            this.tcpChannel = tcpBootstrap.connect(remoteAddress).sync().channel();
+            logger.info("UDP port {} opened. TCP connection established with {}", udpPort, remoteAddress);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
+        } catch (Exception e) {
+            logger.error("Failed to establish TCP connection to {}", remoteAddress, e);
+            throw new RuntimeException("Could not connect to game server", e);
+        }
     }
 
     @Override

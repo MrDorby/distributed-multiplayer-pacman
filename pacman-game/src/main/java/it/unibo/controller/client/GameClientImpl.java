@@ -2,27 +2,41 @@ package it.unibo.controller.client;
 
 import it.unibo.controller.client.engine.ClientGameEngine;
 import it.unibo.controller.client.network.sockets.GameClientGateway;
+import it.unibo.controller.client.network.sockets.session.ConnectionState;
+import it.unibo.controller.client.network.sockets.session.ClientSessionListener;
+import it.unibo.controller.client.network.sockets.session.ClientGameSessionManager;
 import it.unibo.controller.shared.engine.GameEndedEvent;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.PacmanCommand;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
-import it.unibo.controller.shared.network.sockets.packets.JoinGamePacket;
 import it.unibo.controller.shared.network.sockets.packets.PacmanMovePacket;
 import it.unibo.model.game.GameContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GameClientImpl implements GameClient {
+import java.util.ArrayList;
+import java.util.List;
+
+public class GameClientImpl implements GameClient, ClientSessionListener {
     private static final Logger logger = LoggerFactory.getLogger(GameClientImpl.class);
 
     private final GameClientGateway gateway;
+    private final ClientGameSessionManager sessionManager;
     private final ClientGameEngine engine;
-    private final String username;
 
-    public GameClientImpl(ClientGameEngine engine, GameClientGateway gateway, String username) {
+    private final List<GameClientListener> listeners = new ArrayList<>();
+
+    public GameClientImpl(
+            ClientGameEngine engine, GameClientGateway gateway,
+            ClientGameSessionManager sessionManager) {
         this.engine = engine;
         this.gateway = gateway;
-        this.username = username;
+        this.sessionManager = sessionManager;
+    }
+
+    @Override
+    public void addListener(GameClientListener listener) {
+        this.listeners.add(listener);
     }
 
     @Override
@@ -30,14 +44,43 @@ public class GameClientImpl implements GameClient {
         try {
             gateway.start();
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to start game client", e);
         }
     }
 
     @Override
     public void stop() {
+        sessionManager.disconnect();
+        sessionManager.close();
         engine.stop();
         gateway.stop();
+    }
+
+    /* ************************************ *
+     * Session lifecycle methods
+     * ************************************ */
+
+    @Override
+    public void joinServer() {
+        sessionManager.joinServer();
+    }
+
+    @Override
+    public void disconnect() {
+        sessionManager.disconnect();
+    }
+
+    @Override
+    public String getUsername() {
+        return sessionManager.getUsername();
+    }
+
+    @Override
+    public void onConnectionStateChanged(ConnectionState state) {
+        for (GameClientListener listener : listeners) {
+            listener.onConnectionStateChanged(state);
+        }
     }
 
     /* ************************************ *
@@ -54,6 +97,9 @@ public class GameClientImpl implements GameClient {
     public void onGameStart() {
         logger.debug("Received signal to start the game. Starting the engine");
         engine.start();
+        for (GameClientListener listener : listeners) {
+            listener.onGameStarted();
+        }
     }
 
     @Override
@@ -77,12 +123,6 @@ public class GameClientImpl implements GameClient {
     /* *********************** *
      * Client specific methods *
      * *********************** */
-
-    @Override
-    public void connectToServer() {
-        gateway.sendTcp(new JoinGamePacket(username));
-        logger.info("Sent JOIN_MATCH for user '{}'", username);
-    }
 
     @Override
     public GameEngine getEngine() {

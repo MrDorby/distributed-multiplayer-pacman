@@ -14,16 +14,16 @@ public class FourManLobby implements PlayerLobby {
     private static final int MAX_LOBBY_SIZE = 4;
     private final int requiredPlayers;
     private final List<String> players = new ArrayList<>();
-    private boolean isPlaying;
+    private LobbyState state;
 
     public FourManLobby() {
         this.requiredPlayers = MAX_LOBBY_SIZE;
-        this.isPlaying = false;
+        this.state = LobbyState.WAITING;
     }
 
     @Override
     public void addPlayer(String playerName) {
-        if (isPlaying) {
+        if (state != LobbyState.WAITING) {
             return;
         }
         players.add(playerName);
@@ -31,19 +31,20 @@ public class FourManLobby implements PlayerLobby {
 
     @Override
     public void removePlayer(String playerName) {
-        if (isPlaying) {
+        if (state != LobbyState.WAITING) {
             return;
         }
         players.remove(playerName);
     }
 
     @Override
-    public boolean isPlaying() {
-        return isPlaying;
+    public LobbyState getState() {
+        return state;
     }
 
-    public void setPlaying(boolean playing) {
-        this.isPlaying = playing;
+    @Override
+    public void setState(LobbyState state) {
+        this.state = state;
     }
 
     @Override

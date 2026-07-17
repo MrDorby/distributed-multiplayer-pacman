@@ -10,14 +10,16 @@ import java.util.Map;
  * in the network protocol to identify the payload that follows.
  */
 public enum PacketType {
-    JOIN_GAME(1, JoinGamePacket.class),
+    JOIN_GAME(1, JoinServerPacket.class),
     JOIN_GAME_ACK(2, JoinGameAckPacket.class),
     UDP_HANDSHAKE(3, UdpHandshakePacket.class),
     GAME_START(4, GameStartPacket.class),
     PACMAN_MOVE_COMMAND(5, PacmanMovePacket.class),
     GAME_CONTEXT(6, GameContextPacket.class),
     GAME_ENDED(7, GameEndPacket.class),
-    HEARTBEAT(8, HeartbeatPacket.class);
+    HEARTBEAT(8, HeartbeatPacket.class),
+    EXPLICIT_DISCONNECT(9, ExplicitDisconnectPacket.class),
+    UDP_HANDSHAKE_ACK(10, UdpHandshakeAckPacket.class);
 
     private static final Map<Byte, PacketType> PACKET_TYPE_BY_ID = new HashMap<>();
 

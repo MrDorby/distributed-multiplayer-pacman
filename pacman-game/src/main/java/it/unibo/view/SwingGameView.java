@@ -5,7 +5,6 @@ import it.unibo.controller.shared.engine.GameEndedEvent;
 import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.model.common.Direction;
 import it.unibo.model.game.GameContext;
-import it.unibo.model.game.GameState;
 import it.unibo.view.screens.game.GamePanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,17 +12,20 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.Map;
 
 public class SwingGameView implements GameView {
     private static final Logger logger = LoggerFactory.getLogger(SwingGameView.class);
     private final GamePanel gamePanel;
+    private InputHandler inputHandler;
 
-    public SwingGameView(InputHandler inputHandler) {
+    public SwingGameView() {
         this.gamePanel = new GamePanel();
         this.gamePanel.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+                if (inputHandler == null) {
+                    return;
+                }
                 logger.debug("Key pressed: {}", KeyEvent.getKeyText(e.getKeyCode()));
                 Direction targetDirection = null;
                 switch (e.getKeyCode()) {
@@ -39,6 +41,12 @@ public class SwingGameView implements GameView {
         });
     }
 
+    @Override
+    public void setInputHandler(InputHandler inputHandler) {
+        this.inputHandler = inputHandler;
+    }
+
+    @Override
     public JPanel getGamePanel() {
         return this.gamePanel;
     }

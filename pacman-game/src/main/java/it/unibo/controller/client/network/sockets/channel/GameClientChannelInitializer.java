@@ -5,6 +5,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.timeout.IdleStateHandler;
+import it.unibo.controller.client.network.sockets.session.ClientGameSessionManager;
 import it.unibo.controller.shared.network.sockets.channel.NetworkConfig;
 import it.unibo.controller.shared.network.sockets.codec.CborTcpPacketDecoder;
 import it.unibo.controller.shared.network.sockets.codec.CborTcpPacketEncoder;
@@ -16,9 +17,11 @@ import java.util.concurrent.TimeUnit;
 
 public class GameClientChannelInitializer extends ChannelInitializer<SocketChannel> {
     private final Map<PacketType, TcpHandler> handlers;
+    private final ClientGameSessionManager sessionManager;
 
-    public GameClientChannelInitializer(Map<PacketType, TcpHandler> handlers) {
+    public GameClientChannelInitializer(Map<PacketType, TcpHandler> handlers, ClientGameSessionManager sessionManager) {
         this.handlers = handlers;
+        this.sessionManager = sessionManager;
     }
 
     @Override
@@ -38,7 +41,7 @@ public class GameClientChannelInitializer extends ChannelInitializer<SocketChann
                         NetworkConfig.CLIENT_WRITE_PING_INTERVAL_SECONDS,
                         0,
                         TimeUnit.SECONDS),
-                new GameClientNetworkHandler(handlers)
+                new GameClientNetworkHandler(handlers, sessionManager)
         );
     }
 }

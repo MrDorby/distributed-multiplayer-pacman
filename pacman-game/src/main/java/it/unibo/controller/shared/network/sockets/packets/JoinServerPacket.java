@@ -6,7 +6,7 @@ package it.unibo.controller.shared.network.sockets.packets;
  * <p> The server uses this packet to associate the player's identity with
  * their TCP connection.
  */
-public record JoinGamePacket(String username) implements NetworkPacket {
+public record JoinServerPacket(String username) implements NetworkPacket {
     @Override
     public PacketType getType() {
         return PacketType.JOIN_GAME;

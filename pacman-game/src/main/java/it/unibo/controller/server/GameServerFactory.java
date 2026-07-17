@@ -2,10 +2,7 @@ package it.unibo.controller.server;
 
 import it.unibo.controller.server.engine.ServerGameEngine;
 import it.unibo.controller.server.network.sockets.NettyGameServerGateway;
-import it.unibo.controller.server.network.sockets.handlers.HandlerContext;
-import it.unibo.controller.server.network.sockets.handlers.JoinGameHandler;
-import it.unibo.controller.server.network.sockets.handlers.MoveCommandHandler;
-import it.unibo.controller.server.network.sockets.handlers.UdpHandshakeHandler;
+import it.unibo.controller.server.network.sockets.handlers.*;
 import it.unibo.controller.server.network.sockets.session.GameSessionController;
 import it.unibo.controller.server.orchestration.DummyGameServerOrchestrator;
 import it.unibo.controller.server.orchestration.GameServerOrchestrator;
@@ -72,6 +69,7 @@ public class GameServerFactory {
         gateway.addTcpHandler(PacketType.JOIN_GAME, new JoinGameHandler(context));
         gateway.addUdpHandler(PacketType.UDP_HANDSHAKE, new UdpHandshakeHandler(context));
         gateway.addUdpHandler(PacketType.PACMAN_MOVE_COMMAND, new MoveCommandHandler(context));
+        gateway.addTcpHandler(PacketType.EXPLICIT_DISCONNECT, new ExplicitDisconnectHandler(context));
         return server;
     }
 }
