@@ -77,6 +77,7 @@ public class QueriesImpl implements Queries {
         }
     }
 
+    // TODO: Make the send async
     @Override
     @PostMapping(value = "/info", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getPlayerInfo(@RequestBody String encrytpedRequest) {

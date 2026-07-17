@@ -32,6 +32,11 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     implementation("org.springframework.boot:spring-boot-starter-restclient")
     testImplementation("org.springframework.boot:spring-boot-starter-restclient-test")
+
+    implementation(platform("org.mongodb:mongodb-driver-bom:5.9.0"))
+    implementation(platform("io.projectreactor:reactor-bom:2025.0.6"))
+    implementation("io.projectreactor:reactor-core")
+    implementation("org.mongodb:mongodb-driver-reactivestreams")
 }
 
 java {

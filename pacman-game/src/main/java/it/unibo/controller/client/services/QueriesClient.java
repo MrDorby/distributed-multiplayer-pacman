@@ -13,6 +13,7 @@ import javax.crypto.Cipher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.controller.client.common.Stats;
+import it.unibo.controller.client.common.TokenException;
 import it.unibo.controller.client.dto.PlayerInfoMongoDB;
 import it.unibo.controller.client.dto.PublicKeyRequestDTO;
 import it.unibo.controller.client.dto.PublicKeyResponseDTO;
@@ -85,7 +86,7 @@ public class QueriesClient {
 
         HttpResponse<String> tokenResponse = httpClient.send(httpTokenRequest, HttpResponse.BodyHandlers.ofString());
         if (tokenResponse.statusCode() != 200) {
-            throw new Exception(tokenResponse.body());
+            throw new TokenException(tokenResponse.body());
         }
 
     }
