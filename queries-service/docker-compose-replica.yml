@@ -3,6 +3,7 @@ services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/
 # https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-with-keyfile-access-control/
 #  THIS LINK IS ESSENTIAL: https://gist.github.com/harveyconnor/518e088bad23a273cae6ba7fc4643549
   
+  # To create the key for the replica set do: openssl rand -base64 756 > replica.key
   queries:
     depends_on:
       - queriesdb1

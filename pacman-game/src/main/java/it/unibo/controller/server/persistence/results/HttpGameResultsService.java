@@ -41,7 +41,9 @@ public class HttpGameResultsService implements GameResultsService {
 
     @Override
     public CompletableFuture<Void> saveResults(GameContextDTO dto) {
-        return this.mongoDBServerConnection.saveResultsOnDB(dto);
+        CompletableFuture<Void> future = this.mongoDBServerConnection.saveResultsOnDB(dto);
+        this.mongoDBServerConnection.closeConnection();
+        return future;
         // try {
         //     byte[] body = mapper.writeValueAsBytes(dto);
         //     HttpRequest request = HttpRequest.newBuilder(endpoint)

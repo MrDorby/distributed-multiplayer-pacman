@@ -24,8 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * 
- * MongoDBServerConnection
+ * MongoDBServerConnection manages the GameServer connections with the MongoDB instances.
  */
 public class MongoDBServerConnection {
     
@@ -53,7 +52,10 @@ public class MongoDBServerConnection {
         ConnectToDatabase.SHORT_TERM, new DatabaseInfo(ST, ST_DB, ST_CL)
     );
 
+    private ConnectToDatabase connectToDatabase;
+
     public MongoDBServerConnection(ConnectToDatabase connectionString) {
+        this.connectToDatabase = connectionString;
         DatabaseInfo info = connections.get(connectionString);
         this.mongoClient = MongoClients.create(info.stringConnection());
         this.mongoDatabase = this.mongoClient.getDatabase(info.database());
@@ -61,12 +63,21 @@ public class MongoDBServerConnection {
     }
 
     /**
-     * 
-     * @param gameContextDTO
-     * @return
+     * This methods handles database save requests, for both long-term and short-term databases.
+     * @param gameContextDTO containing the datas that need to be stored.
+     * @return a CompletableFuture of the action done.
      */
     public CompletableFuture<Void> saveResultsOnDB(GameContextDTO gameContextDTO) {
-        // TODO: Check if it's long term or short term.
+        if (this.connectToDatabase.equals(ConnectToDatabase.LONG_TERM)) {
+            return longTermDB(gameContextDTO);
+        } else {
+            return null; //TODO: Complete for the short term db.
+        }
+        
+    }
+
+    /* Handles the requests for the long-term database. */
+    private CompletableFuture<Void> longTermDB(GameContextDTO gameContextDTO) {
         Map<String, Integer> leaderboard = gameContextDTO.gameState().leaderboard();
         CompletableFuture<?>[] futures = new CompletableFuture[4];
         int index = 0;
@@ -102,7 +113,7 @@ public class MongoDBServerConnection {
     }
 
     /**
-     * 
+     * Closes the MongoDB connection.
      */
     public void closeConnection() {
         this.mongoClient.close();
