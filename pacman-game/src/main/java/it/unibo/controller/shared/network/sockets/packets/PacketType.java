@@ -10,7 +10,7 @@ import java.util.Map;
  * in the network protocol to identify the payload that follows.
  */
 public enum PacketType {
-    JOIN_GAME(1, JoinGamePacket.class),
+    JOIN_GAME(1, JoinServerPacket.class),
     JOIN_GAME_ACK(2, JoinGameAckPacket.class),
     UDP_HANDSHAKE(3, UdpHandshakePacket.class),
     GAME_START(4, GameStartPacket.class),

@@ -3,19 +3,18 @@ package it.unibo.view.game;
 import javax.swing.*;
 import java.awt.*;
 
-public class GameClientWindow {
+public class GameClientFrame {
     private final JFrame frame;
 
-    public GameClientWindow() {
+    public GameClientFrame() {
         frame = new JFrame("Pacman");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1280, 720);
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
-        JPanel rootContainer = new JPanel();
         GameContainer gameContainer = new GameContainer();
-        rootContainer.add(gameContainer);
-        frame.add(rootContainer);
+        GameController controller = new GameController(gameContainer);
+        frame.add(gameContainer, BorderLayout.CENTER);
     }
 
     public void show() {

@@ -4,6 +4,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
+import it.unibo.controller.client.network.sockets.session.ClientGameSessionManager;
 import it.unibo.controller.shared.network.sockets.handlers.TcpHandler;
 import it.unibo.controller.shared.network.sockets.packets.HeartbeatPacket;
 import it.unibo.controller.shared.network.sockets.packets.NetworkPacket;
@@ -26,14 +27,16 @@ public class GameClientNetworkHandler extends SimpleChannelInboundHandler<Object
     private static final Logger logger = LoggerFactory.getLogger(GameClientNetworkHandler.class);
 
     private final Map<PacketType, TcpHandler> handlers;
+    private final ClientGameSessionManager sessionManager;
 
     /**
      * Constructs a new client network handler.
      *
      * @param handlers A lookup map of strategy handlers indexed by their packet type.
      */
-    public GameClientNetworkHandler(Map<PacketType, TcpHandler> handlers) {
+    public GameClientNetworkHandler(Map<PacketType, TcpHandler> handlers, ClientGameSessionManager sessionManager) {
         this.handlers = handlers;
+        this.sessionManager = sessionManager;
     }
 
     /**
@@ -73,7 +76,7 @@ public class GameClientNetworkHandler extends SimpleChannelInboundHandler<Object
                 // The server went completely silent and failed to return a heartbeat response within our timeout window.
                 // We assume the server is dead or frozen.
                 logger.debug("Server connection timed out. Closing socket");
-                // TODO: Handle lost connection (e.g., transition client to offline state)
+                sessionManager.onConnectionLost();
                 ctx.close();
             }
         } else {
@@ -87,7 +90,8 @@ public class GameClientNetworkHandler extends SimpleChannelInboundHandler<Object
      */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        // TODO handle lost connection
+        logger.info("TCP Channel became inactive with {}", ctx.channel().remoteAddress());
+        sessionManager.onConnectionLost();
     }
 
     @Override

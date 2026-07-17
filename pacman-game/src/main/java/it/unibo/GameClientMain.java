@@ -1,10 +1,10 @@
 package it.unibo;
 
-import it.unibo.view.game.GameClientWindow;
+import it.unibo.view.game.GameClientFrame;
 
 public class GameClientMain {
     static void main() {
-        GameClientWindow app = new GameClientWindow();
+        GameClientFrame app = new GameClientFrame();
         app.show();
     }
 }

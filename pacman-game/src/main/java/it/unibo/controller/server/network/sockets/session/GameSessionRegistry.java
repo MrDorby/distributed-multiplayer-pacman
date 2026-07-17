@@ -48,7 +48,7 @@ public class GameSessionRegistry {
     public GameSession getByUdpToken(String token) {
         if (token == null) return null;
         return sessionsByUsername.values().stream()
-                .filter(session -> token.equals(session.getUdpToken().value()))
+                .filter(session -> session.getUdpToken() != null && token.equals(session.getUdpToken().value()))
                 .findFirst()
                 .orElse(null);
     }

@@ -1,5 +1,6 @@
 package it.unibo.controller.client.network.sockets;
 
+import it.unibo.controller.client.network.sockets.session.ClientGameSessionManager;
 import it.unibo.controller.shared.network.sockets.handlers.TcpHandler;
 import it.unibo.controller.shared.network.sockets.handlers.UdpHandler;
 import it.unibo.controller.shared.network.sockets.packets.NetworkPacket;
@@ -39,4 +40,11 @@ public interface GameClientGateway {
      * Sends a packet to a remote host via UDP.
      */
     void sendUdp(NetworkPacket packet);
+
+    /**
+     * Sets the session manager for heartbeat callbacks.
+     *
+     * @param sessionManager the manager which will be called when abrupt TCP disconnects are detected.
+     */
+    void setSessionManager(ClientGameSessionManager sessionManager);
 }
