@@ -1,6 +1,6 @@
 package it.unibo.controller.server.persistence.backup;
 
-import it.unibo.controller.shared.network.dto.GameContextDTO;
+import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,8 +10,8 @@ public class DummyGameBackupService implements GameBackupService {
     private static final Logger logger = LoggerFactory.getLogger(DummyGameBackupService.class);
 
     @Override
-    public CompletableFuture<Void> saveSnapshot(GameContextDTO dto) {
-        logger.info("Saving snapshot.");
+    public CompletableFuture<Void> saveSnapshot(MatchSnapshot snapshot) {
+        logger.info("Saving snapshot taken at {} with matchId: {}", snapshot.timestamp(), snapshot.matchId());
         return CompletableFuture.completedFuture(null);
     }
 }

@@ -25,6 +25,7 @@ public class GameServerFactory {
     private static final String MAP_PATH_FORMAT = "maps/%s.json";
 
     public static GameServer createWithPersistence(
+            String matchId,
             String mapName,
             int tcpPort,
             int udpPort,
@@ -37,19 +38,25 @@ public class GameServerFactory {
                 new HttpGameBackupService(httpClient, backupEndpoint),
                 new HttpGameResultsService(httpClient, resultsEndpoint)
         );
-        return assemble(mapName, tcpPort, udpPort, persistence, orchestrator);
+        return assemble(matchId, mapName, tcpPort, udpPort, persistence, orchestrator);
     }
 
-    public static GameServer createWithDummyExtraServices(String mapName, int tcpPort, int udpPort) {
+    public static GameServer createWithDummyExtraServices(
+            String matchId,
+            String mapName,
+            int tcpPort,
+            int udpPort
+    ) {
         GamePersistenceManager persistence = new GamePersistenceManager(
                 new DummyGameBackupService(),
                 new DummyGameResultsService()
         );
         GameServerOrchestrator dummyOrchestrator = new DummyGameServerOrchestrator();
-        return assemble(mapName, tcpPort, udpPort, persistence, dummyOrchestrator);
+        return assemble(matchId, mapName, tcpPort, udpPort, persistence, dummyOrchestrator);
     }
 
     private static GameServer assemble(
+            String matchId,
             String mapName,
             int tcpPort,
             int udpPort,
@@ -62,7 +69,7 @@ public class GameServerFactory {
         GameSessionController sessionController = new GameSessionController();
         NettyGameServerGateway gateway = new NettyGameServerGateway(tcpPort, udpPort, sessionController);
         ServerGameEngine engine = new ServerGameEngine(game);
-        GameServer server = new GameServerImpl(engine, gateway, persistence, orchestrator);
+        GameServer server = new GameServerImpl(matchId, engine, gateway, persistence, orchestrator);
         engine.addListener(server);
         sessionController.addListener(server);
         HandlerContext context = new HandlerContext(sessionController, server, gateway);

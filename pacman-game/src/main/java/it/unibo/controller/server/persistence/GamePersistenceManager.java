@@ -1,8 +1,8 @@
 package it.unibo.controller.server.persistence;
 
 import it.unibo.controller.server.persistence.backup.GameBackupService;
+import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 import it.unibo.controller.server.persistence.results.GameResultsService;
-import it.unibo.controller.shared.network.dto.GameContextDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +24,7 @@ public class GamePersistenceManager {
     private final GameResultsService resultsService;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-    private volatile GameContextDTO lastContext;
+    private volatile MatchSnapshot currentSnapshot;
     private ScheduledFuture<?> periodicTask;
 
     public GamePersistenceManager(GameBackupService backupService, GameResultsService resultsService) {
@@ -32,8 +32,8 @@ public class GamePersistenceManager {
         this.resultsService = resultsService;
     }
 
-    public void updateContext(GameContextDTO context) {
-        this.lastContext = context;
+    public void updateContext(MatchSnapshot snapshot) {
+        this.currentSnapshot = snapshot;
     }
 
     public void start() {
@@ -42,20 +42,20 @@ public class GamePersistenceManager {
     }
 
     private void saveSnapShot() {
-        GameContextDTO dto = lastContext;
-        if (dto == null) return;
-        backupService.saveSnapshot(dto).exceptionally(ex -> {
+        MatchSnapshot snapshot = currentSnapshot;
+        if (snapshot == null) return;
+        backupService.saveSnapshot(snapshot).exceptionally(ex -> {
             logger.warn("Periodic snapshot failed", ex);
             return null;
         });
     }
 
-    public void saveFinalSnapshot(GameContextDTO dto) {
+    public void saveFinalSnapshot(MatchSnapshot finalSnapshot) {
         if (periodicTask != null) {
             periodicTask.cancel(false);
         }
-        CompletableFuture<Void> backupSaved = backupService.saveSnapshot(dto);
-        CompletableFuture<Void> resultsSaved = resultsService.saveResults(dto);
+        CompletableFuture<Void> backupSaved = backupService.saveSnapshot(finalSnapshot);
+        CompletableFuture<Void> resultsSaved = resultsService.saveResults(finalSnapshot);
         try {
             CompletableFuture.allOf(backupSaved, resultsSaved).get(5, TimeUnit.SECONDS);
             logger.info("Final game context and results saved.");

@@ -4,6 +4,7 @@ import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.session.GameSession;
 import it.unibo.controller.server.orchestration.GameServerOrchestrator;
 import it.unibo.controller.server.persistence.GamePersistenceManager;
+import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 import it.unibo.controller.shared.engine.GameEndedEvent;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.engine.GameLifecycleEvent;
@@ -25,6 +26,8 @@ import java.util.List;
 public class GameServerImpl implements GameServer {
     private static final Logger logger = LoggerFactory.getLogger(GameServerImpl.class);
 
+    private final String matchId;
+
     private final GameServerGateway gateway;
     private final GameEngine engine;
     private final GamePersistenceManager persistenceManager;
@@ -34,11 +37,14 @@ public class GameServerImpl implements GameServer {
 
     private final FourManLobby lobby = new FourManLobby();
 
-    public GameServerImpl(GameEngine engine,
-                          GameServerGateway gateway,
-                          GamePersistenceManager persistenceManager,
-                          GameServerOrchestrator orchestrator
+    public GameServerImpl(
+            String matchId,
+            GameEngine engine,
+            GameServerGateway gateway,
+            GamePersistenceManager persistenceManager,
+            GameServerOrchestrator orchestrator
     ) {
+        this.matchId = matchId;
         this.gateway = gateway;
         this.engine = engine;
         this.persistenceManager = persistenceManager;
@@ -164,7 +170,8 @@ public class GameServerImpl implements GameServer {
     public void onGameContextUpdate(GameContext context) {
         logger.trace("Broadcasting game context to all clients");
         GameContextDTO dto = encoder.encode(context);
-        persistenceManager.updateContext(dto);
+        MatchSnapshot snapshot = new MatchSnapshot(this.matchId, System.currentTimeMillis(), dto);
+        persistenceManager.updateContext(snapshot);
         gateway.broadcastUdp(new GameContextPacket(dto));
     }
 
@@ -177,7 +184,8 @@ public class GameServerImpl implements GameServer {
         if (event instanceof GameEndedEvent(GameContext context)) {
             logger.info("Game has ended");
             GameContextDTO dto = encoder.encode(context);
-            persistenceManager.saveFinalSnapshot(dto);
+            MatchSnapshot snapshot = new MatchSnapshot(this.matchId, System.currentTimeMillis(), dto);
+            persistenceManager.saveFinalSnapshot(snapshot);
             gateway.broadcastTcp(new GameContextPacket(dto));
             gateway.broadcastTcp(new GameEndPacket());
             lobby.setState(LobbyState.FINISHED);

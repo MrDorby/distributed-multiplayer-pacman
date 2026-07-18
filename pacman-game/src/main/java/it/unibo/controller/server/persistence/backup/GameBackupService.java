@@ -1,6 +1,6 @@
 package it.unibo.controller.server.persistence.backup;
 
-import it.unibo.controller.shared.network.dto.GameContextDTO;
+import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -11,5 +11,5 @@ public interface GameBackupService {
     /**
      * Saves a snapshot of the game context to the backup store.
      */
-    CompletableFuture<Void> saveSnapshot(GameContextDTO dto);
+    CompletableFuture<Void> saveSnapshot(MatchSnapshot snapshot);
 }

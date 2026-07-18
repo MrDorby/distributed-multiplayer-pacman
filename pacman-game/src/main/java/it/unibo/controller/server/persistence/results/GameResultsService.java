@@ -1,6 +1,6 @@
 package it.unibo.controller.server.persistence.results;
 
-import it.unibo.controller.shared.network.dto.GameContextDTO;
+import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -11,5 +11,5 @@ public interface GameResultsService {
     /**
      * Saves the aggregated results derived from the given game context.
      */
-    CompletableFuture<Void> saveResults(GameContextDTO dto);
+    CompletableFuture<Void> saveResults(MatchSnapshot snapshot);
 }

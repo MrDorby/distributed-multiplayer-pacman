@@ -3,6 +3,7 @@ package it.unibo.controller.server.persistence.results;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 import it.unibo.controller.server.persistence.mongodb.ConnectToDatabase;
 import it.unibo.controller.server.persistence.mongodb.MongoDBServerConnection;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
@@ -40,8 +41,8 @@ public class HttpGameResultsService implements GameResultsService {
     }
 
     @Override
-    public CompletableFuture<Void> saveResults(GameContextDTO dto) {
-        CompletableFuture<Void> future = this.mongoDBServerConnection.saveResultsOnDB(dto);
+    public CompletableFuture<Void> saveResults(MatchSnapshot snapshot) {
+        CompletableFuture<Void> future = this.mongoDBServerConnection.saveResultsOnDB(null); // TODO replace null with snapshot after interface is updated
         this.mongoDBServerConnection.closeConnection();
         return future;
         // try {

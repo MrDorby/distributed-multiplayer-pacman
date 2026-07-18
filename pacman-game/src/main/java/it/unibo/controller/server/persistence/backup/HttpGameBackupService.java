@@ -2,6 +2,7 @@ package it.unibo.controller.server.persistence.backup;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 /**
- * HTTP-based implementation of {@link GameBackupService} that POSTs the game context
+ * HTTP-based implementation of {@link GameBackupService} that POSTs the game snapshot
  * as JSON to a configured backup endpoint.
  */
 public class HttpGameBackupService implements GameBackupService {
@@ -34,9 +35,9 @@ public class HttpGameBackupService implements GameBackupService {
     }
 
     @Override
-    public CompletableFuture<Void> saveSnapshot(GameContextDTO dto) {
+    public CompletableFuture<Void> saveSnapshot(MatchSnapshot snapshot) {
         try {
-            byte[] body = objectMapper.writeValueAsBytes(dto);
+            byte[] body = objectMapper.writeValueAsBytes(snapshot);
             HttpRequest request = HttpRequest.newBuilder(endpoint)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofByteArray(body))
