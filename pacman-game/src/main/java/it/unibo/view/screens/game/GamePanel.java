@@ -228,11 +228,11 @@ public class GamePanel extends JPanel {
                     .get();
                 String lives = String.valueOf(pc.getLives());
                 String points = String.valueOf(list.get(i).getValue());
-                String playerId = pc.isPlayer() ? id : "BOT";
-                String displayName = playerId.length() > PLAYER_NAME_LENGTH
-                        ? playerId.substring(0, PLAYER_NAME_LENGTH) + "..."
-                        : playerId;
-                scoreLabels.get(i).name.setText(displayName);
+                String baseDisplayName = pc.isPlayer() ? id : " [Bot] " + id;
+                String finalDisplayName = baseDisplayName.length() > PLAYER_NAME_LENGTH
+                        ? baseDisplayName.substring(0, PLAYER_NAME_LENGTH) + "..."
+                        : baseDisplayName;
+                scoreLabels.get(i).name.setText(finalDisplayName);
                 scoreLabels.get(i).lives.setText(lives);
                 scoreLabels.get(i).points.setText(points);
             }
