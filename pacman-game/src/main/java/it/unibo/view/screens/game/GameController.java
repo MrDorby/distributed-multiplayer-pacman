@@ -7,6 +7,7 @@ import it.unibo.controller.client.network.sockets.session.ConnectionState;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.controller.shared.input.InputHandlerImpl;
+import it.unibo.controller.shared.network.dto.GameContextDTO;
 import it.unibo.view.navigation.AppNavigator;
 import it.unibo.view.navigation.AppState;
 import it.unibo.view.screens.ScreenController;
@@ -120,9 +121,12 @@ public class GameController implements GameClientListener, ScreenController {
     }
 
     @Override
-    public void onGameEnded() {
+    public void onGameEnded(GameContextDTO context) {
         cleanup();
-        SwingUtilities.invokeLater(screen::showGameOverView);
+        SwingUtilities.invokeLater(() -> {
+            screen.getGameOverPanel().updateStats(context);
+            screen.showGameOverView();
+        });
     }
 
     @Override

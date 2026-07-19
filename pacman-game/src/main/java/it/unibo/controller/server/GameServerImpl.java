@@ -187,7 +187,7 @@ public class GameServerImpl implements GameServer {
             MatchSnapshot snapshot = new MatchSnapshot(this.matchId, System.currentTimeMillis(), dto);
             persistenceManager.saveFinalSnapshot(snapshot);
             gateway.broadcastTcp(new GameContextPacket(dto));
-            gateway.broadcastTcp(new GameEndPacket());
+            gateway.broadcastTcp(new GameEndPacket(dto));
             lobby.setState(LobbyState.FINISHED);
             orchestrator.shutdown();
             scheduleServerShutdown(Duration.ofSeconds(10));

@@ -1,5 +1,6 @@
 package it.unibo.controller.client;
 
+import it.unibo.controller.shared.network.dto.GameContextDTO;
 import it.unibo.model.game.GameContext;
 
 /**
@@ -23,5 +24,5 @@ public interface GameClientNetworkListener {
     /**
      * Callback triggered when the match concludes according to the server.
      */
-    void onGameEnd();
+    void onGameEnd(GameContextDTO gameContextDTO);
 }

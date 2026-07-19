@@ -20,6 +20,6 @@ public class GameEndHandler implements TcpHandler {
     public void handle(Channel channel, NetworkPacket packet) {
         GameEndPacket gameEndPacket = (GameEndPacket) packet;
         logger.debug("Received {} over TCP from {}", gameEndPacket.getType(), channel.remoteAddress());
-        client.onGameEnd();
+        client.onGameEnd(gameEndPacket.context());
     }
 }

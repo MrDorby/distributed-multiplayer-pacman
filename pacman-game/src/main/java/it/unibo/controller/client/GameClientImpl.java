@@ -9,6 +9,7 @@ import it.unibo.controller.shared.engine.GameEndedEvent;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.PacmanCommand;
 import it.unibo.controller.shared.input.PacmanMoveCommand;
+import it.unibo.controller.shared.network.dto.GameContextDTO;
 import it.unibo.controller.shared.network.sockets.packets.PacmanMovePacket;
 import it.unibo.model.game.GameContext;
 import org.slf4j.Logger;
@@ -103,11 +104,11 @@ public class GameClientImpl implements GameClient, ClientSessionListener {
     }
 
     @Override
-    public void onGameEnd() {
+    public void onGameEnd(GameContextDTO gameContextDTO) {
         logger.debug("Received game end event from server");
         engine.onGameEvent(new GameEndedEvent(engine.getGame().getContext()));
         for (GameClientListener listener : listeners) {
-            listener.onGameEnded();
+            listener.onGameEnded(gameContextDTO);
         }
     }
 
