@@ -4,6 +4,7 @@ import it.unibo.controller.shared.network.dto.GameContextDTO;
 import it.unibo.controller.shared.network.translation.GameContextDecoderImpl;
 import it.unibo.controller.shared.network.translation.GameContextEncoderImpl;
 import it.unibo.model.entities.GameEntityFactoryImpl;
+import it.unibo.model.entities.SpeculativeEntityFactoryImpl;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameContextFactory;
 import org.junit.jupiter.api.BeforeAll;
@@ -14,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class GameContextRoundTripTest {
     private static GameContext context;
     private final GameContextEncoderImpl encoder = new GameContextEncoderImpl();
-    private final GameContextDecoderImpl decoder = new GameContextDecoderImpl();
+    private final GameContextDecoderImpl decoder = new GameContextDecoderImpl(new SpeculativeEntityFactoryImpl());
 
     @BeforeAll
     static void setUp() {

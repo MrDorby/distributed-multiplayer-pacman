@@ -104,7 +104,7 @@ public class LoginRegisterPanel extends JPanel {
 
         emailPanel.setLayout(new BoxLayout(emailPanel, BoxLayout.Y_AXIS));
         emailPanel.setBorder(panelBorder);
-        JLabel emailLabel = new JLabel("Email");
+        JLabel emailLabel = new JLabel("Username");
         emailLabel.setFont(FontManager.addingFont(15f, FONT_NAME));
         emailLabelPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         emailLabelPanel.add(emailLabel);
@@ -113,7 +113,7 @@ public class LoginRegisterPanel extends JPanel {
                 BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER),
                 BorderFactory.createEmptyBorder(0, 10, 0, 10))
         );
-        usernameField.setFont(new Font(usernameField.getFont().getFontName(), Font.PLAIN, 15));
+        usernameField.setFont(new Font(usernameField.getFont().getFontName(), Font.PLAIN, 20));
         emailTextFieldPanel.add(usernameField);
         emailPanel.add(emailLabelPanel);
         emailPanel.add(emailTextFieldPanel);
@@ -131,7 +131,7 @@ public class LoginRegisterPanel extends JPanel {
                 BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER),
                 BorderFactory.createEmptyBorder(0, 10, 0, 10))
         );
-        passwordField.setFont(new Font(emailLabel.getFont().getFontName(), Font.PLAIN, 15));
+        passwordField.setFont(new Font(emailLabel.getFont().getFontName(), Font.PLAIN, 20));
         passwordFieldPanel.add(passwordField);
         passwordPanel.add(passwordLabelPanel);
         passwordPanel.add(passwordFieldPanel);

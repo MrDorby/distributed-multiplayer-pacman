@@ -1,28 +1,41 @@
 package it.unibo;
 
-import it.unibo.controller.server.GameServerController;
-import it.unibo.model.entities.GameEntityFactoryImpl;
-import it.unibo.model.game.GameContext;
-import it.unibo.model.game.GameContextFactory;
-import it.unibo.model.game.GameImpl;
+import it.unibo.controller.server.GameServerFactory;
+import it.unibo.controller.server.GameServer;
+
+import java.util.UUID;
 
 public class GameServerMain {
     private static final String DEFAULT_MAP_NAME = "map1";
-    private static final String MAP_PATH_FORMAT = "maps/%s.json";
-    private static final int DEFAULT_TCP_PORT = 7777 ;
-    private static final int DEFAULT_UDP_PORT = 7778;
+    private static final int DEFAULT_TCP_PORT = 7777;
+    private static final int DEFAULT_UDP_PORT = 7777;
 
     /**
      * Launches the game server.
      *
-     * <p>Usage: {@code GameServerMain [mapPath] [tcpPort] [udpPort]}
+     * <p>Usage: {@code GameServerMain} (launches with local defaults and a random matchId)
+     * <p>or: {@code GameServerMain [match_id] [map_name] [tcp_port] [udp_port]} (all 4 are mandatory)
      */
     static void main(String[] args) throws Exception {
-        String mapName = args.length > 0 ? args[0] : DEFAULT_MAP_NAME;
-        int tcpPort = args.length > 1 ? Integer.parseInt(args[1]) : DEFAULT_TCP_PORT;
-        int udpPort = args.length > 2 ?  Integer.parseInt(args[2]) : DEFAULT_UDP_PORT;
-        String mapPath = MAP_PATH_FORMAT.formatted(mapName);
-        GameContext context = GameContextFactory.createFromMap(mapPath, new GameEntityFactoryImpl());
-        GameServerController controller = new GameServerController(new GameImpl(context), tcpPort, udpPort);
+        String matchId;
+        String mapName;
+        int tcpPort;
+        int udpPort;
+
+        if (args.length == 0) {
+            matchId = UUID.randomUUID().toString();
+            mapName = DEFAULT_MAP_NAME;
+            tcpPort = DEFAULT_TCP_PORT;
+            udpPort = DEFAULT_UDP_PORT;
+        } else if (args.length == 4) {
+            matchId = args[0];
+            mapName = args[1];
+            tcpPort = Integer.parseInt(args[2]);
+            udpPort = Integer.parseInt(args[3]);
+        } else {
+            throw new IllegalArgumentException("Invalid usage. Provide either NO arguments for defaults, or EXACTLY 4 arguments: " + "<match_id> <map_name> <tcp_port> <udp_port>");
+        }
+        GameServer server = GameServerFactory.createWithDummyExtraServices(matchId, mapName, tcpPort, udpPort);
+        server.start();
     }
 }

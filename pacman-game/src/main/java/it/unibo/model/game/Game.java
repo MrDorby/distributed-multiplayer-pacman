@@ -30,5 +30,5 @@ public interface Game {
     /**
      * Lets a bot take control of a given pacman in case the player controlling it goes afk.
      */
-    void changePacmanBehaviour(Pacman pacman, boolean isPlayer);
+    void changePacmanBehaviour(String pacmanId, boolean isPlayer);
 }

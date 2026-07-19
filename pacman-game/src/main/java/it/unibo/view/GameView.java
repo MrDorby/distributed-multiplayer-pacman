@@ -1,30 +1,23 @@
 package it.unibo.view;
 
+import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.model.game.GameContext;
+
+import javax.swing.*;
 
 /**
  * The visual output for the game.
  */
 public interface GameView {
-
     /**
      * Updates the screen with the latest game data.
      */
     void render(GameContext context);
 
-    /**
-     * Displays the game window.
-     */
-    void show();
+    void setInputHandler(InputHandler inputHandler);
 
     /**
-     * @param onExit the action perfomed ones the user clicks on exit.
-     * Displays the view for the winner of the match.
+     * Return the JPanel used for rendering the game view
      */
-    void displayWinView(Runnable onExit);
-
-    /**
-     * Displays the view of game over.
-     */
-    void displayGameOverView();
+    JPanel getGamePanel();
 }

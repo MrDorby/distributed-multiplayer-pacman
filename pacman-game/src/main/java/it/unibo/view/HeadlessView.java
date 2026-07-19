@@ -1,8 +1,11 @@
 package it.unibo.view;
 
+import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.model.game.GameContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
 
 public class HeadlessView implements GameView {
     private static final Logger logger = LoggerFactory.getLogger(HeadlessView.class);
@@ -13,17 +16,10 @@ public class HeadlessView implements GameView {
     }
 
     @Override
-    public void show() {
-        logger.info("Headless view initialized. No window will be displayed.");
-    }
+    public void setInputHandler(InputHandler inputHandler) {}
 
     @Override
-    public void displayWinView(Runnable onExit) {
-        logger.info("Headless winView initialized. No window will be displayed.");
-    }
-
-    @Override
-    public void displayGameOverView() {
-        logger.info("Headless gameOverView initialized. No window will be displayed.");
+    public JPanel getGamePanel() {
+        return null;
     }
 }

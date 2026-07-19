@@ -1,5 +1,7 @@
 package it.unibo;
 
+import it.unibo.controller.client.services.ServiceManager;
+import it.unibo.controller.client.services.ServiceManagerImpl;
 import it.unibo.view.navigation.AppState;
 import it.unibo.view.navigation.ScreenRouter;
 import it.unibo.view.screens.game.GameController;
@@ -20,10 +22,12 @@ public class FullPacmanClientMain {
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         ScreenRouter router = new ScreenRouter(frame);
-        router.register(AppState.LOGIN, new LoginController(router));
+        ServiceManager serviceManager = new ServiceManagerImpl();
+        // TODO: Instantiate AuthClient (Controller/Client + package) and pass it to other constructors.
+        router.register(AppState.LOGIN, new LoginController(router, serviceManager));
         router.register(AppState.MAIN_MENU, new MainMenuController(router));
-        router.register(AppState.IN_GAME, new GameController(router, "LocalPlayer"));
-        router.register(AppState.REGISTER, new RegisterController(router));
+        router.register(AppState.IN_GAME, new GameController(router));
+        router.register(AppState.REGISTER, new RegisterController(router, serviceManager));
         router.goTo(AppState.LOGIN);
     }
 

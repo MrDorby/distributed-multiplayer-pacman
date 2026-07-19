@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * {@value MAX_CATCHUP_TICKS} ticks per iteration. If the loop falls further
  * behind than that, such ticks are dropped.
  */
-public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
+public abstract class AbstractFixedTimeStepGameEngine implements GameEngine, Runnable {
     private static final Logger logger = LoggerFactory.getLogger(AbstractFixedTimeStepGameEngine.class);
 
     private static final int TICKS_PER_SECOND = 64;
@@ -31,7 +31,7 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
     private static final int MAX_CATCHUP_TICKS = 5;
 
     protected Game game;
-    private GameView view = new HeadlessView();
+    protected GameView view = new HeadlessView();
     private final Queue<PacmanCommand> commandQueue = new ConcurrentLinkedQueue<>();
 
     private volatile boolean running = true;
@@ -59,6 +59,11 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
 
     @Override
     public void start() {
+        new Thread(this, "game-engine").start();
+    }
+
+    @Override
+    public void run() {
         long previousTime = System.currentTimeMillis();
         long lastTpsTime = previousTime;
         long lag = 0;
@@ -130,5 +135,10 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine {
     @Override
     public boolean isRunning() {
         return running;
+    }
+
+    @Override
+    public int getTickRate() {
+        return TICKS_PER_SECOND;
     }
 }
