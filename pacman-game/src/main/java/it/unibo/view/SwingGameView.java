@@ -1,11 +1,9 @@
 package it.unibo.view;
 
-import it.unibo.controller.shared.engine.GameLifecycleEvent;
-import it.unibo.controller.shared.engine.GameEndedEvent;
 import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.model.common.Direction;
 import it.unibo.model.game.GameContext;
-import it.unibo.view.screens.game.GamePanel;
+import it.unibo.view.screens.game.panels.GamePanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,13 +52,5 @@ public class SwingGameView implements GameView {
     @Override
     public void render(GameContext gameContext) {
         this.gamePanel.setGameContext(gameContext);
-    }
-
-    @Override
-    public void onLifecycleEvent(GameLifecycleEvent event) {
-        if (event instanceof GameEndedEvent(GameContext context)) {
-            String winner = context.getGameState().getWinnerId();
-            JOptionPane.showMessageDialog(gamePanel, "The winner is " + winner, "Match Results", JOptionPane.PLAIN_MESSAGE);
-        }
     }
 }

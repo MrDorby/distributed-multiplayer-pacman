@@ -1,6 +1,5 @@
 package it.unibo.view;
 
-import it.unibo.controller.shared.engine.GameLifecycleEvent;
 import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.model.game.GameContext;
 
@@ -16,8 +15,6 @@ public interface GameView {
     void render(GameContext context);
 
     void setInputHandler(InputHandler inputHandler);
-
-    void onLifecycleEvent(GameLifecycleEvent event);
 
     /**
      * Return the JPanel used for rendering the game view

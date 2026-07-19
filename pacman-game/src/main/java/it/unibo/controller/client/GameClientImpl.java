@@ -106,6 +106,9 @@ public class GameClientImpl implements GameClient, ClientSessionListener {
     public void onGameEnd() {
         logger.debug("Received game end event from server");
         engine.onGameEvent(new GameEndedEvent(engine.getGame().getContext()));
+        for (GameClientListener listener : listeners) {
+            listener.onGameEnded();
+        }
     }
 
     /* ************************************ *

@@ -1,4 +1,4 @@
-package it.unibo.view.screens.game;
+package it.unibo.view.screens.game.panels;
 
 import it.unibo.model.common.GameConstants;
 import it.unibo.model.common.Vector2D;

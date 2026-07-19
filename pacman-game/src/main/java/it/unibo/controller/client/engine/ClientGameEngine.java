@@ -44,7 +44,6 @@ public class ClientGameEngine extends AbstractFixedTimeStepGameEngine implements
         while ((event = events.poll()) != null) {
             if (event instanceof GameEndedEvent) {
                 this.stop();
-                view.onLifecycleEvent(event);
                 break;
             }
         }

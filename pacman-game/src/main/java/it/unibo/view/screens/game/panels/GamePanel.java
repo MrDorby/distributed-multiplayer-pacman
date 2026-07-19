@@ -1,4 +1,4 @@
-package it.unibo.view.screens.game;
+package it.unibo.view.screens.game.panels;
 
 import it.unibo.model.entities.Pacman;
 import it.unibo.model.game.GameContext;
@@ -6,7 +6,6 @@ import it.unibo.view.font.FontManager;
 import it.unibo.view.font.FontName;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 

@@ -25,7 +25,6 @@ public class LocalGameEngine extends AbstractFixedTimeStepGameEngine {
     protected void afterTick() {
         if (this.game.getContext().getGameState().isGameOver()) {
             super.stop();
-            super.view.onLifecycleEvent(new GameEndedEvent(game.getContext()));
         }
     }
 }
