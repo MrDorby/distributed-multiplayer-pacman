@@ -11,5 +11,5 @@ public interface BoundingBox {
     /**
      * Returns the center of the bounding box.
      */
-    Vector2D getCenter();
+    Vector2D center();
 }

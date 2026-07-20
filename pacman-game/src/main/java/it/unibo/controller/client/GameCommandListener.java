@@ -1,6 +1,6 @@
 package it.unibo.controller.client;
 
-import it.unibo.controller.shared.input.PacmanCommand;
+import it.unibo.controller.shared.engine.command.PacmanCommand;
 
 /**
  * Listener interface for intercepting player intents.

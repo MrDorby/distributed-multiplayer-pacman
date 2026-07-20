@@ -1,6 +1,6 @@
 package it.unibo.controller.server.network.sockets.handlers;
 
-import it.unibo.controller.shared.input.PacmanMoveCommand;
+import it.unibo.controller.shared.engine.command.PacmanMoveCommand;
 import it.unibo.controller.shared.network.sockets.handlers.UdpHandler;
 import it.unibo.controller.shared.network.sockets.packets.NetworkPacket;
 import it.unibo.controller.shared.network.sockets.packets.PacmanMovePacket;

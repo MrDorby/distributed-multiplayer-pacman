@@ -8,11 +8,8 @@ public class GameConstants {
     public static final int GAME_DURATION_IN_MILLIS = GAME_DURATION_IN_SECONDS * 1000;
 
     public enum GameEntityFeatures {
-
         PACMAN(16, 3000, 2),
-
         GHOST(16, 3000, 2),
-
         DOT(8, 3000, 0);
 
         private final int radius;
@@ -24,7 +21,6 @@ public class GameConstants {
             this.timeToRespawn = timeToRespawn;
             this.velocity = velocity;
         }
-
 
         public int getRadius() {
             return radius;

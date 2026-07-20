@@ -1,4 +1,4 @@
-package it.unibo.controller.server;
+package it.unibo.controller.server.lobby;
 
 import java.util.List;
 

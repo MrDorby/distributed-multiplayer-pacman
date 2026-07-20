@@ -1,6 +1,7 @@
 package it.unibo.controller.shared.input;
 
 import it.unibo.controller.shared.engine.GameEngine;
+import it.unibo.controller.shared.engine.command.PacmanMoveCommand;
 import it.unibo.model.common.Direction;
 
 public class InputHandlerImpl implements InputHandler {

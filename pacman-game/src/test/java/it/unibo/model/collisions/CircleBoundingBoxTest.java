@@ -37,7 +37,7 @@ public class CircleBoundingBoxTest {
             public boolean collides(BoundingBox other) { return false; }
 
             @Override
-            public Vector2D getCenter() { return null; }
+            public Vector2D center() { return null; }
         };
         assertThrows(IllegalArgumentException.class, () -> box.collides(unknownBox));
     }

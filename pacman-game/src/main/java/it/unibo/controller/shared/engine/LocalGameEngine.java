@@ -1,6 +1,6 @@
 package it.unibo.controller.shared.engine;
 
-import it.unibo.controller.shared.input.PacmanCommand;
+import it.unibo.controller.shared.engine.command.PacmanCommand;
 import it.unibo.model.game.Game;
 
 import java.util.List;
@@ -9,8 +9,8 @@ public class LocalGameEngine extends AbstractFixedTimeStepGameEngine {
     public LocalGameEngine(Game game, String localPlayerUsername) {
         super(game);
         List<String> localNames = List.of(localPlayerUsername, "Alpha", "Beta", "Gamma");
-        this.getGame().setPacmanNames(localNames);
-        this.getGame().getContext().getPacmans().stream()
+        this.game.setPacmanNames(localNames);
+        this.game.getContext().getPacmans().stream()
                 .filter(pacman -> !pacman.getId().equals(localPlayerUsername))
                 .forEach(pacman -> pacman.changeBehaviour(false));
     }

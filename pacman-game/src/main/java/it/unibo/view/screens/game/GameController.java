@@ -120,6 +120,7 @@ public class GameController implements GameClientListener, ScreenController {
         gameView.getGamePanel().setLocalPlayerId(client.getUsername());
         gameView.setInputHandler(inputHandler);
         engine.setView(gameView);
+        engine.start();
         SwingUtilities.invokeLater(screen::showGameView);
     }
 
