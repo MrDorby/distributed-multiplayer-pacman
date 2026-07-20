@@ -4,6 +4,7 @@ import java.util.List;
 
 public record GameContextDTO(
         String mapName,
+        long tick,
         GameStateDTO gameState,
         List<PacmanDTO> pacmans,
         List<GhostDTO> ghosts,

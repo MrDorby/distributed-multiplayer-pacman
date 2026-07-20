@@ -10,6 +10,10 @@ import java.util.Set;
 
 public interface GameContext {
 
+    long getTick();
+
+    void setTick(long tick);
+
     /**
      * Returns the latest calculated collisions.
      */

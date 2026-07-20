@@ -19,6 +19,7 @@ public class GameContextEncoderImpl implements GameContextEncoder {
     public GameContextDTO encode(GameContext context) {
         return new GameContextDTO(
                 context.getMap().getName(),
+                context.getTick(),
                 encode(context.getGameState()),
                 context.getPacmans().stream().map(GameContextEncoderImpl::encode).toList(),
                 context.getGhosts().stream().map(GameContextEncoderImpl::encode).toList(),

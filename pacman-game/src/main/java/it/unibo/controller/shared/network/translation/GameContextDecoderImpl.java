@@ -48,7 +48,7 @@ public class GameContextDecoderImpl implements GameContextDecoder {
         Set<Pacman> pacmans = dto.pacmans().stream()
                 .map(pacman -> decodePacman(pacman, cachedMap))
                 .collect(Collectors.toSet());
-        return new GameContextImpl(cachedMap, dotsMap, ghosts, pacmans, dto.gameState().timeLeftInMillis());
+        return new GameContextImpl(cachedMap, dto.tick(), dotsMap, ghosts, pacmans, dto.gameState().timeLeftInMillis());
     }
 
     private Pacman decodePacman(PacmanDTO dto, GameMap map) {

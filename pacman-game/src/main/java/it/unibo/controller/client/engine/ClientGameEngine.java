@@ -14,10 +14,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ClientGameEngine extends AbstractFixedTimeStepGameEngine implements RemoteGameEngineListener {
     private final AtomicReference<GameContext> latestContext = new AtomicReference<>();
+    private final AtomicLong maxReceivedTick = new AtomicLong(-1);
+
     private final Queue<GameLifecycleEvent> events = new ConcurrentLinkedQueue<>();
     private final List<GameCommandListener> listeners = new ArrayList<>();
 
@@ -36,7 +39,13 @@ public class ClientGameEngine extends AbstractFixedTimeStepGameEngine implements
 
     @Override
     public void onGameContextUpdate(GameContext context) {
-        this.latestContext.set(context);
+        long incomingTick = context.getTick();
+        long currentMax = maxReceivedTick.get();
+        if (incomingTick > currentMax) {
+            if (maxReceivedTick.compareAndSet(currentMax, incomingTick)) {
+                this.latestContext.set(context);
+            }
+        }
     }
 
     private void processEvents() {
@@ -55,6 +64,7 @@ public class ClientGameEngine extends AbstractFixedTimeStepGameEngine implements
         GameContext context = latestContext.getAndSet(null);
         if (context != null) {
             this.game = new GameImpl(context);
+            this.setCurrentTick(context.getTick());
         }
     }
 

@@ -56,7 +56,7 @@ public class GameContextFactory {
         Set<Ghost> ghosts = new HashSet<>();
         ghosts.add(new GhostImpl(ghostSpawn, gameMap));
 
-        return new GameContextImpl(gameMap, dotsMap, ghosts, pacmans, GAME_DURATION_IN_MILLIS);
+        return new GameContextImpl(gameMap, 0, dotsMap, ghosts, pacmans, GAME_DURATION_IN_MILLIS);
     }
 
     public static GameContext createFromMap(String mapPath, GameEntityFactory gameEntityFactory) {
@@ -79,6 +79,7 @@ public class GameContextFactory {
         });
         return new GameContextImpl(
                 gameMap,
+                0,
                 dotsMap,
                 ghosts,
                 pacmans,

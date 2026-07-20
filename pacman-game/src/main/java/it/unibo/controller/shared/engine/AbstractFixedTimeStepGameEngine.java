@@ -35,6 +35,7 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine, Run
     private final Queue<PacmanCommand> commandQueue = new ConcurrentLinkedQueue<>();
 
     private volatile boolean running = true;
+    private long currentTick = 0;
     private volatile int currentTps = 0;
 
     public AbstractFixedTimeStepGameEngine(Game game) {
@@ -104,6 +105,7 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine, Run
     }
 
     private void tick() {
+        this.currentTick++;
         beforeTick();
         while (!commandQueue.isEmpty()) {
             PacmanCommand command = commandQueue.poll();
@@ -115,6 +117,14 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine, Run
         game.update(MILLIS_PER_TICK);
         view.render(game.getContext());
         afterTick();
+    }
+
+    protected long getCurrentTick() {
+        return this.currentTick;
+    }
+
+    protected void setCurrentTick(long tick) {
+        this.currentTick = tick;
     }
 
     @Override

@@ -11,10 +11,7 @@ import it.unibo.model.map.TileType;
 import it.unibo.model.movement.MovementManager;
 import it.unibo.model.movement.MovementManagerImpl;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PacmanImpl extends GameEntityImpl implements Pacman {

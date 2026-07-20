@@ -125,7 +125,7 @@ public class GameEntitiesTest {
 
     /* Provides fast implementation of the game context. */
     private void createGameContext(Map<MatrixCoordinates,Dot> dots, Set<Ghost> ghosts, Set<Pacman> pacmans) {
-        this.context = new GameContextImpl(map, dots, 
+        this.context = new GameContextImpl(map, 0, dots,
                         ghosts, 
                         pacmans, 
                         GAME_DURATION_IN_MILLIS);

@@ -34,7 +34,9 @@ public class ServerGameEngine extends AbstractFixedTimeStepGameEngine {
     }
 
     @Override
-    protected void beforeTick() {}
+    protected void beforeTick() {
+        this.getGame().getContext().setTick(this.getCurrentTick());
+    }
 
     @Override
     protected void afterCommandExecuted(PacmanCommand command) {}
