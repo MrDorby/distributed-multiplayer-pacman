@@ -27,6 +27,7 @@ public class SinglePlayerPacmanMain {
             GameView view = new SwingGameView();
             engine.setView(view);
             view.setInputHandler(inputHandler);
+            view.getGamePanel().setLocalPlayerId(playerName);
             JFrame frame = new JFrame("Pacman Standalone Test");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1200, 800);
