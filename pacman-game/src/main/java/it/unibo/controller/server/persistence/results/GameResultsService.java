@@ -11,5 +11,10 @@ public interface GameResultsService {
     /**
      * Saves the aggregated results derived from the given game context.
      */
-    CompletableFuture<Void> saveResults(MatchSnapshot snapshot);
+    CompletableFuture<?>[] saveResults(MatchSnapshot snapshot);
+
+    /**
+     * Closes the MongoDB connection (MongoClient) and frees the resources.
+     */
+    void closeConnection();
 }

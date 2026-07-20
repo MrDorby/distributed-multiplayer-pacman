@@ -10,8 +10,16 @@ public class DummyGameResultsService implements GameResultsService {
     private static final Logger logger = LoggerFactory.getLogger(DummyGameResultsService.class);
 
     @Override
-    public CompletableFuture<Void> saveResults(MatchSnapshot snapshot) {
+    public CompletableFuture<?>[] saveResults(MatchSnapshot snapshot) {
         logger.debug("Saving results of snapshot taken at {} with matchId: {}", snapshot.timestamp(), snapshot.matchId());
-        return CompletableFuture.completedFuture(null);
+        CompletableFuture<?>[] ft = new CompletableFuture[1];
+        ft[0] = CompletableFuture.completedFuture(null); 
+        return ft;
+    }
+
+    @Override
+    public void closeConnection() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'closeConnection'");
     }
 }

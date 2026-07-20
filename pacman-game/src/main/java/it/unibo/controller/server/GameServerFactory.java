@@ -19,7 +19,6 @@ import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 
 public class GameServerFactory {
     private static final String MAP_PATH_FORMAT = "maps/%s.json";
@@ -33,10 +32,9 @@ public class GameServerFactory {
             URI resultsEndpoint,
             GameServerOrchestrator orchestrator
     ) {
-        HttpClient httpClient = HttpClient.newHttpClient();
         GamePersistenceManager persistence = new GamePersistenceManager(
-                new HttpGameBackupService(httpClient, backupEndpoint),
-                new HttpGameResultsService(httpClient, resultsEndpoint)
+                new HttpGameBackupService(),
+                new HttpGameResultsService()
         );
         return assemble(matchId, mapName, tcpPort, udpPort, persistence, orchestrator);
     }

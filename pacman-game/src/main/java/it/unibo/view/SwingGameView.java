@@ -7,7 +7,6 @@ import it.unibo.view.viewmodel.GameContextViewModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 

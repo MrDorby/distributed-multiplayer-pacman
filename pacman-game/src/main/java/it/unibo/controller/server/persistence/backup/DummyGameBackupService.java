@@ -14,4 +14,10 @@ public class DummyGameBackupService implements GameBackupService {
         logger.info("Saving snapshot taken at {} with matchId: {}", snapshot.timestamp(), snapshot.matchId());
         return CompletableFuture.completedFuture(null);
     }
+
+    @Override
+    public void closeConnection() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'closeConnection'");
+    }
 }

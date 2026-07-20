@@ -1,7 +1,6 @@
 package it.unibo.model.game;
 
 import it.unibo.model.common.Direction;
-import it.unibo.model.entities.Pacman;
 
 import java.util.List;
 

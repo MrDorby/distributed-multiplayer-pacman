@@ -54,14 +54,30 @@ public class GamePersistenceManager {
         if (periodicTask != null) {
             periodicTask.cancel(false);
         }
-        CompletableFuture<Void> backupSaved = backupService.saveSnapshot(finalSnapshot);
-        CompletableFuture<Void> resultsSaved = resultsService.saveResults(finalSnapshot);
         try {
-            CompletableFuture.allOf(backupSaved, resultsSaved).get(5, TimeUnit.SECONDS);
+            CompletableFuture.allOf(getAllOf(finalSnapshot)).get(5, TimeUnit.SECONDS);
+            closeConnections();
             logger.info("Final game context and results saved.");
         } catch (Exception e) {
             logger.error("Final backup and/or results save failed or timed out", e);
         }
+    }
+
+    private void closeConnections() {
+        this.backupService.closeConnection();
+        this.resultsService.closeConnection();
+    }
+
+    private CompletableFuture<?>[] getAllOf(MatchSnapshot finalSnapshot) {
+        CompletableFuture<?> backupSaved = backupService.saveSnapshot(finalSnapshot);
+        CompletableFuture<?>[] resultsSaved = resultsService.saveResults(finalSnapshot);
+        CompletableFuture<?>[] allOf = new CompletableFuture[resultsSaved.length + 1];
+        int index = 0;
+        allOf[index++] = backupSaved;
+        for (CompletableFuture<?> completableFuture : resultsSaved) {
+            allOf[index++] = completableFuture;
+        }
+        return allOf;
     }
 
     public void stop() {

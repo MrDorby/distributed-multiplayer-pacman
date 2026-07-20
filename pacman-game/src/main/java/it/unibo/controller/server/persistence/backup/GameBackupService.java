@@ -11,5 +11,10 @@ public interface GameBackupService {
     /**
      * Saves a snapshot of the game context to the backup store.
      */
-    CompletableFuture<Void> saveSnapshot(MatchSnapshot snapshot);
+    CompletableFuture<?> saveSnapshot(MatchSnapshot snapshot);
+
+    /**
+     * Closes the MongoDB connection (MongoClient) and frees the resources.
+     */
+    void closeConnection();
 }
