@@ -22,7 +22,7 @@ public class FourManLobby implements PlayerLobby {
     }
 
     @Override
-    public void addPlayer(String playerName) {
+    public synchronized void addPlayer(String playerName) {
         if (state != LobbyState.WAITING) {
             return;
         }
@@ -30,7 +30,7 @@ public class FourManLobby implements PlayerLobby {
     }
 
     @Override
-    public void removePlayer(String playerName) {
+    public synchronized void removePlayer(String playerName) {
         if (state != LobbyState.WAITING) {
             return;
         }
@@ -38,32 +38,32 @@ public class FourManLobby implements PlayerLobby {
     }
 
     @Override
-    public LobbyState getState() {
+    public synchronized LobbyState getState() {
         return state;
     }
 
     @Override
-    public void setState(LobbyState state) {
+    public synchronized void setState(LobbyState state) {
         this.state = state;
     }
 
     @Override
-    public int getCurrentPlayerCount() {
+    public synchronized int getCurrentPlayerCount() {
         return players.size();
     }
 
     @Override
-    public int getRequiredPlayerCount() {
+    public synchronized int getRequiredPlayerCount() {
         return requiredPlayers;
     }
 
     @Override
-    public boolean isFull() {
+    public synchronized boolean isFull() {
         return players.size() == requiredPlayers;
     }
 
     @Override
-    public List<String> getPlayers() {
+    public synchronized List<String> getPlayers() {
         return new ArrayList<>(players);
     }
 }

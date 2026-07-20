@@ -19,18 +19,25 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class GameServerImpl implements GameServer {
     private static final Logger logger = LoggerFactory.getLogger(GameServerImpl.class);
+    public static final int SERVER_SHUTDOWN_DELAY_SECONDS = 10;
 
     private final String matchId;
-
     private final GameServerGateway gateway;
     private final ServerGameEngine engine;
     private final GamePersistenceManager persistenceManager;
     private final GameServerOrchestrator orchestrator;
 
     private final FourManLobby lobby = new FourManLobby();
+
+    private final ScheduledExecutorService shutdownScheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ExecutorService networkWorker = Executors.newSingleThreadExecutor();
 
     public GameServerImpl(
             String matchId,
@@ -162,10 +169,12 @@ public class GameServerImpl implements GameServer {
      */
     @Override
     public void onGameContextUpdate(GameContextDTO context) {
-        logger.trace("Broadcasting game context to all clients");
-        MatchSnapshot snapshot = new MatchSnapshot(this.matchId, System.currentTimeMillis(), context);
-        persistenceManager.updateContext(snapshot);
-        gateway.broadcastUdp(new GameContextPacket(context));
+        networkWorker.submit(() -> {
+            logger.trace("Broadcasting game context to all clients");
+            MatchSnapshot snapshot = new MatchSnapshot(this.matchId, System.currentTimeMillis(), context);
+            persistenceManager.updateContext(snapshot);
+            gateway.broadcastUdp(new GameContextPacket(context));
+        });
     }
 
     /*
@@ -174,28 +183,33 @@ public class GameServerImpl implements GameServer {
      */
     @Override
     public void onGameEvent(GameEvent event) {
-        if (event instanceof GameEndedEvent(GameContextDTO context)) {
-            logger.info("Game has ended");
-            MatchSnapshot snapshot = new MatchSnapshot(this.matchId, System.currentTimeMillis(), context);
-            persistenceManager.saveFinalSnapshot(snapshot);
-            gateway.broadcastTcp(new GameContextPacket(context));
-            gateway.broadcastTcp(new GameEndPacket(context));
+        synchronized (this) {
             lobby.setState(LobbyState.FINISHED);
-            orchestrator.shutdown();
-            scheduleServerShutdown(Duration.ofSeconds(10));
+        }
+        if (event instanceof GameEndedEvent(GameContextDTO context)) {
+            networkWorker.submit(() -> {
+                logger.info("Game has ended");
+                MatchSnapshot snapshot = new MatchSnapshot(this.matchId, System.currentTimeMillis(), context);
+                persistenceManager.saveFinalSnapshot(snapshot);
+                gateway.broadcastTcp(new GameContextPacket(context));
+                gateway.broadcastTcp(new GameEndPacket(context));
+                orchestrator.shutdown();
+                scheduleServerShutdown(Duration.ofSeconds(SERVER_SHUTDOWN_DELAY_SECONDS));
+            });
         }
     }
 
     private void scheduleServerShutdown(Duration delay) {
         logger.info("Server process scheduled to terminate in {} seconds", delay.getSeconds());
-        try {
-            Thread.sleep(delay.toMillis());
-            stop();
-            logger.info("Exiting JVM process cleanly");
-            System.exit(0);
-        } catch (Exception e) {
-            logger.error("Error occurred while shutting down the server components", e);
-            System.exit(1);
-        }
+        shutdownScheduler.schedule(() -> {
+            try {
+                stop();
+                logger.info("Exiting JVM process cleanly");
+                System.exit(0);
+            } catch (Exception e) {
+                logger.error("Error occurred while shutting down the server components", e);
+                System.exit(1);
+            }
+        }, delay.toMillis(), TimeUnit.MILLISECONDS);
     }
 }
