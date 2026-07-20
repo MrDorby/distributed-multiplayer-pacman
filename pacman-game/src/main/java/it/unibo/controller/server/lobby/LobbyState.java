@@ -1,4 +1,4 @@
-package it.unibo.controller.server;
+package it.unibo.controller.server.lobby;
 
 /**
  * Represents the lifecycle states of a multiplayer game lobby.

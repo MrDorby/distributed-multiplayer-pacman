@@ -1,6 +1,8 @@
 package it.unibo.controller.server;
 
 import it.unibo.controller.server.engine.ServerGameEngine;
+import it.unibo.controller.server.lobby.FourManLobby;
+import it.unibo.controller.server.lobby.LobbyState;
 import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.session.GameSession;
 import it.unibo.controller.server.orchestration.GameServerOrchestrator;
@@ -73,6 +75,9 @@ public class GameServerImpl implements GameServer {
             persistenceManager.stop();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        } finally {
+            networkWorker.shutdown();
+            shutdownScheduler.shutdown();
         }
     }
 
