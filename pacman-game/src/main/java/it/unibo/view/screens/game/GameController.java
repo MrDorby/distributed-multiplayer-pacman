@@ -8,6 +8,7 @@ import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.controller.shared.input.InputHandlerImpl;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
+import it.unibo.view.GameView;
 import it.unibo.view.navigation.AppNavigator;
 import it.unibo.view.navigation.AppState;
 import it.unibo.view.screens.ScreenController;
@@ -115,8 +116,10 @@ public class GameController implements GameClientListener, ScreenController {
         GameEngine engine = client.getEngine();
         InputHandler inputHandler = new InputHandlerImpl(client.getUsername());
         inputHandler.setEngine(engine);
-        screen.getGameView().setInputHandler(inputHandler);
-        engine.setView(screen.getGameView());
+        GameView gameView = screen.getGameView();
+        gameView.getGamePanel().setLocalPlayerId(client.getUsername());
+        gameView.setInputHandler(inputHandler);
+        engine.setView(gameView);
         SwingUtilities.invokeLater(screen::showGameView);
     }
 

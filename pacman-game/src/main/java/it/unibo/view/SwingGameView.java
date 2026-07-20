@@ -45,7 +45,7 @@ public class SwingGameView implements GameView {
     }
 
     @Override
-    public JPanel getGamePanel() {
+    public GamePanel getGamePanel() {
         return this.gamePanel;
     }
 

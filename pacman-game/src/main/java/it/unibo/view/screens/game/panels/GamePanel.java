@@ -12,6 +12,7 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class GamePanel extends JPanel {
 
@@ -22,6 +23,7 @@ public class GamePanel extends JPanel {
     private final MenuPanel menuPanel;
     private final LifePanel lifePanel;
 
+    private String localPlayerId;
     private Runnable onEscapePressed;
 
     public GamePanel() {
@@ -76,12 +78,22 @@ public class GamePanel extends JPanel {
         this.add(menuPanel, constraints);
     }
 
+    public void setLocalPlayerId(String localPlayerId) {
+        this.localPlayerId = localPlayerId;
+        this.lifePanel.setLocalPlayerId(localPlayerId);
+    }
+
     public void onEscape(Runnable action) {
         this.onEscapePressed = action;
     }
 
     private static class LifePanel extends JPanel {
+        private String localPlayerId;
         private GameContextViewModel context;
+
+        void setLocalPlayerId(String localPlayerId) {
+            this.localPlayerId = localPlayerId;
+        }
 
         void setGameContext(GameContextViewModel gameContext) {
             setDoubleBuffered(true);
@@ -96,19 +108,19 @@ public class GamePanel extends JPanel {
                 );
         }
 
-        // TODO: Change when Pacman ID will be present.
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            if (this.context == null) return;
+            if (this.context == null || this.localPlayerId == null) return;
             this.context.pacmans()
                     .stream()
+                    .filter(p -> this.localPlayerId.equals(p.id()))
                     .findFirst()
-                    .ifPresent(x -> {
+                    .ifPresent(pacman -> {
                         int radius = 26;
                         int space = 20;
                         int start = (this.getWidth() / 2) - (3 * radius) + space;
-                        for (int i = 0; i < x.lives(); i++) {
+                        for (int i = 0; i < pacman.lives(); i++) {
                             g.setColor(Color.RED);
                             g.fillOval(
                                     start + (radius + space) * i,
@@ -214,22 +226,22 @@ public class GamePanel extends JPanel {
                 .toList().reversed();
             for (int i = 0; i < list.size(); i++) {
                 String id =  list.get(i).getKey();
-                PacmanViewModel pc = context
-                    .pacmans()
-                    .stream()
-                    .filter(
-                        x -> x.id().equals(id))
-                    .findFirst()
-                    .get();
-                String lives = String.valueOf(pc.lives());
-                String points = String.valueOf(list.get(i).getValue());
-                String baseDisplayName = pc.controlledByPlayer() ? id : " [Bot] " + id;
-                String finalDisplayName = baseDisplayName.length() > PLAYER_NAME_LENGTH
-                        ? baseDisplayName.substring(0, PLAYER_NAME_LENGTH) + "..."
-                        : baseDisplayName;
-                scoreLabels.get(i).name.setText(finalDisplayName);
-                scoreLabels.get(i).lives.setText(lives);
-                scoreLabels.get(i).points.setText(points);
+                Optional<PacmanViewModel> optionalPacman = context.pacmans()
+                        .stream()
+                        .filter(x -> x.id().equals(id))
+                        .findFirst();
+                if (optionalPacman.isPresent()) {
+                    PacmanViewModel pacman = optionalPacman.get();
+                    String lives = String.valueOf(pacman.lives());
+                    String points = String.valueOf(list.get(i).getValue());
+                    String baseDisplayName = pacman.controlledByPlayer() ? id : " [Bot] " + id;
+                    String finalDisplayName = baseDisplayName.length() > PLAYER_NAME_LENGTH
+                            ? baseDisplayName.substring(0, PLAYER_NAME_LENGTH) + "..."
+                            : baseDisplayName;
+                    scoreLabels.get(i).name.setText(finalDisplayName);
+                    scoreLabels.get(i).lives.setText(lives);
+                    scoreLabels.get(i).points.setText(points);
+                }
             }
         }
     }
