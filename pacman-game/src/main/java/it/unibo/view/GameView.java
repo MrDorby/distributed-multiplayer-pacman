@@ -1,7 +1,7 @@
 package it.unibo.view;
 
 import it.unibo.controller.shared.input.InputHandler;
-import it.unibo.model.game.GameContext;
+import it.unibo.view.viewmodel.GameContextViewModel;
 
 import javax.swing.*;
 
@@ -12,7 +12,7 @@ public interface GameView {
     /**
      * Updates the screen with the latest game data.
      */
-    void render(GameContext context);
+    void render(GameContextViewModel context);
 
     void setInputHandler(InputHandler inputHandler);
 

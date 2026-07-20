@@ -2,8 +2,8 @@ package it.unibo.view;
 
 import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.model.common.Direction;
-import it.unibo.model.game.GameContext;
 import it.unibo.view.screens.game.panels.GamePanel;
+import it.unibo.view.viewmodel.GameContextViewModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ public class SwingGameView implements GameView {
     }
 
     @Override
-    public void render(GameContext gameContext) {
-        this.gamePanel.setGameContext(gameContext);
+    public void render(GameContextViewModel context) {
+        this.gamePanel.setGameContext(context);
     }
 }

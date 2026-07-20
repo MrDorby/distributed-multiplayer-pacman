@@ -4,6 +4,7 @@ import it.unibo.controller.shared.input.PacmanCommand;
 import it.unibo.model.game.Game;
 import it.unibo.view.GameView;
 import it.unibo.view.HeadlessView;
+import it.unibo.view.viewmodel.ViewModelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,7 +116,7 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine, Run
             }
         }
         game.update(MILLIS_PER_TICK);
-        view.render(game.getContext());
+        view.render(ViewModelFactory.create(game.getContext()));
         afterTick();
     }
 

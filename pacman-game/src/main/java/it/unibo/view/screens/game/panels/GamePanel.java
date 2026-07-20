@@ -1,9 +1,9 @@
 package it.unibo.view.screens.game.panels;
 
-import it.unibo.model.entities.Pacman;
-import it.unibo.model.game.GameContext;
 import it.unibo.view.font.FontManager;
 import it.unibo.view.font.FontName;
+import it.unibo.view.viewmodel.GameContextViewModel;
+import it.unibo.view.viewmodel.PacmanViewModel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,8 +12,6 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class GamePanel extends JPanel {
 
@@ -83,17 +81,17 @@ public class GamePanel extends JPanel {
     }
 
     private static class LifePanel extends JPanel {
-        private GameContext gameContext;
+        private GameContextViewModel context;
 
-        void setGameContext(GameContext gameContext) {
+        void setGameContext(GameContextViewModel gameContext) {
             setDoubleBuffered(true);
-            this.gameContext = gameContext;
+            this.context = gameContext;
             this.setBorder(
                 BorderFactory.createTitledBorder(
-                    BorderFactory.createEmptyBorder(20, 0, 20, 0), 
-                    "Lives", 
-                    TitledBorder.CENTER, 
-                    TitledBorder.ABOVE_TOP, 
+                    BorderFactory.createEmptyBorder(20, 0, 20, 0),
+                    "Lives",
+                    TitledBorder.CENTER,
+                    TitledBorder.ABOVE_TOP,
                     FontManager.addingFont(15f, FontName.S2P.getFontName()))
                 );
         }
@@ -102,15 +100,15 @@ public class GamePanel extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            if (this.gameContext == null) return;
-            this.gameContext.getPacmans()
+            if (this.context == null) return;
+            this.context.pacmans()
                     .stream()
                     .findFirst()
                     .ifPresent(x -> {
                         int radius = 26;
                         int space = 20;
                         int start = (this.getWidth() / 2) - (3 * radius) + space;
-                        for (int i = 0; i < x.getLives(); i++) {
+                        for (int i = 0; i < x.lives(); i++) {
                             g.setColor(Color.RED);
                             g.fillOval(
                                     start + (radius + space) * i,
@@ -152,12 +150,12 @@ public class GamePanel extends JPanel {
             this.add(exitContainer, BorderLayout.LINE_END);
         }
 
-        public void setGameContext(GameContext gameContext) {
-            if (gameContext == null || gameContext.getGameState() == null) {
+        public void setGameContext(GameContextViewModel context) {
+            if (context == null || context.gameState() == null) {
                 this.timeLeft.setText("Time left: --");
                 return;
             }
-            this.timeLeft.setText("Time left: " + gameContext.getGameState().getTimeLeftInMillis() / 1000 + "s");
+            this.timeLeft.setText("Time left: " + context.gameState().timeLeftInMillis() / 1000 + "s");
         }
     }
 
@@ -165,7 +163,6 @@ public class GamePanel extends JPanel {
         private record Triple(JLabel name, JLabel lives, JLabel points) {
             
         }
-        //private final Map<String, JLabel> scoreLabels = new HashMap<>();
         private final Map<Integer, Triple> scoreLabels = new HashMap<>();
 
         ScoreboardPanel() {
@@ -208,26 +205,25 @@ public class GamePanel extends JPanel {
             }
         }
 
-        // TODO: completing with username deleted for players with no more lives.
-        public void setGameContext(GameContext gameContext) {
-            if (gameContext == null || gameContext.getGameState() == null) return;
-            var list = gameContext.getGameState().getLeaderboard()
+        public void setGameContext(GameContextViewModel context) {
+            if (context == null || context.gameState() == null) return;
+            var list = context.gameState().leaderboard()
                 .entrySet()
                 .stream()
-                .sorted((x, y) -> x.getValue().compareTo(y.getValue()))
-                .collect(Collectors.toList()).reversed();
+                .sorted(Map.Entry.comparingByValue())
+                .toList().reversed();
             for (int i = 0; i < list.size(); i++) {
                 String id =  list.get(i).getKey();
-                Pacman pc = gameContext
-                    .getPacmans()
+                PacmanViewModel pc = context
+                    .pacmans()
                     .stream()
                     .filter(
-                        x -> x.getId().equals(id))
+                        x -> x.id().equals(id))
                     .findFirst()
                     .get();
-                String lives = String.valueOf(pc.getLives());
+                String lives = String.valueOf(pc.lives());
                 String points = String.valueOf(list.get(i).getValue());
-                String baseDisplayName = pc.isPlayer() ? id : " [Bot] " + id;
+                String baseDisplayName = pc.controlledByPlayer() ? id : " [Bot] " + id;
                 String finalDisplayName = baseDisplayName.length() > PLAYER_NAME_LENGTH
                         ? baseDisplayName.substring(0, PLAYER_NAME_LENGTH) + "..."
                         : baseDisplayName;
@@ -238,12 +234,12 @@ public class GamePanel extends JPanel {
         }
     }
 
-    public void setGameContext(GameContext gameContext) {
-        Objects.requireNonNull(gameContext);
-        this.gameMapPanel.setGameContext(gameContext);
-        this.menuPanel.setGameContext(gameContext);
-        this.lifePanel.setGameContext(gameContext);
-        this.scoreboardPanel.setGameContext(gameContext);
+    public void setGameContext(GameContextViewModel context) {
+        if (context == null ) return;
+        this.gameMapPanel.setGameContext(context);
+        this.menuPanel.setGameContext(context);
+        this.lifePanel.setGameContext(context);
+        this.scoreboardPanel.setGameContext(context);
         this.repaint();
     }
 }
