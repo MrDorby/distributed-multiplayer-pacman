@@ -1,6 +1,6 @@
 package it.unibo.controller.server;
 
-import it.unibo.controller.shared.input.PacmanMoveCommand;
+import it.unibo.controller.shared.engine.command.PacmanMoveCommand;
 
 /**
  * Receives events from the network layer as clients join and send commands.

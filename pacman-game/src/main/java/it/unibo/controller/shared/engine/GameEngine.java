@@ -1,10 +1,10 @@
 package it.unibo.controller.shared.engine;
 
-import it.unibo.controller.shared.input.PacmanCommand;
-import it.unibo.model.game.Game;
+import it.unibo.controller.shared.engine.command.PacmanCommand;
 import it.unibo.view.GameView;
 
 public interface GameEngine {
+
     /**
      * Adds a command to be executed on the next tick.
      */
@@ -19,11 +19,6 @@ public interface GameEngine {
      * Returns whether the game engine is still running.
      */
     boolean isRunning();
-
-    /**
-     * Returns the current instance of the game.
-     */
-    Game getGame();
 
     /**
      * Starts the game engine.
