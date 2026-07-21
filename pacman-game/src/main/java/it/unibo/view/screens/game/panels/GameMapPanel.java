@@ -18,6 +18,8 @@ public class GameMapPanel extends JPanel {
     private int mapPixelHeight;  // Total pixel height of the rendered map
     private int tilePixelSize;   // Pixel size of a single tile (tiles are square)
 
+    private String localPlayerId;
+
     public GameMapPanel() {
         this.setOpaque(false);
         this.setVisible(true);
@@ -77,7 +79,8 @@ public class GameMapPanel extends JPanel {
             int size = (int) (pacman.canEatGhosts()
                     ? getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2.5
                     : getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2);
-            drawGameEntity(g2d, pacman.position(), size, Color.YELLOW, startX, startY);
+            Color color = this.localPlayerId.equals(pacman.id()) ? Color.BLUE : Color.YELLOW;
+            drawGameEntity(g2d, pacman.position(), size, color, startX, startY);
         });
     }
 
@@ -113,5 +116,9 @@ public class GameMapPanel extends JPanel {
     private int startingY() {
         int availableHeight = this.getHeight() - TOP_PADDING - BOTTOM_PADDING;
         return TOP_PADDING + (availableHeight - this.mapPixelHeight) / 2;
+    }
+
+    public void setLocalPlayerId(String localPlayerId) {
+        this.localPlayerId = localPlayerId;
     }
 }

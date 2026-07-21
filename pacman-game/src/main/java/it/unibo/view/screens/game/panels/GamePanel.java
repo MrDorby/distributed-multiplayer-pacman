@@ -81,6 +81,8 @@ public class GamePanel extends JPanel {
     public void setLocalPlayerId(String localPlayerId) {
         this.localPlayerId = localPlayerId;
         this.lifePanel.setLocalPlayerId(localPlayerId);
+        this.gameMapPanel.setLocalPlayerId(localPlayerId);
+        this.scoreboardPanel.setLocalPlayerId(localPlayerId);
     }
 
     public void onEscape(Runnable action) {
@@ -176,6 +178,7 @@ public class GamePanel extends JPanel {
             
         }
         private final Map<Integer, Triple> scoreLabels = new HashMap<>();
+        private String localPlayerId;
 
         ScoreboardPanel() {
             this.setLayout(new GridLayout(0, 3));
@@ -217,6 +220,10 @@ public class GamePanel extends JPanel {
             }
         }
 
+        public void setLocalPlayerId(String localPlayerId) {
+            this.localPlayerId = localPlayerId;
+        } 
+
         public void setGameContext(GameContextViewModel context) {
             if (context == null || context.gameState() == null) return;
             var list = context.gameState().leaderboard()
@@ -238,9 +245,13 @@ public class GamePanel extends JPanel {
                     String finalDisplayName = baseDisplayName.length() > PLAYER_NAME_LENGTH
                             ? baseDisplayName.substring(0, PLAYER_NAME_LENGTH) + "..."
                             : baseDisplayName;
+                    Color color = this.localPlayerId.equals(id) ? Color.BLUE : Color.BLACK;
                     scoreLabels.get(i).name.setText(finalDisplayName);
+                    scoreLabels.get(i).name.setForeground(color);
                     scoreLabels.get(i).lives.setText(lives);
+                    scoreLabels.get(i).lives.setForeground(color);
                     scoreLabels.get(i).points.setText(points);
+                    scoreLabels.get(i).points.setForeground(color);
                 }
             }
         }

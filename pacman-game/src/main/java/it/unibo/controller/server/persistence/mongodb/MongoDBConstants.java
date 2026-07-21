@@ -112,6 +112,7 @@ public class MongoDBConstants {
     public static class ShortTermFields {
         
         private final String matchId;
+        // TODO: add list user.
         private final String checkpoints;
         
         public ShortTermFields(String matchId, String checkpoints) {
@@ -122,6 +123,7 @@ public class MongoDBConstants {
         public String getMatchIdLabel() {
             return matchId;
         }
+
         public String getCheckpointsLabel() {
             return checkpoints;
         }

@@ -1,0 +1,92 @@
+services:
+  # To create the key for the replica set do: openssl rand -base64 756 > replica.key
+  short:
+    depends_on:
+      - shortdb1
+      - shortdb2
+      - shortdb3
+    build: .
+    restart: on-failure
+    ports:
+      - $SHORT_PORT:$SHORT_PORT
+    networks:
+      - short_term_db_network
+
+  # Primary
+  shortdb1:
+    image: mongo:latest
+    container_name: shortdb1
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}  # Database to be created on startup
+    ports:
+      - ${MONGODB_PORT1}:27017 # Port changed due to possible conflict with MongoDb on local
+    depends_on:
+      - shortdb2
+      - shortdb3
+    volumes:
+      - ./replica.key:/data/replica.key
+      #- ./mongo-short:/data/db //TODO: Define the Volume where to mount the DB.
+    networks:
+      - short_term_db_network
+    command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/data/replica.key", "--bind_ip_all"]
+
+  # Secondary
+  shortdb2:
+    image: mongo:latest
+    container_name: shortdb2
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}  # Database to be created on startup
+    ports:
+      - ${MONGODB_PORT2}:27017
+    volumes:
+      - ./replica.key:/data/replica.key
+      #- ./mongo-short:/data/db //TODO: Define the Volume where to mount the DB.
+    networks:
+      - short_term_db_network
+    command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/data/replica.key", "--bind_ip_all"]
+
+
+  # Arbiter
+  shortdb3:
+    image: mongo:latest
+    container_name: shortdb3
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}  # Database to be created on startup
+    ports:
+      - ${MONGODB_PORT3}:27017
+    volumes:
+      - ./replica.key:/data/replica.key
+      #- ./mongo-short:/data/db //TODO: Define the Volume where to mount the DB.
+    networks:
+      - short_term_db_network
+    command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/data/replica.key", "--bind_ip_all"]
+
+  mongo-setup:
+    image: mongo:latest
+    container_name: mongo-setup
+    restart: on-failure
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    depends_on:
+      - shortdb1
+      - shortdb2
+      - shortdb3
+    volumes:
+      - ./mongodb_init.sh:/scripts/mongodb_init.sh
+    networks:
+      - short_term_db_network
+    entrypoint: ["/bin/bash", "/scripts/mongodb_init.sh"] 
+
+networks:
+  short_term_db_network:
+    driver: bridge

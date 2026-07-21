@@ -16,7 +16,7 @@ public class LoginController implements ScreenController {
             String password = loginView.getPassword();
             if (!username.isEmpty() && !password.isEmpty()) {
                 try {
-                    serviceManager.login(username, password); // TODO: TO CHECK THE MAIN MENU, COMMENT THIS LINE.
+                    //serviceManager.login(username, password); // TODO: TO CHECK THE MAIN MENU, COMMENT THIS LINE.
                     navigator.goTo(AppState.MAIN_MENU);
                 } catch (Exception e) {
                     loginView.showMessage(e.getMessage());

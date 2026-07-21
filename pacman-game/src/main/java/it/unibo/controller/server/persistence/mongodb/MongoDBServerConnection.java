@@ -47,7 +47,7 @@ public class MongoDBServerConnection {
         this.mongoDatabase = this.mongoClient.getDatabase(connectionString.getDatabaseName());
         this.collection = this.mongoDatabase.getCollection(connectionString.getCollectionName());
     }
-
+    //TODO: ADD METHOD TO GET CONTEXT FROM SHORT-TERM DB.
     /**
      * This methods handles database save requests, for long-term databases.
      * @param snapshot containing the datas that need to be stored.
