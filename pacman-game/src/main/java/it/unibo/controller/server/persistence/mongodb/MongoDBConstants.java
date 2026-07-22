@@ -7,20 +7,20 @@ public class MongoDBConstants {
 
     // TODO: Is it ok to insert Connection String with password?
     /* Connection String for a specific MongoDB database. */
-    private static final String LT = "mongodb://admin:password@queriesdb1:27017,queriesdb2:27017,queriesdb3:27017/authDB?authSource=admin&replicaSet=replicaSet";
-    private static final String ST = "";
+    private static final String LT = "mongodb://admin:password@queriesdb1:27017,queriesdb2:27017,queriesdb3:27017/statsDB?authSource=admin&replicaSet=replicaSet";
+    private static final String ST = "mongodb://admin:password@shortdb1:27017,shortdb2:27017,shortdb3:27017/shortDB?authSource=admin&replicaSet=replicaSet";
     
     /* MongoDB Databases. */
     private static final String LT_DB = "statsDB";
-    private static final String ST_DB = "";
+    private static final String ST_DB = "shortDB";
 
     /* MongoDB Colletions. */
     private static final String LT_CL = "stats";
-    private static final String ST_CL = "";
+    private static final String ST_CL = "matches";
 
     /* Label of the different fields in each database. */
     private static final LongTermFields longTermFields = new LongTermFields("username", "nMatch", "nWins", "bestScore");
-    private static final ShortTermFields shortTermFields = new ShortTermFields("matchId", "checkpoints");;
+    private static final ShortTermFields shortTermFields = new ShortTermFields("matchId", "users", "checkpoints");
 
     private MongoDBConstants() {}
 
@@ -68,9 +68,6 @@ public class MongoDBConstants {
 
     }
 
-    /*  */
-    //private static interface Fields {}
-
     /**
      * String labels of the long-term database's fields.
       */
@@ -112,16 +109,21 @@ public class MongoDBConstants {
     public static class ShortTermFields {
         
         private final String matchId;
-        // TODO: add list user.
+        private final String userList;
         private final String checkpoints;
         
-        public ShortTermFields(String matchId, String checkpoints) {
+        public ShortTermFields(String matchId, String userList, String checkpoints) {
             this.matchId = matchId;
+            this.userList = userList;
             this.checkpoints = checkpoints;
         }
 
         public String getMatchIdLabel() {
             return matchId;
+        }
+        
+        public String getUserListLabel() {
+            return userList;
         }
 
         public String getCheckpointsLabel() {

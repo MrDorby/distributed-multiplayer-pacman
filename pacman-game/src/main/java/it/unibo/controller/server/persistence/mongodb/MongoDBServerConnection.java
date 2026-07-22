@@ -47,7 +47,7 @@ public class MongoDBServerConnection {
         this.mongoDatabase = this.mongoClient.getDatabase(connectionString.getDatabaseName());
         this.collection = this.mongoDatabase.getCollection(connectionString.getCollectionName());
     }
-    //TODO: ADD METHOD TO GET CONTEXT FROM SHORT-TERM DB.
+
     /**
      * This methods handles database save requests, for long-term databases.
      * @param snapshot containing the datas that need to be stored.
@@ -81,6 +81,7 @@ public class MongoDBServerConnection {
             if (doc.isEmpty()) {
                 //Document newDoc = Document.parse(jsonSnap);
                 Document newDoc = new Document(shortTermFields.getMatchIdLabel(), snapshot.matchId())
+                                .append(shortTermFields.getUserListLabel(), snapshot.context().pacmans().stream().map(p -> p.id()).toList())
                                 .append(shortTermFields.getCheckpointsLabel(), List.of(checkpoint));
                 Publisher<InsertOneResult> insertPublisher = this.collection.insertOne(newDoc);
                 future = Mono.from(insertPublisher).toFuture();
@@ -103,7 +104,6 @@ public class MongoDBServerConnection {
         // }
     }
 
-    // TODO: Adds comments in the code.
     /* Handles the requests for the long-term database. */
     private CompletableFuture<?>[] longTermDB(GameContextDTO gameContextDTO) {
         LongTermFields longTermFields = connectToDatabase.getLongTermFields();
@@ -148,6 +148,29 @@ public class MongoDBServerConnection {
      */
     public void closeConnection() {
         this.mongoClient.close();
+    }
+
+    /**
+     * Retrieves the last checkpoint from the short-term mongodb instance.
+     * @param matchId the identifier of the match.
+     * @return a MatchSnapshot containing all the info for the checkpoint.
+     * @throws Exception
+     */
+    public MatchSnapshot getCheckpoint(String matchId) throws Exception {
+        ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
+        Bson filter = eq(shortTermFields.getMatchIdLabel(), matchId);
+        FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
+        Document doc = Flux.from(publisher).blockLast();
+        
+        if (doc.isEmpty()) {
+            throw new Exception("MatchID not valid!");
+        }
+        Checkpoint checkpoint = ((List<Checkpoint>) doc.get(shortTermFields.getCheckpointsLabel())).getLast();
+        MatchSnapshot matchSnapshot = new MatchSnapshot(
+            matchId, 
+            checkpoint.timestamp(), 
+            checkpoint.gameContextDTO());
+        return matchSnapshot;
     }
 
 }
