@@ -19,6 +19,7 @@ import it.unibo.model.game.GameContextFactory;
 import it.unibo.model.game.GameImpl;
 
 import java.net.URI;
+import java.util.Collection;
 
 public class GameServerFactory {
     private static final String MAP_PATH_FORMAT = "maps/%s.json";
@@ -36,7 +37,7 @@ public class GameServerFactory {
                 new HttpGameBackupService(),
                 new HttpGameResultsService()
         );
-        return assemble(matchId, mapName, tcpPort, udpPort, persistence, orchestrator);
+        return assemble(matchId, mapName, tcpPort, udpPort, persistence, orchestrator, false, null);
     }
 
     public static GameServer createWithDummyExtraServices(
@@ -50,7 +51,7 @@ public class GameServerFactory {
                 new DummyGameResultsService()
         );
         GameServerOrchestrator dummyOrchestrator = new DummyGameServerOrchestrator();
-        return assemble(matchId, mapName, tcpPort, udpPort, persistence, dummyOrchestrator);
+        return assemble(matchId, mapName, tcpPort, udpPort, persistence, dummyOrchestrator, false, null);
     }
 
     private static GameServer assemble(
@@ -59,7 +60,9 @@ public class GameServerFactory {
             int tcpPort,
             int udpPort,
             GamePersistenceManager persistence,
-            GameServerOrchestrator orchestrator
+            GameServerOrchestrator orchestrator,
+            boolean isRecovery,
+            Collection<String> previousActivePlayers
     ) {
         String mapPath = MAP_PATH_FORMAT.formatted(mapName);
         GameContext gameContext = GameContextFactory.createFromMap(mapPath, new GameEntityFactoryImpl());
@@ -67,7 +70,15 @@ public class GameServerFactory {
         GameSessionController sessionController = new GameSessionController();
         NettyGameServerGateway gateway = new NettyGameServerGateway(tcpPort, udpPort, sessionController);
         ServerGameEngine engine = new ServerGameEngine(game);
-        GameServer server = new GameServerImpl(matchId, engine, gateway, persistence, orchestrator);
+        GameServer server = new GameServerImpl(
+                matchId,
+                engine,
+                gateway,
+                persistence,
+                orchestrator,
+                isRecovery,
+                previousActivePlayers
+        );
         engine.addListener(server);
         sessionController.addListener(server);
         HandlerContext context = new HandlerContext(sessionController, server, gateway);

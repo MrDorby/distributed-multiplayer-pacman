@@ -1,8 +1,10 @@
 package it.unibo.controller.server;
 
 import it.unibo.controller.server.engine.ServerGameEngine;
-import it.unibo.controller.server.lobby.FourManLobby;
 import it.unibo.controller.server.lobby.LobbyState;
+import it.unibo.controller.server.lobby.MatchLifecycleManager;
+import it.unibo.controller.server.lobby.RecoveryMatchLifecycleManager;
+import it.unibo.controller.server.lobby.StandardMatchLifecycleManager;
 import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.session.GameSession;
 import it.unibo.controller.server.orchestration.GameServerOrchestrator;
@@ -10,17 +12,15 @@ import it.unibo.controller.server.persistence.GamePersistenceManager;
 import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 import it.unibo.controller.shared.engine.event.GameEndedEvent;
 import it.unibo.controller.shared.engine.event.GameEvent;
-import it.unibo.controller.shared.engine.command.ChangePacmanBehaviourCommand;
 import it.unibo.controller.shared.engine.command.PacmanMoveCommand;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
 import it.unibo.controller.shared.network.sockets.packets.GameContextPacket;
 import it.unibo.controller.shared.network.sockets.packets.GameEndPacket;
-import it.unibo.controller.shared.network.sockets.packets.GameStartPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,7 +28,9 @@ import java.util.concurrent.TimeUnit;
 
 public class GameServerImpl implements GameServer {
     private static final Logger logger = LoggerFactory.getLogger(GameServerImpl.class);
+
     public static final int SERVER_SHUTDOWN_DELAY_SECONDS = 10;
+    public static final int DEFAULT_MATCH_CAPACITY = 4;
 
     private final String matchId;
     private final GameServerGateway gateway;
@@ -36,7 +38,7 @@ public class GameServerImpl implements GameServer {
     private final GamePersistenceManager persistenceManager;
     private final GameServerOrchestrator orchestrator;
 
-    private final FourManLobby lobby = new FourManLobby();
+    private final MatchLifecycleManager matchLifecycleManager;
 
     private final ScheduledExecutorService shutdownScheduler = Executors.newSingleThreadScheduledExecutor();
     private final ExecutorService networkWorker = Executors.newSingleThreadExecutor();
@@ -46,21 +48,34 @@ public class GameServerImpl implements GameServer {
             ServerGameEngine engine,
             GameServerGateway gateway,
             GamePersistenceManager persistenceManager,
-            GameServerOrchestrator orchestrator
+            GameServerOrchestrator orchestrator,
+            boolean isRecovery,
+            Collection<String> recoveryRoster
     ) {
         this.matchId = matchId;
-        this.gateway = gateway;
         this.engine = engine;
+        this.gateway = gateway;
         this.persistenceManager = persistenceManager;
         this.orchestrator = orchestrator;
+
+        if (isRecovery) {
+            if (recoveryRoster == null || recoveryRoster.isEmpty()) {
+                throw new IllegalArgumentException("Recovery roster must not be empty for recovery matches");
+            }
+            this.matchLifecycleManager = new RecoveryMatchLifecycleManager(recoveryRoster, engine, gateway);
+        } else {
+            this.matchLifecycleManager = new StandardMatchLifecycleManager(DEFAULT_MATCH_CAPACITY, engine, gateway);
+        }
     }
 
     @Override
     public void start() throws Exception {
         try {
             gateway.start();
+            persistenceManager.start();
             orchestrator.ready();
             orchestrator.startHeartbeat();
+            matchLifecycleManager.onServerStart();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -86,72 +101,18 @@ public class GameServerImpl implements GameServer {
      * ********************************** */
 
     @Override
-    public synchronized void onPlayerConnected(GameSession session) {
-        String username = session.getUsername();
-        switch (lobby.getState()) {
-            case WAITING -> {
-                lobby.addPlayer(username);
-                logger.info("Player {} joined ({}/{})", username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
-                if (lobby.isFull()) {
-                    lobby.setState(LobbyState.PLAYING);
-                    startGame();
-                }
-            }
-            case PLAYING -> logger.info("Player {} tried to join after game already started", username);
-            case FINISHED -> logger.info("Player {} tried to join, but the game has already finished", username);
-        }
+    public void onPlayerConnected(GameSession session) {
+        matchLifecycleManager.onPlayerConnected(session);
     }
 
     @Override
-    public synchronized void onPlayerReconnected(GameSession session) {
-        String username = session.getUsername();
-        switch (lobby.getState()) {
-            case WAITING -> {
-                lobby.addPlayer(username);
-                logger.info("Player {} has reconnected to the lobby before the game started ({}/{})",
-                        username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
-                if (lobby.isFull()) {
-                    lobby.setState(LobbyState.PLAYING);
-                    startGame();
-                }
-            }
-            case PLAYING -> {
-                logger.info("Player {} has reconnected mid-game, restoring human control", username);
-                engine.enqueueCommand(new ChangePacmanBehaviourCommand(username, true));
-                GameContextDTO context = engine.getLatestContext();
-                gateway.sendTcp(username, new GameContextPacket(context));
-                gateway.sendTcp(username, new GameStartPacket());
-            }
-            case FINISHED -> logger.info("Player {} tried to reconnect, but the game has already finished", username);
-        }
+    public void onPlayerReconnected(GameSession session) {
+        matchLifecycleManager.onPlayerReconnected(session);
     }
 
     @Override
-    public synchronized void onPlayerDisconnected(GameSession session) {
-        String username = session.getUsername();
-        switch (lobby.getState()) {
-            case WAITING -> {
-                lobby.removePlayer(username);
-                logger.info("Player {} has left the lobby before game started ({}/{})",
-                        username, lobby.getCurrentPlayerCount(), lobby.getRequiredPlayerCount());
-            }
-            case PLAYING -> {
-                logger.info("Player {} has disconnected mid-game, substituting with a bot", username);
-                engine.enqueueCommand(new ChangePacmanBehaviourCommand(username, false));
-            }
-            case FINISHED -> logger.info("Player {} disconnected after the game was already finished", username);
-        }
-    }
-
-    private void startGame() {
-        List<String> players = lobby.getPlayers();
-        logger.info("Required player count reached. Starting game with players: {}", players);
-        engine.initialize(players);
-        GameContextDTO context = engine.getLatestContext();
-        gateway.broadcastTcp(new GameContextPacket(context));
-        gateway.broadcastTcp(new GameStartPacket());
-        engine.start();
-        persistenceManager.start();
+    public void onPlayerDisconnected(GameSession session) {
+        matchLifecycleManager.onPlayerDisconnected(session);
     }
 
     /* ******************************** *
@@ -188,9 +149,7 @@ public class GameServerImpl implements GameServer {
      */
     @Override
     public void onGameEvent(GameEvent event) {
-        synchronized (this) {
-            lobby.setState(LobbyState.FINISHED);
-        }
+        matchLifecycleManager.setState(LobbyState.FINISHED);
         if (event instanceof GameEndedEvent(GameContextDTO context)) {
             networkWorker.submit(() -> {
                 logger.info("Game has ended");
