@@ -168,7 +168,8 @@ public class MongoDBServerConnection {
         Checkpoint checkpoint = ((List<Checkpoint>) doc.get(shortTermFields.getCheckpointsLabel())).getLast();
         MatchSnapshot matchSnapshot = new MatchSnapshot(
             matchId, 
-            checkpoint.timestamp(), 
+            checkpoint.timestamp(),
+            List.of(),
             checkpoint.gameContextDTO());
         return matchSnapshot;
     }
