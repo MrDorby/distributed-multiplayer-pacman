@@ -49,6 +49,11 @@ public class StandardMatchLifecycleManager implements MatchLifecycleManager {
         this.state = state;
     }
 
+    @Override
+    public Collection<String> getActivePlayers() {
+        return List.copyOf(activePlayers);
+    }
+
     /**
      * Standard matches do not require grace periods or pre-game timers, so this is a no-op.
      */
@@ -135,8 +140,8 @@ public class StandardMatchLifecycleManager implements MatchLifecycleManager {
         activePlayers.addAll(waitingPlayers);
         logger.info("Required player count reached. Starting game with players: {}", activePlayers);
         engine.initialize(new ArrayList<>(activePlayers));
+        engine.start();
         gateway.broadcastTcp(new GameContextPacket(engine.getLatestContext()));
         gateway.broadcastTcp(new GameStartPacket());
-        engine.start();
     }
 }

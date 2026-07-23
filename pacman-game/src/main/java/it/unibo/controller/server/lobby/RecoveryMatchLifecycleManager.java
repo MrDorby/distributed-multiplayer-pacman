@@ -55,6 +55,11 @@ public class RecoveryMatchLifecycleManager implements MatchLifecycleManager {
         this.state = state;
     }
 
+    @Override
+    public Collection<String> getActivePlayers() {
+        return List.copyOf(previousActivePlayers);
+    }
+
     /**
      * Arms the grace window timer. Starts the game when the window expires or all players join.
      */
@@ -169,9 +174,9 @@ public class RecoveryMatchLifecycleManager implements MatchLifecycleManager {
             logger.info("Player {} starting as {}", player, isConnected ? "Human" : "Bot");
             engine.enqueueCommand(new ChangePacmanBehaviourCommand(player, isConnected));
         }
+        engine.start();
         gateway.broadcastTcp(new GameContextPacket(engine.getLatestContext()));
         gateway.broadcastTcp(new GameStartPacket());
-        engine.start();
         scheduler.shutdown();
     }
 }

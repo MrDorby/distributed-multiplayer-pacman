@@ -6,15 +6,21 @@ import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 
-public class FileGameResultsService implements GameResultsService {
-    private static final Logger logger = LoggerFactory.getLogger(FileGameResultsService.class);
+/**
+ * Local development implementation of {@link GameResultsService}.
+ * Writes match results to the local {@code .temp/matches} directory.
+ */
+public class LocalGameResultsService implements GameResultsService {
+    private static final Logger logger = LoggerFactory.getLogger(LocalGameResultsService.class);
     private final ObjectMapper mapper;
 
-    public FileGameResultsService() {
+    public LocalGameResultsService() {
         this.mapper = new ObjectMapper();
         this.mapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
@@ -22,11 +28,12 @@ public class FileGameResultsService implements GameResultsService {
     @Override
     public CompletableFuture<?>[] saveResults(MatchSnapshot snapshot) {
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            String fileName = String.format("result_match_%s_%d.json", snapshot.matchId(), snapshot.timestamp());
-            File destinationFile = new File(fileName);
+            Path matchDirectory = Paths.get(".temp", "matches", snapshot.matchId());
+            Path targetFile = matchDirectory.resolve("result.json");
             try {
-                mapper.writeValue(destinationFile, snapshot);
-                logger.info("Saved final game results to {}", destinationFile.getAbsolutePath());
+                Files.createDirectories(matchDirectory);
+                mapper.writeValue(targetFile.toFile(), snapshot);
+                logger.info("Saved game results to {}", targetFile.toAbsolutePath());
             } catch (IOException e) {
                 logger.error("Failed to save game results for matchId: {}", snapshot.matchId(), e);
                 throw new RuntimeException("Failed to persist game results", e);

@@ -3,8 +3,6 @@ package it.unibo.controller.server;
 import it.unibo.controller.server.engine.ServerGameEngine;
 import it.unibo.controller.server.lobby.LobbyState;
 import it.unibo.controller.server.lobby.MatchLifecycleManager;
-import it.unibo.controller.server.lobby.RecoveryMatchLifecycleManager;
-import it.unibo.controller.server.lobby.StandardMatchLifecycleManager;
 import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.session.GameSession;
 import it.unibo.controller.server.orchestration.GameServerOrchestrator;
@@ -20,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,9 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 public class GameServerImpl implements GameServer {
     private static final Logger logger = LoggerFactory.getLogger(GameServerImpl.class);
-
     public static final int SERVER_SHUTDOWN_DELAY_SECONDS = 10;
-    public static final int DEFAULT_MATCH_CAPACITY = 4;
 
     private final String matchId;
     private final GameServerGateway gateway;
@@ -49,23 +45,14 @@ public class GameServerImpl implements GameServer {
             GameServerGateway gateway,
             GamePersistenceManager persistenceManager,
             GameServerOrchestrator orchestrator,
-            boolean isRecovery,
-            Collection<String> recoveryRoster
+            MatchLifecycleManager matchLifecycleManager
     ) {
         this.matchId = matchId;
         this.engine = engine;
         this.gateway = gateway;
         this.persistenceManager = persistenceManager;
         this.orchestrator = orchestrator;
-
-        if (isRecovery) {
-            if (recoveryRoster == null || recoveryRoster.isEmpty()) {
-                throw new IllegalArgumentException("Recovery roster must not be empty for recovery matches");
-            }
-            this.matchLifecycleManager = new RecoveryMatchLifecycleManager(recoveryRoster, engine, gateway);
-        } else {
-            this.matchLifecycleManager = new StandardMatchLifecycleManager(DEFAULT_MATCH_CAPACITY, engine, gateway);
-        }
+        this.matchLifecycleManager = matchLifecycleManager;
     }
 
     @Override
@@ -137,7 +124,7 @@ public class GameServerImpl implements GameServer {
     public void onGameContextUpdate(GameContextDTO context) {
         networkWorker.submit(() -> {
             logger.trace("Broadcasting game context to all clients");
-            MatchSnapshot snapshot = new MatchSnapshot(this.matchId, System.currentTimeMillis(), context);
+            MatchSnapshot snapshot = createSnapshot(context);
             persistenceManager.updateContext(snapshot);
             gateway.broadcastUdp(new GameContextPacket(context));
         });
@@ -153,7 +140,7 @@ public class GameServerImpl implements GameServer {
         if (event instanceof GameEndedEvent(GameContextDTO context)) {
             networkWorker.submit(() -> {
                 logger.info("Game has ended");
-                MatchSnapshot snapshot = new MatchSnapshot(this.matchId, System.currentTimeMillis(), context);
+                MatchSnapshot snapshot = createSnapshot(context);
                 persistenceManager.saveFinalSnapshot(snapshot);
                 gateway.broadcastTcp(new GameContextPacket(context));
                 gateway.broadcastTcp(new GameEndPacket(context));
@@ -161,6 +148,11 @@ public class GameServerImpl implements GameServer {
                 scheduleServerShutdown(Duration.ofSeconds(SERVER_SHUTDOWN_DELAY_SECONDS));
             });
         }
+    }
+
+    private MatchSnapshot createSnapshot(GameContextDTO context) {
+        List<String> activePlayers = List.copyOf(matchLifecycleManager.getActivePlayers());
+        return new MatchSnapshot(this.matchId, System.currentTimeMillis(), activePlayers, context);
     }
 
     private void scheduleServerShutdown(Duration delay) {

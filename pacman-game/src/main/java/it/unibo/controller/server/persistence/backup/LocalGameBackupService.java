@@ -6,15 +6,21 @@ import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 
-public class FileGameBackupService implements GameBackupService {
-    private static final Logger logger = LoggerFactory.getLogger(FileGameBackupService.class);
+/**
+ * Local development implementation of {@link GameBackupService}.
+ * Writes snapshots to the local {@code .temp/matches} folder for easy debugging and testing.
+ */
+public class LocalGameBackupService implements GameBackupService {
+    private static final Logger logger = LoggerFactory.getLogger(LocalGameBackupService.class);
     private final ObjectMapper mapper;
 
-    public FileGameBackupService() {
+    public LocalGameBackupService() {
         this.mapper = new ObjectMapper();
         this.mapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
@@ -22,11 +28,12 @@ public class FileGameBackupService implements GameBackupService {
     @Override
     public CompletableFuture<Void> saveSnapshot(MatchSnapshot snapshot) {
         return CompletableFuture.runAsync(() -> {
-            String fileName = String.format("match_%s_%d.json", snapshot.matchId(), snapshot.timestamp());
-            File destinationFile = new File(fileName);
+            Path snapshotDirectory = Paths.get(".temp", "matches", snapshot.matchId(), "snapshots");
+            Path targetFile = snapshotDirectory.resolve(snapshot.timestamp() + ".json");
             try {
-                mapper.writeValue(destinationFile, snapshot);
-                logger.info("Saved snapshot to {}", destinationFile.getAbsolutePath());
+                Files.createDirectories(snapshotDirectory);
+                mapper.writeValue(targetFile.toFile(), snapshot);
+                logger.info("Saved snapshot to {}", targetFile.toAbsolutePath());
             } catch (IOException e) {
                 logger.error("Failed to save snapshot for matchId: {}", snapshot.matchId(), e);
                 throw new RuntimeException("Failed to persist snapshot", e);
