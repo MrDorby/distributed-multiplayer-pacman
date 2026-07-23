@@ -8,8 +8,10 @@ import it.unibo.controller.server.orchestration.DummyGameServerOrchestrator;
 import it.unibo.controller.server.orchestration.GameServerOrchestrator;
 import it.unibo.controller.server.persistence.GamePersistenceManager;
 import it.unibo.controller.server.persistence.backup.DummyGameBackupService;
+import it.unibo.controller.server.persistence.backup.FileGameBackupService;
 import it.unibo.controller.server.persistence.backup.HttpGameBackupService;
 import it.unibo.controller.server.persistence.results.DummyGameResultsService;
+import it.unibo.controller.server.persistence.results.FileGameResultsService;
 import it.unibo.controller.server.persistence.results.HttpGameResultsService;
 import it.unibo.controller.shared.network.sockets.packets.PacketType;
 import it.unibo.model.entities.GameEntityFactoryImpl;
@@ -52,6 +54,19 @@ public class GameServerFactory {
         );
         GameServerOrchestrator dummyOrchestrator = new DummyGameServerOrchestrator();
         return assemble(matchId, mapName, tcpPort, udpPort, persistence, dummyOrchestrator, false, null);
+    }
+
+    public static GameServer createWithFileSystemPersistence(
+            String matchId,
+            String mapName,
+            int tcpPort,
+            int udpPort
+    ) {
+        GamePersistenceManager persistence = new GamePersistenceManager(
+                new FileGameBackupService(),
+                new FileGameResultsService()
+        );
+        return assemble(matchId, mapName, tcpPort, udpPort, persistence, new DummyGameServerOrchestrator(), false, null);
     }
 
     private static GameServer assemble(

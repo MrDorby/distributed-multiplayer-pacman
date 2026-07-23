@@ -35,7 +35,7 @@ public class GameServerMain {
         } else {
             throw new IllegalArgumentException("Invalid usage. Provide either NO arguments for defaults, or EXACTLY 4 arguments: " + "<match_id> <map_name> <tcp_port> <udp_port>");
         }
-        GameServer server = GameServerFactory.createWithDummyExtraServices(matchId, mapName, tcpPort, udpPort);
+        GameServer server = GameServerFactory.createWithFileSystemPersistence(matchId, mapName, tcpPort, udpPort);
         server.start();
     }
 }

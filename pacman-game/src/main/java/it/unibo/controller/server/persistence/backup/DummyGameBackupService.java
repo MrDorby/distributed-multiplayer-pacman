@@ -16,8 +16,5 @@ public class DummyGameBackupService implements GameBackupService {
     }
 
     @Override
-    public void closeConnection() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'closeConnection'");
-    }
+    public void closeConnection() {}
 }
