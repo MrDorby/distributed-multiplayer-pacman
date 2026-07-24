@@ -27,15 +27,18 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.22.0")
     // Source: https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     implementation("ch.qos.logback:logback-classic:1.5.32")
+    // Source: https://mvnrepository.com/artifact/io.netty/netty-all
+    implementation("io.netty:netty-all:4.2.15.Final")
+    // Source: https://mvnrepository.com/artifact/org.mockito/mockito-core
+    mockitoAgent("org.mockito:mockito-core:5.23.0")
 
     // Source: https://mvnrepository.com/artifact/com.auth0/java-jwt
     implementation("com.auth0:java-jwt:4.5.2") //TODO: check io.jsonwebtoken
 
-    implementation("org.springframework.boot:spring-boot-starter-webmvc")
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    implementation("org.springframework.boot:spring-boot-starter-restclient")
-    testImplementation("org.springframework.boot:spring-boot-starter-restclient-test")
-
+    implementation(platform("org.mongodb:mongodb-driver-bom:5.9.0"))
+    implementation(platform("io.projectreactor:reactor-bom:2025.0.6"))
+    implementation("io.projectreactor:reactor-core")
+    implementation("org.mongodb:mongodb-driver-reactivestreams")
 }
 
 java {
