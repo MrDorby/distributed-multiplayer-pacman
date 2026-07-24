@@ -13,21 +13,21 @@ import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Local development implementation of {@link GameResultsService}.
+ * Local development implementation of {@link GameResultsRepository}.
  * Writes match results to the local {@code .temp/matches} directory.
  */
-public class LocalGameResultsService implements GameResultsService {
-    private static final Logger logger = LoggerFactory.getLogger(LocalGameResultsService.class);
+public class LocalGameResultsRepository implements GameResultsRepository {
+    private static final Logger logger = LoggerFactory.getLogger(LocalGameResultsRepository.class);
     private final ObjectMapper mapper;
 
-    public LocalGameResultsService() {
+    public LocalGameResultsRepository() {
         this.mapper = new ObjectMapper();
         this.mapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
     @Override
-    public CompletableFuture<?>[] saveResults(MatchSnapshot snapshot) {
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+    public CompletableFuture<Void> saveResults(MatchSnapshot snapshot) {
+        return CompletableFuture.runAsync(() -> {
             Path matchDirectory = Paths.get(".temp", "matches", snapshot.matchId());
             Path targetFile = matchDirectory.resolve("result.json");
             try {
@@ -39,9 +39,8 @@ public class LocalGameResultsService implements GameResultsService {
                 throw new RuntimeException("Failed to persist game results", e);
             }
         });
-        return new CompletableFuture<?>[]{ future };
     }
 
     @Override
-    public void closeConnection() {}
+    public void close() throws Exception {}
 }
