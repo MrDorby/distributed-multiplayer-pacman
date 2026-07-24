@@ -8,7 +8,7 @@ package it.unibo.mongodb;
  */
 public record Socket(
     String ip,
-    String port
+    int port
 ) {
-    
+
 }

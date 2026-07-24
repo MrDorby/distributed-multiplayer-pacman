@@ -15,7 +15,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import it.unibo.MatchmakerDetailsService;
+import it.unibo.dto.JoinLobbyRequest;
+import it.unibo.dto.JoinLobbyResponse;
+import it.unibo.dto.LobbyTypeResponse;
+import it.unibo.dto.QuitLobbyRequest;
+import it.unibo.mongodb.LobbyInfoMongoDB;
 
 /**
  * 
@@ -28,28 +36,44 @@ public class MatchmakerImpl implements Matchmaker{
     private static final String AUTHENTICATOR_REQUEST = "http://localhost:8080/auth/token";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
+    private final MatchmakerDetailsService matchmakerDetailsService;
 
-    public MatchmakerImpl() {
+    public MatchmakerImpl(MatchmakerDetailsService matchmakerDetailsService) {
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
+        this.matchmakerDetailsService = matchmakerDetailsService;
     }
 
     @Override
     @PostMapping(value = "/join_lobby", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> joinLobby(String token) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'joinLobby'");
+    public ResponseEntity<String> joinLobby(@RequestBody JoinLobbyRequest join) {
+        try {
+            String token = join.token();
+            String username = checkTokenPermission(token);
+            JoinLobbyResponse response = this.matchmakerDetailsService.checkForLobby(username, join.map());
+            String res = this.objectMapper.writeValueAsString(response);
+            return ResponseEntity.ok(res);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @Override
     @PostMapping(value = "/quit_lobby", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> quitLobby(String token) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'quitLobby'");
+    public ResponseEntity<String> quitLobby(@RequestBody QuitLobbyRequest quit) {
+        try {
+            String token = quit.token();
+            String username = checkTokenPermission(token);
+            //LobbyInfoMongoDB lobby = this.matchmakerDetailsService.getLobby(quit.lobbyId());
+            this.matchmakerDetailsService.deleteUserByLobbyId(quit.lobbyId(), username);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     /*  */
-    private void checkTokenPermission(String token) throws Exception { 
+    private String checkTokenPermission(String token) throws Exception { 
         HttpRequest httpTokenRequest = HttpRequest.newBuilder()
                                     .uri(URI.create(AUTHENTICATOR_REQUEST))
                                     .header("Content-Type", "application/json")
@@ -59,8 +83,9 @@ public class MatchmakerImpl implements Matchmaker{
         try {
             HttpResponse<String> tokenResponse = httpClient.send(httpTokenRequest, HttpResponse.BodyHandlers.ofString());
             if (tokenResponse.statusCode() == 200) {
-                throw new Exception(tokenResponse.body());
+                return JWT.decode(token).getClaim("username").asString();
             }
+            throw new Exception(tokenResponse.body());
         } catch (IOException | InterruptedException e) {
             throw new Exception(e.getMessage());
         }
