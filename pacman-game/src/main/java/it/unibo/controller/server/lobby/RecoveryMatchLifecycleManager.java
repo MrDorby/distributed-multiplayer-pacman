@@ -92,7 +92,10 @@ public class RecoveryMatchLifecycleManager implements MatchLifecycleManager {
                 logger.info("Player {} joined pre-game lobby ({}/{})",
                         username, connectedPlayers.size(), previousActivePlayers.size());
                 if (connectedPlayers.size() == previousActivePlayers.size()) {
-                    startGame();
+                    if (matchStartTask != null) {
+                        matchStartTask.cancel(false);
+                    }
+                    scheduler.submit(this::startGame);
                 }
             }
             case PLAYING -> {
@@ -124,7 +127,10 @@ public class RecoveryMatchLifecycleManager implements MatchLifecycleManager {
                 logger.info("Player {} reconnected to pre-game lobby ({}/{})",
                         username, connectedPlayers.size(), previousActivePlayers.size());
                 if (connectedPlayers.size() == previousActivePlayers.size()) {
-                    startGame();
+                    if (matchStartTask != null) {
+                        matchStartTask.cancel(false);
+                    }
+                    scheduler.submit(this::startGame);
                 }
             }
             case PLAYING -> {
@@ -163,11 +169,11 @@ public class RecoveryMatchLifecycleManager implements MatchLifecycleManager {
         }
     }
 
-    private void startGame() {
-        setState(LobbyState.PLAYING);
-        if (matchStartTask != null && !matchStartTask.isDone()) {
-            matchStartTask.cancel(false);
+    private synchronized void startGame() {
+        if (state != LobbyState.WAITING) {
+            return;
         }
+        setState(LobbyState.PLAYING);
         logger.info("Starting recovered game for {}", previousActivePlayers);
         for (String player : previousActivePlayers) {
             boolean isConnected = connectedPlayers.contains(player);
