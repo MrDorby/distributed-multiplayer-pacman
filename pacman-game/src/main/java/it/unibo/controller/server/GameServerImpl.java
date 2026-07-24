@@ -74,7 +74,7 @@ public class GameServerImpl implements GameServer {
             orchestrator.stopHeartbeat();
             engine.stop();
             gateway.stop();
-            persistenceManager.stop();
+            persistenceManager.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -125,7 +125,7 @@ public class GameServerImpl implements GameServer {
         networkWorker.submit(() -> {
             logger.trace("Broadcasting game context to all clients");
             MatchSnapshot snapshot = createSnapshot(context);
-            persistenceManager.updateContext(snapshot);
+            persistenceManager.updateSnapshot(snapshot);
             gateway.broadcastUdp(new GameContextPacket(context));
         });
     }
