@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * 
- * LobbyInfoMongoDB
+ * Defines the structure for objects contained in the Lobby collection.
  */
 @Document(collection = "lobby")
 public class LobbyInfoMongoDB {

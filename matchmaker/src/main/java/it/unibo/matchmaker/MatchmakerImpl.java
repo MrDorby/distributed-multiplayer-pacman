@@ -7,7 +7,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,15 +18,16 @@ import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.MatchmakerDetailsService;
+import it.unibo.dto.GameServerRequest;
 import it.unibo.dto.JoinLobbyRequest;
 import it.unibo.dto.JoinLobbyResponse;
-import it.unibo.dto.LobbyTypeResponse;
 import it.unibo.dto.QuitLobbyRequest;
-import it.unibo.mongodb.LobbyInfoMongoDB;
+import it.unibo.mongodb.MatchInfoMongoDB;
 
 /**
- * 
  * MatchmakerImpl
+ * <p>
+ * Service that manages the lobbies and lets users find a match.
  */
 @RestController
 @RequestMapping(value = "/matchmaker")
@@ -72,7 +72,7 @@ public class MatchmakerImpl implements Matchmaker{
         }
     }
 
-    /*  */
+    /* Checks if the user is permitted to do the differents requests by controlling the token received. */
     private String checkTokenPermission(String token) throws Exception { 
         HttpRequest httpTokenRequest = HttpRequest.newBuilder()
                                     .uri(URI.create(AUTHENTICATOR_REQUEST))
@@ -91,5 +91,21 @@ public class MatchmakerImpl implements Matchmaker{
         }
     }
 
+    // TODO: Change
+    @Override
+    @PostMapping(value = "/game_server", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getGameServer(@RequestBody GameServerRequest info) {
+        try {
+            String username = checkTokenPermission(info.token());
+            MatchInfoMongoDB match = this.matchmakerDetailsService.getMatch(info.lobbyId()); // TODO: to change.
+            String result = this.objectMapper.writeValueAsString(match);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    //TODO: add method to get GameServer info.
+    //TODO: insert the links with the manager when the FOUND is returned.
     
 }

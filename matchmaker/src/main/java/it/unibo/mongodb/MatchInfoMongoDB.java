@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * 
- * MatchInfoMongoDB
+ * Defines the structure for objects contained in the Matches collection.
  */
 @Document(collection = "matches")
 public class MatchInfoMongoDB {
@@ -15,12 +15,13 @@ public class MatchInfoMongoDB {
     @Id
     private String id;
     private List<String> users;
-    private Socket gameServerSocket;
+    private Socket gameServerSocket; //TODO: Change because we need to understand
+    // how the information is stored.
     
     public MatchInfoMongoDB() {
     
     }
-    
+
     public MatchInfoMongoDB(
         List<String> users, 
         Socket gameServerSocket) {

@@ -60,12 +60,7 @@ public class AuthenticatorImpl implements Authenticator {
         KeyManager.generateRSAKeys();
     }
 
-    /**
-     * Defines the communication between the client and the authenticator for the synchronization phase.
-     * @param publicKeyClientDTO the initial input received by the client.
-     * @return ResponseEntity<String> in json and containing the PublicKeyServerDTO. 
-     * In case of problem, the output will be a response empty with a HttpStatus.
-     */
+    @Override
     @PostMapping(value = "/syn", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> syn(@RequestBody PublicKeyClientDTO publicKeyClientDTO) {
         try {
@@ -101,11 +96,7 @@ public class AuthenticatorImpl implements Authenticator {
         }
     }
 
-    /**
-     * Defines the procedure of authentication for the client to the server, checking the credentials sent. 
-     * @param loginRequest The body of the message containing username and password encrypted.
-     * @return ResponseEntity<String> in json containing the LoginResponse serialized.
-     */
+    @Override
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> login(@RequestBody String encryptedLoginDTO) {
         ObjectMapper mapper = new ObjectMapper();
@@ -147,11 +138,7 @@ public class AuthenticatorImpl implements Authenticator {
         }
     }
 
-    /**
-     * Defines the procedure of registration for the client to the server, adding credential to the database. 
-     * @param registerRequest The body of the message containing username and password encrypted.
-     * @return ResponseEntity in json containing the Response.
-     */
+    @Override
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> register(@RequestBody String encryptedRequest) {
         ObjectMapper mapper = new ObjectMapper();
@@ -175,11 +162,7 @@ public class AuthenticatorImpl implements Authenticator {
         }
     }
 
-    /**
-     * Defines the procedure to validate the token of a specific user.
-     * @param token a TokenDTO Object that represent the token sent via JSON format.
-     * @return a ResponseEntity containing the response.
-     */
+    @Override
     @PostMapping(value = "/token", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> checkToken(@RequestBody TokenDTO token) {
         Instant expireDate = JWT.decode(token.token()).getExpiresAtAsInstant();
