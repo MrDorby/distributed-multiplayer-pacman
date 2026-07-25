@@ -7,10 +7,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 
 import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 
 public class LoginRegisterPanel extends JPanel {
     private static final int MIN_PANEL_SIZE = 800;
@@ -36,7 +33,7 @@ public class LoginRegisterPanel extends JPanel {
     public LoginRegisterPanel(String textTitle, String textTop, String textBottom) {
         this.setBackground(Color.YELLOW);
         this.setLayout(new GridBagLayout());
-        this.addComponentListener(new ComponentListener() {
+        this.addComponentListener(new ComponentAdapter() {
 
             @Override
             public void componentResized(ComponentEvent e) {
@@ -52,25 +49,6 @@ public class LoginRegisterPanel extends JPanel {
                     bottomButtonPanel.setBorder(panelBorder);
                 }
             }
-
-            @Override
-            public void componentMoved(ComponentEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'componentMoved'");
-            }
-
-            @Override
-            public void componentShown(ComponentEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'componentShown'");
-            }
-
-            @Override
-            public void componentHidden(ComponentEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'componentHidden'");
-            }
-            
         });
 
         Color colorPanel = Color.WHITE;
@@ -118,26 +96,7 @@ public class LoginRegisterPanel extends JPanel {
         usernameField.setFont(FontManager.addingFont(20f, FONT_NAME));
         usernameField.setBackground(Color.LIGHT_GRAY);
         usernameField.setForeground(Color.WHITE);
-        usernameField.addMouseListener(new MouseListener() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'mouseClicked'");
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'mousePressed'");
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'mouseReleased'");
-            }
-
+        usernameField.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
@@ -169,26 +128,7 @@ public class LoginRegisterPanel extends JPanel {
         passwordField.setFont(FontManager.addingFont(20f, FONT_NAME));
         passwordField.setBackground(Color.LIGHT_GRAY);
         passwordField.setForeground(Color.WHITE);
-        passwordField.addMouseListener(new MouseListener() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'mouseClicked'");
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'mousePressed'");
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'mouseReleased'");
-            }
-
+        passwordField.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
@@ -290,11 +230,11 @@ public class LoginRegisterPanel extends JPanel {
     }
 
     public void onClickTopButton(Runnable action) {
-        topButton.addActionListener(e -> action.run());
+        topButton.addActionListener(_ -> action.run());
     }
 
     public void onClickBottomButton(Runnable action) {
-        bottomButton.addActionListener(e -> action.run());
+        bottomButton.addActionListener(_ -> action.run());
     }
 
     public String getUsername() {
