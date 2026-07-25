@@ -47,6 +47,7 @@ public class ConnectionFailurePanel extends JPanel {
         );
         reconnectButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         reconnectPanel.setOpaque(false);
+        reconnectPanel.add(reconnectButton);
 
         backButton.setFont(FontManager.addingFont(BUTTON_FONT_SIZE, FONT_NAME));
         backButton.setBorder(BorderFactory.createCompoundBorder(
@@ -55,6 +56,7 @@ public class ConnectionFailurePanel extends JPanel {
         );
         backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         backPanel.setOpaque(false);
+        backPanel.add(backButton);
 
         JPanel container = new JPanel();
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
