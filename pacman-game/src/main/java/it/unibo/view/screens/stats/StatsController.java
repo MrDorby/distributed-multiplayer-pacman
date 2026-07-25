@@ -1,8 +1,8 @@
 package it.unibo.view.screens.stats;
 
-import javax.swing.JPanel;
+import javax.swing.*;
 
-import it.unibo.controller.client.common.Stats;
+import it.unibo.controller.client.common.PlayerStats;
 import it.unibo.controller.client.services.ServiceManager;
 import it.unibo.view.navigation.AppNavigator;
 import it.unibo.view.navigation.AppState;
@@ -14,17 +14,12 @@ import it.unibo.view.screens.ScreenController;
 public class StatsController implements ScreenController {
 
     private final StatsView statsView;
+    private final ServiceManager serviceManager;
 
     public StatsController(AppNavigator navigator, ServiceManager serviceManager) {
-        this.statsView = new StatsView(serviceManager.getUsername());
-        try {
-            Stats stats = serviceManager.getPlayerInfo();
-            this.statsView.setStats(stats);
-        } catch (Exception e) {
-            this.statsView.setStats(null);
-            statsView.showMessage(e.getMessage());
-        }
-        statsView.onHome(() -> navigator.goTo(AppState.MAIN_MENU));
+        this.serviceManager = serviceManager;
+        this.statsView = new StatsView();
+        this.statsView.onHome(() -> navigator.goTo(AppState.MAIN_MENU));
     }
 
     @Override
@@ -34,12 +29,23 @@ public class StatsController implements ScreenController {
 
     @Override
     public void onEnter() {
-        // Setup Stats related stuff.
+        statsView.setUsername(serviceManager.getUsername());
+        statsView.showLoadingState();
+        new Thread(() -> {
+            try {
+                PlayerStats stats = serviceManager.getPlayerInfo();
+                SwingUtilities.invokeLater(() -> statsView.setStats(stats));
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    statsView.setStats(null);
+                    statsView.showMessage(e.getMessage());
+                });
+            }
+        }).start();
     }
 
     @Override
     public void onExit() {
-        // Whatever needs to be done once finished.
+        statsView.clear();
     }
-    
 }

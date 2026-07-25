@@ -16,7 +16,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
 
-import it.unibo.controller.client.common.Stats;
+import it.unibo.controller.client.common.PlayerStats;
 import it.unibo.view.font.FontManager;
 import it.unibo.view.font.FontName;
 
@@ -54,15 +54,10 @@ public class StatsPanel extends JPanel {
 
     private final JButton homeButton = new JButton("Home");
 
-    public StatsPanel(String username) {
+    public StatsPanel() {
         setLayout(new BorderLayout());
         setBackground(Color.CYAN);
 
-        if (Objects.isNull(username)) {
-            title.setText("Player");
-        } else {
-            title.setText(username);
-        }
         title.setFont(FontManager.addingFont(SIZE_TITLE, FONT_NAME));
         titlePanel.setBackground(Color.WHITE);
         titlePanel.setBorder(
@@ -131,10 +126,10 @@ public class StatsPanel extends JPanel {
     }
 
     /**
-     * Adds the player statistics to the differents labels.
+     * Adds the player statistics to the different labels.
      * @param stats the user's info.
      */
-    public void setStats(Stats stats) {
+    public void setStats(PlayerStats stats) {
         if (Objects.nonNull(stats)) {
             matches.setText(String.valueOf(stats.nMatch()));
             wins.setText(String.valueOf(stats.nWins()));
@@ -161,7 +156,36 @@ public class StatsPanel extends JPanel {
      * @param action the action performed by the button.
      */
     public void onHomeButton(Runnable action) {
-        homeButton.addActionListener(e -> action.run());
+        homeButton.addActionListener(_ -> action.run());
     }
 
+    /**
+     * Sets the username displayed in the title header.
+     *
+     * @param username the username to show
+     */
+    public void setUsername(String username) {
+        if (Objects.isNull(username) || username.isBlank()) {
+            title.setText("Unknown");
+        } else {
+            title.setText(username);
+        }
+    }
+
+    /**
+     * Sets all statistic labels to a temporary loading indicator.
+     */
+    public void showLoading() {
+        matches.setText("...");
+        wins.setText("...");
+        winRate.setText("...");
+        bestScore.setText("...");
+    }
+
+    /**
+     * Clears all statistic fields back to default placeholders.
+     */
+    public void clearFields() {
+        setStats(null);
+    }
 }
