@@ -12,7 +12,7 @@ import javax.crypto.Cipher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import it.unibo.controller.client.common.Stats;
+import it.unibo.controller.client.common.PlayerStats;
 import it.unibo.controller.client.common.TokenException;
 import it.unibo.controller.client.dto.PlayerInfoMongoDB;
 import it.unibo.controller.client.dto.PublicKeyRequestDTO;
@@ -48,11 +48,11 @@ public class QueriesClient {
      * @return a new Stat object that contains all the player statistics.
      * @throws Exception
      */
-    public Stats getPlayerStats(String username, String token) throws Exception {
+    public PlayerStats getPlayerStats(String username, String token) throws Exception {
         PublicKeyResponseDTO publicKeyResponseDTO = syn(username);
         checkToken(token);
         String encryptedRequest = keyManager.encryptDecryptDataRSA(
-                username, 
+                username,
                 Cipher.ENCRYPT_MODE, 
                 keyManager.getPublicKeyFromString(publicKeyResponseDTO.publicKey()));
         
@@ -67,11 +67,11 @@ public class QueriesClient {
             throw new Exception(infoResponse.body());
         }
         PlayerInfoMongoDB playerInfo = objectMapper.readValue(infoResponse.body(), PlayerInfoMongoDB.class);
-        return new Stats(
+        return new PlayerStats(
             playerInfo.username(), 
             playerInfo.nMatch(), 
             playerInfo.nWins(), 
-            playerInfo.nWins() / playerInfo.nMatch(), 
+            (float) playerInfo.nWins() / playerInfo.nMatch(),
             playerInfo.bestScore());
     }
 
@@ -88,7 +88,6 @@ public class QueriesClient {
         if (tokenResponse.statusCode() != 200) {
             throw new TokenException(tokenResponse.body());
         }
-
     }
 
     /* Executes the syn procedure where the two services exchange their public key. */
@@ -104,13 +103,11 @@ public class QueriesClient {
                                     .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(publicKeyDTOString))
                                     .build();
-        
+
         HttpResponse<String> synResponse = httpClient.send(httpSynRequest, HttpResponse.BodyHandlers.ofString());
         if (synResponse.statusCode() != 200) {
             throw new Exception(synResponse.body());
         }
-
         return objectMapper.readValue(synResponse.body(), PublicKeyResponseDTO.class);
     }
-
 }

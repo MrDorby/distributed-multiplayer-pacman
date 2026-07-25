@@ -2,7 +2,7 @@ package it.unibo.controller.client.services;
 
 import java.net.http.HttpClient;
 
-import it.unibo.controller.client.common.Stats;
+import it.unibo.controller.client.common.PlayerStats;
 import it.unibo.controller.client.key.KeyManager;
 
 public class ServiceManagerImpl implements ServiceManager {
@@ -40,8 +40,7 @@ public class ServiceManagerImpl implements ServiceManager {
     }
 
     @Override
-    public Stats getPlayerInfo() throws Exception {
+    public PlayerStats getPlayerInfo() throws Exception {
         return this.queriesClient.getPlayerStats(getUsername(), getToken());
     }
-    
 }

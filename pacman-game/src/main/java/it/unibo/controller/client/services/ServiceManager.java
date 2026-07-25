@@ -1,6 +1,6 @@
 package it.unibo.controller.client.services;
 
-import it.unibo.controller.client.common.Stats;
+import it.unibo.controller.client.common.PlayerStats;
 
 /**
  * Manager for the services that the client needs to connect with.
@@ -41,7 +41,7 @@ public interface ServiceManager {
      * @return The Stats relative to the player.
      * @throws Exception
      */
-    Stats getPlayerInfo() throws Exception;
+    PlayerStats getPlayerInfo() throws Exception;
     
     // TODO: add for matchmaker and queries.
     
