@@ -70,11 +70,11 @@ public class ConnectionFailurePanel extends JPanel {
     }
 
     public void setOnReconnect(Runnable action) {
-        reconnectButton.addActionListener(e -> action.run());
+        reconnectButton.addActionListener(_ -> action.run());
     }
 
     public void setOnGoBack(Runnable action) {
-        backButton.addActionListener(e -> action.run());
+        backButton.addActionListener(_ -> action.run());
     }
 
     public void setErrorMessage(String text) {
