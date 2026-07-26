@@ -10,15 +10,15 @@ import org.springframework.stereotype.Repository;
 
 /**
  * 
- * ShortTermMatchRepository
+ * The short-term repository interface used for matches informations.
  */
 @Repository
 public interface ShortTermMatchRepository extends MongoRepository<MatchInfoMongoDB, String>{
     
     /**
-     * 
-     * @param matchId
-     * @return
+     * Finds the all the informations about a specific match.
+     * @param matchId the identifier of the match.
+     * @return an Optional for a MatchInfoMongoDB.
      */
     Optional<MatchInfoMongoDB> findByMatchId(String matchId);
 }

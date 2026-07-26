@@ -10,17 +10,27 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class MatchmakerClientImpl implements MatchmakerClient {
+    private static final String JOIN_LOBBY_PATH = "/join_lobby";
+    private static final String QUIT_LOBBY_PATH = "/quit_lobby";
+    private static final String GAME_SERVER_PATH = "/game_server";
+
+    private final String joinLobbyUrl;
+    private final String quitLobbyUrl;
+    private final String gameServerUrl;
+
     private final HttpClient httpClient;
-    private final String baseUrl;
     private final ObjectMapper objectMapper;
 
     private String currentLobbyId;
     private String currentMatchId;
 
-    public MatchmakerClientImpl(HttpClient httpClient, String baseUrl) {
+    public MatchmakerClientImpl(HttpClient httpClient, UriReader uri) {
         this.httpClient = httpClient;
-        this.baseUrl = baseUrl;
         this.objectMapper = new ObjectMapper();
+        String matchmakerBase = uri.matchmaker();
+        this.joinLobbyUrl = matchmakerBase + JOIN_LOBBY_PATH;
+        this.quitLobbyUrl = matchmakerBase + QUIT_LOBBY_PATH;
+        this.gameServerUrl = matchmakerBase + GAME_SERVER_PATH;
     }
 
     @Override
@@ -28,7 +38,7 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         clearMatchmakingData();
         var payload = objectMapper.writeValueAsString(new JoinLobbyRequest(userToken, mapName));
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/matchmaker/join_lobby"))
+                .uri(URI.create(joinLobbyUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload))
                 .build();
@@ -48,7 +58,7 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         if (this.currentLobbyId == null) return false;
         var payload = objectMapper.writeValueAsString(new QuitLobbyRequest(userToken, this.currentLobbyId));
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/matchmaker/quit_lobby"))
+                .uri(URI.create(quitLobbyUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload))
                 .build();
@@ -66,7 +76,7 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         if (this.currentMatchId != null) return true;
         var payload = objectMapper.writeValueAsString(new GameServerRequest(userToken, this.currentLobbyId));
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/matchmaker/game_server"))
+                .uri(URI.create(gameServerUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload))
                 .build();
@@ -81,6 +91,7 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         return false;
     }
 
+    // TODO likely needs to use a different endpoint
     @Override
     public ConnectionParameters getServerParameters(String userToken) throws Exception {
         if (this.currentMatchId == null) {
@@ -88,7 +99,7 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         }
         var payload = objectMapper.writeValueAsString(new GameServerRequest(userToken, this.currentMatchId));
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/matchmaker/game_server"))
+                .uri(URI.create(gameServerUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload))
                 .build();
