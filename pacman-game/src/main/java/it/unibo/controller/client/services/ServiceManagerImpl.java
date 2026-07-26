@@ -13,10 +13,11 @@ public class ServiceManagerImpl implements ServiceManager {
     private final QueriesClient queriesClient;
 
     public ServiceManagerImpl() {
+        UriReader uri = new UriManager().getURIs();
         this.httpClient = HttpClient.newHttpClient();
         this.keyManager = new KeyManager();
-        this.authClient = new AuthClient(this.httpClient, this.keyManager);
-        this.queriesClient = new QueriesClient(this.httpClient, this.keyManager);
+        this.authClient = new AuthClient(this.httpClient, this.keyManager, uri);
+        this.queriesClient = new QueriesClient(this.httpClient, this.keyManager, uri);
     }
 
     @Override

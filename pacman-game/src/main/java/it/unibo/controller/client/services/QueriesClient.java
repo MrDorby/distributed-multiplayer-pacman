@@ -26,19 +26,26 @@ import it.unibo.controller.client.key.KeyManager;
  */
 public class QueriesClient {
     
-    // TODO: Check the request addresses
-    private static final String SYN_REQUEST = "http://localhost:8080/queries/syn";
-    private static final String TOKEN_REQUEST = "http://localhost:8080/queries/token";
-    private static final String INFO_REQUEST = "http://localhost:8080/queries/info";
-    private static final String HASH_TYPE = "SHA-256"; 
+    private static final String SYN = "/syn";
+    private static final String TOKEN = "/token";
+    private static final String INFO = "/info";
+    private static final String HASH_TYPE = "SHA-256";
+
+    private final String syn_request;
+    private final String token_request;
+    private final String info_request;
+     
     private final HttpClient httpClient;
     private final KeyManager keyManager;
     private final ObjectMapper objectMapper;
 
-    public QueriesClient(HttpClient httpClient, KeyManager keyManager) {
+    public QueriesClient(HttpClient httpClient, KeyManager keyManager, UriReader uri) {
         this.httpClient = httpClient;
         this.keyManager = keyManager;
         this.objectMapper = new ObjectMapper();
+        this.syn_request = uri.queries() + SYN;
+        this.token_request = uri.queries() + TOKEN;
+        this.info_request = uri.queries() + INFO;
     }
 
     /**
@@ -57,7 +64,7 @@ public class QueriesClient {
                 keyManager.getPublicKeyFromString(publicKeyResponseDTO.publicKey()));
         
         HttpRequest httpInfoRequest = HttpRequest.newBuilder()
-                                    .uri(URI.create(INFO_REQUEST))
+                                    .uri(URI.create(info_request))
                                     .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(encryptedRequest))
                                     .build();
@@ -79,7 +86,7 @@ public class QueriesClient {
     private void checkToken(String token) throws Exception {
         //String jsonFormat = objectMapper.writeValueAsString(token);
         HttpRequest httpTokenRequest = HttpRequest.newBuilder()
-                                    .uri(URI.create(TOKEN_REQUEST))
+                                    .uri(URI.create(token_request))
                                     .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(token))
                                     .build();
@@ -100,7 +107,7 @@ public class QueriesClient {
         String publicKeyDTOString = objectMapper.writeValueAsString(publicKeyDTO);
 
         HttpRequest httpSynRequest = HttpRequest.newBuilder()
-                                    .uri(URI.create(SYN_REQUEST))
+                                    .uri(URI.create(syn_request))
                                     .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(publicKeyDTOString))
                                     .build();
