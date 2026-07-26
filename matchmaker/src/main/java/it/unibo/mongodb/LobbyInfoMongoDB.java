@@ -3,34 +3,28 @@ package it.unibo.mongodb;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * 
- * LobbyInfoMongoDB
+ * Defines the structure for objects contained in the Lobby collection.
  */
 @Document(collection = "lobby")
 public class LobbyInfoMongoDB {
     
     @Id
     private String id;
-
-    @Indexed(unique = true)
-    private String lobbyId;
     private String map;
-    private List<Players> players;
+    private List<String> players;
     
     public LobbyInfoMongoDB() {
 
     }
 
     public LobbyInfoMongoDB(
-        String lobbyId,
         String map,
-        List<Players> players
+        List<String> players
     ) {
-        this.lobbyId = lobbyId;
         this.map = map;
         this.players = players;
     }
@@ -38,13 +32,12 @@ public class LobbyInfoMongoDB {
     public String getId() {
         return id;
     }
-    public String getLobbyId() {
-        return lobbyId;
-    }
+
     public String getMap() {
         return map;
     }
-    public List<Players> getPlayers() {
+
+    public List<String> getPlayers() {
         return players;
     }
 }
