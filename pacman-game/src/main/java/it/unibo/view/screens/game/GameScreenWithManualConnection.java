@@ -9,15 +9,15 @@ import it.unibo.view.screens.game.panels.ConnectionSetupPanel;
  */
 public class GameScreenWithManualConnection extends AbstractGameScreen {
     public static final String CARD_SETUP = "Setup";
-    private final ConnectionSetupPanel setupPanel = new ConnectionSetupPanel();
+    private final ConnectionSetupPanel connectionSetupPanel = new ConnectionSetupPanel();
 
     public GameScreenWithManualConnection() {
         super();
-        add(setupPanel, CARD_SETUP);
+        add(connectionSetupPanel, CARD_SETUP);
     }
 
-    public ConnectionSetupPanel getSetupPanel() {
-        return setupPanel;
+    public ConnectionSetupPanel getConnectionSetupPanel() {
+        return connectionSetupPanel;
     }
 
     public void showConnectionSetupView() {

@@ -67,11 +67,6 @@ public class GameClientImpl implements GameClient, ClientSessionListener {
     }
 
     @Override
-    public void disconnect() {
-        sessionManager.disconnect();
-    }
-
-    @Override
     public String getUsername() {
         return sessionManager.getUsername();
     }

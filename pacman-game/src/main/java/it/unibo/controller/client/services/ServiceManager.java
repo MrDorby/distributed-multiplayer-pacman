@@ -1,6 +1,7 @@
 package it.unibo.controller.client.services;
 
 import it.unibo.controller.client.common.PlayerStats;
+import it.unibo.controller.client.common.ConnectionParameters;
 
 /**
  * Manager for the services that the client needs to connect with.
@@ -44,5 +45,52 @@ public interface ServiceManager {
     PlayerStats getPlayerInfo() throws Exception;
     
     // TODO: add for matchmaker and queries.
-    
+
+    /**
+     * Enters the player into the matchmaking queue for a specific map.
+     *
+     * @param mapName the name of the map to queue for.
+     * @return true if successfully added to the queue, false otherwise.
+     */
+    boolean queue(String mapName) throws Exception;
+
+    /**
+     * Requests cancellation of the active matchmaking queue session.
+     *
+     * @return true if the cancellation request succeeded, false otherwise.
+     */
+    boolean cancelQueue() throws Exception;
+
+    /**
+     * Polls the server to check if a match has been found for the player.
+     *
+     * @return true if a match is ready; false if still searching.
+     */
+    boolean checkQueueStatus() throws Exception;
+
+    /**
+     * Retrieves the network parameters required to connect to the game server for a match.
+     *
+     * @return the {@link ConnectionParameters} for the game server connection.
+     */
+    ConnectionParameters getGameServerParameters() throws Exception;
+
+    /**
+     * Gets the unique identifier for the player's queue lobby.
+     *
+     * @return the lobby ID String, or null if not currently in a lobby.
+     */
+    String getCurrentLobbyId();
+
+    /**
+     * Gets the unique identifier for the match found during matchmaking.
+     *
+     * @return the match ID String, or null if no match has been assigned yet.
+     */
+    String getCurrentMatchId();
+
+    /**
+     * Clears all matchmaking data.
+     */
+    void clearMatchmakingData();
 }

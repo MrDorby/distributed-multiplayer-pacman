@@ -1,6 +1,6 @@
 package it.unibo.view.screens.game;
 
-import it.unibo.controller.client.dto.ConnectionParameters;
+import it.unibo.controller.client.common.ConnectionParameters;
 import it.unibo.controller.client.services.ServiceManager;
 import it.unibo.view.navigation.AppNavigator;
 import it.unibo.view.navigation.AppState;
@@ -25,7 +25,6 @@ public class GameControllerWithDirectConnection extends AbstractGameController {
     private final ServiceManager serviceManager;
 
     private int retryCount = 0;
-    private String activeMatchId = "";
     private ConnectionParameters lastParameters;
 
     public GameControllerWithDirectConnection(AppNavigator navigator, ServiceManager serviceManager) {
@@ -35,10 +34,6 @@ public class GameControllerWithDirectConnection extends AbstractGameController {
         this.screen.getGameOverPanel().setOnGoBack(this::handleExitToMainMenu);
         this.screen.getFailurePanel().setOnGoBack(this::handleExitToMainMenu);
         this.screen.getFailurePanel().setOnReconnect(this::handleRetry);
-    }
-
-    public void setActiveMatchId(String matchId) {
-        this.activeMatchId = matchId;
     }
 
     @Override
@@ -65,7 +60,7 @@ public class GameControllerWithDirectConnection extends AbstractGameController {
         new Thread(() -> {
             try {
                 String user = serviceManager.getUsername();
-                ConnectionParameters parameters = serviceManager.fetchServerParameters(activeMatchId);
+                ConnectionParameters parameters = serviceManager.getGameServerParameters();
                 this.lastParameters = parameters;
                 super.startConnection(parameters, user);
             } catch (Exception e) {

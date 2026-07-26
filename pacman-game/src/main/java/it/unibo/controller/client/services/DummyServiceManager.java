@@ -1,6 +1,7 @@
 package it.unibo.controller.client.services;
 
 import it.unibo.controller.client.common.PlayerStats;
+import it.unibo.controller.client.common.ConnectionParameters;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +18,9 @@ public class DummyServiceManager implements ServiceManager {
 
     private String currentUsername;
     private String currentToken;
+
+    private volatile String currentLobbyId;
+    private volatile String currentMatchId;
 
     public DummyServiceManager() {
         userDatabase.put("user", "123");
@@ -60,7 +64,62 @@ public class DummyServiceManager implements ServiceManager {
         if (currentUsername == null) {
             throw new Exception("Not authenticated");
         }
-        Thread.sleep(5000);
+        Thread.sleep(1000);
         return new PlayerStats(currentUsername, 12, 5, 0.1f, 1250);
+    }
+
+    @Override
+    public boolean queue(String mapName) throws Exception {
+        clearMatchmakingData();
+        Thread.sleep(1000);
+        if (Math.random() < 0.3) {
+            return false;
+        }
+        this.currentLobbyId = "lobby_" + UUID.randomUUID().toString().substring(0, 8);
+        return true;
+    }
+
+    @Override
+    public boolean cancelQueue() {
+        if (this.currentLobbyId == null) {
+            return false;
+        }
+        clearMatchmakingData();
+        return true;
+    }
+
+    @Override
+    public boolean checkQueueStatus() throws Exception {
+        if (this.currentLobbyId == null) {
+            throw new IllegalStateException("Not enqueued");
+        }
+        Thread.sleep(2000);
+        boolean matchFound = Math.random() > 0.3;
+        if (matchFound) {
+            this.currentMatchId = "match_" + UUID.randomUUID().toString().substring(0, 8);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public ConnectionParameters getGameServerParameters() {
+        return new ConnectionParameters("127.0.0.1", 7777, 7777);
+    }
+
+    @Override
+    public String getCurrentLobbyId() {
+        return this.currentLobbyId;
+    }
+
+    @Override
+    public String getCurrentMatchId() {
+        return this.currentMatchId;
+    }
+
+    @Override
+    public void clearMatchmakingData() {
+        this.currentLobbyId = null;
+        this.currentMatchId = null;
     }
 }

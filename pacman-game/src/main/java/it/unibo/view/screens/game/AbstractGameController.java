@@ -3,7 +3,7 @@ package it.unibo.view.screens.game;
 import it.unibo.controller.client.GameClient;
 import it.unibo.controller.client.GameClientFactory;
 import it.unibo.controller.client.GameClientListener;
-import it.unibo.controller.client.dto.ConnectionParameters;
+import it.unibo.controller.client.common.ConnectionParameters;
 import it.unibo.controller.client.network.sockets.session.ConnectionState;
 import it.unibo.controller.shared.engine.GameEngine;
 import it.unibo.controller.shared.input.InputHandler;

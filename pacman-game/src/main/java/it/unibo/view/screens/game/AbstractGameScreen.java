@@ -16,10 +16,10 @@ import java.awt.*;
  * game over summaries, and connection failure screens.
  */
 public abstract class AbstractGameScreen extends JPanel {
-    public static final String CARD_CONNECTING = "Connecting";
-    public static final String CARD_GAME = "Game";
-    public static final String CARD_GAME_OVER = "GameOver";
-    public static final String CARD_FAILURE = "ConnectionFailure";
+    public static final String CONNECTING_CARD = "Connecting";
+    public static final String GAME_CARD = "Game";
+    public static final String GAME_OVER_CARD = "GameOver";
+    public static final String FAILURE_CARD = "ConnectionFailure";
 
     protected final CardLayout cardLayout = new CardLayout();
 
@@ -30,10 +30,10 @@ public abstract class AbstractGameScreen extends JPanel {
 
     public AbstractGameScreen() {
         setLayout(cardLayout);
-        add(connectingPanel, CARD_CONNECTING);
-        add(gameView.getGamePanel(), CARD_GAME);
-        add(gameOverPanel, CARD_GAME_OVER);
-        add(failurePanel, CARD_FAILURE);
+        add(connectingPanel, CONNECTING_CARD);
+        add(gameView.getGamePanel(), GAME_CARD);
+        add(gameOverPanel, GAME_OVER_CARD);
+        add(failurePanel, FAILURE_CARD);
     }
 
     public ConnectingPanel getConnectingPanel() {
@@ -54,20 +54,20 @@ public abstract class AbstractGameScreen extends JPanel {
 
     public void showConnectingView(String statusText) {
         connectingPanel.updateStatus(statusText);
-        cardLayout.show(this, CARD_CONNECTING);
+        cardLayout.show(this, CONNECTING_CARD);
     }
 
     public void showGameView() {
-        cardLayout.show(this, CARD_GAME);
+        cardLayout.show(this, GAME_CARD);
         gameView.getGamePanel().requestFocusInWindow();
     }
 
     public void showGameOverView() {
-        cardLayout.show(this, CARD_GAME_OVER);
+        cardLayout.show(this, GAME_OVER_CARD);
     }
 
     public void showFailureView(String reasonText) {
         failurePanel.setErrorMessage(reasonText);
-        cardLayout.show(this, CARD_FAILURE);
+        cardLayout.show(this, FAILURE_CARD);
     }
 }

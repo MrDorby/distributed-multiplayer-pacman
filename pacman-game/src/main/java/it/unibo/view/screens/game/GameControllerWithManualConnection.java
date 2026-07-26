@@ -1,6 +1,6 @@
 package it.unibo.view.screens.game;
 
-import it.unibo.controller.client.dto.ConnectionParameters;
+import it.unibo.controller.client.common.ConnectionParameters;
 import it.unibo.view.screens.game.panels.ConnectionSetupPanel;
 
 import javax.swing.*;
@@ -23,7 +23,7 @@ public class GameControllerWithManualConnection extends AbstractGameController {
     private ConnectionParameters lastParameters = new ConnectionParameters(DEFAULT_HOST, DEFAULT_TCP_PORT, DEFAULT_UDP_PORT);
 
     public GameControllerWithManualConnection() {
-        this.screen.getSetupPanel().setOnConnect(this::handleConnect);
+        this.screen.getConnectionSetupPanel().setOnConnect(this::handleConnect);
         this.screen.getConnectingPanel().setOnCancel(this::handleExitToSetup);
         this.screen.getGameOverPanel().setOnGoBack(this::handleExitToSetup);
         this.screen.getFailurePanel().setOnGoBack(this::handleExitToSetup);
@@ -32,8 +32,8 @@ public class GameControllerWithManualConnection extends AbstractGameController {
 
     @Override
     public void onEnter() {
-        this.screen.getSetupPanel().setConnectionFields(
-                lastUsername,
+        this.screen.getConnectionSetupPanel().setConnectionFields(
+                DEFAULT_USERNAME,
                 DEFAULT_HOST,
                 DEFAULT_TCP_PORT,
                 DEFAULT_UDP_PORT
@@ -43,7 +43,7 @@ public class GameControllerWithManualConnection extends AbstractGameController {
 
     private void handleConnect() {
         try {
-            ConnectionSetupPanel panel = screen.getSetupPanel();
+            ConnectionSetupPanel panel = screen.getConnectionSetupPanel();
             this.lastUsername = panel.getUsername();
             String host = panel.getHost();
             int tcp = Integer.parseInt(panel.getTcpText());
@@ -51,7 +51,7 @@ public class GameControllerWithManualConnection extends AbstractGameController {
             this.lastParameters = new ConnectionParameters(host, tcp, udp);
             super.startConnection(this.lastParameters, this.lastUsername);
         } catch (NumberFormatException e) {
-            screen.showFailureView("Bad parameters");
+            screen.showFailureView("Bad connection parameters");
         }
     }
 
