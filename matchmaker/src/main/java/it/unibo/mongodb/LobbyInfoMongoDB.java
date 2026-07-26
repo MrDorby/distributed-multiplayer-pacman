@@ -29,14 +29,23 @@ public class LobbyInfoMongoDB {
         this.players = players;
     }
     
+    /**
+     * @return the lobby identifier.
+     */
     public String getId() {
         return id;
     }
 
+    /**
+     * @return the map name.
+     */
     public String getMap() {
         return map;
     }
 
+    /**
+     * @return the list of the players' names.
+     */
     public List<String> getPlayers() {
         return players;
     }

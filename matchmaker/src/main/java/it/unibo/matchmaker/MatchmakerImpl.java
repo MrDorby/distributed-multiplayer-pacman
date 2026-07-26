@@ -33,6 +33,7 @@ import it.unibo.mongodb.MatchInfoMongoDB;
 @RequestMapping(value = "/matchmaker")
 public class MatchmakerImpl implements Matchmaker{
 
+    // TODO: add to the env.
     private static final String AUTHENTICATOR_REQUEST = "http://localhost:8080/auth/token";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -97,15 +98,11 @@ public class MatchmakerImpl implements Matchmaker{
     public ResponseEntity<String> getGameServer(@RequestBody GameServerRequest info) {
         try {
             String username = checkTokenPermission(info.token());
-            MatchInfoMongoDB match = this.matchmakerDetailsService.getMatch(info.lobbyId()); // TODO: to change.
-            String result = this.objectMapper.writeValueAsString(match);
+            MatchInfoMongoDB match = this.matchmakerDetailsService.getMatch(info.matchId()); // TODO: to change.
+            String result = this.objectMapper.writeValueAsString(match.getGameServerSocket());
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
-    //TODO: add method to get GameServer info.
-    //TODO: insert the links with the manager when the FOUND is returned.
-    
 }

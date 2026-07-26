@@ -1,12 +1,19 @@
 package it.unibo;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.boot.webflux.*;
 
 import it.unibo.dto.JoinLobbyResponse;
 import it.unibo.dto.LobbyTypeResponse;
@@ -14,7 +21,9 @@ import it.unibo.mongodb.LobbyInfoMongoDB;
 import it.unibo.mongodb.MatchInfoMongoDB;
 import it.unibo.mongodb.ShortTermLobbyRepository;
 import it.unibo.mongodb.ShortTermMatchRepository;
+import reactor.core.publisher.Mono;
 
+//TODO: Check: https://dev.to/adamthedeveloper/spring-webflux-when-to-use-it-and-how-to-build-with-it-5a6e
 /**
  * 
  * Manages all the actions required by the Matchmaker.
@@ -23,6 +32,7 @@ import it.unibo.mongodb.ShortTermMatchRepository;
 public class MatchmakerDetailsService {
 
     private static final int LOBBY_SIZE = 4;
+    private static final String MANAGER = "";
     
     @Autowired
     private ShortTermLobbyRepository lobbyCollection;
@@ -63,7 +73,7 @@ public class MatchmakerDetailsService {
             int size = lobby.get().getPlayers().size();
             return size < LOBBY_SIZE ? 
                 new JoinLobbyResponse(LobbyTypeResponse.WAITING, lobby.get().getId()) : 
-                new JoinLobbyResponse(LobbyTypeResponse.FOUND, lobby.get().getId());
+                foundResponse(lobby.get());
         }
         List<LobbyInfoMongoDB> lobbies = lobbyCollection.findByMap(map);
         if (lobbies.isEmpty()) {
@@ -82,9 +92,43 @@ public class MatchmakerDetailsService {
             
             newLobby.getPlayers().add(username);
             return newLobby.getPlayers().size() == LOBBY_SIZE ? 
-                new JoinLobbyResponse(LobbyTypeResponse.FOUND, newLobby.getId()) : 
+                foundResponse(newLobby) : 
                 new JoinLobbyResponse(LobbyTypeResponse.WAITING, newLobby.getId());
         }
+    }
+
+    // TODO: quando si ha la risposta con found, aggiungere sulla collection matches un nuovo match
+    // e inviare la richiesta al manager.
+    private JoinLobbyResponse foundResponse(LobbyInfoMongoDB lobby) {
+        // TODO: chiamare il manager.
+        /* SYNC
+        ResponseEntity<String> result = RestClient
+            .create(MANAGER)
+            .post()
+            .uri(new URI("/"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
+            .body(null)
+            .retrieve()
+            .toEntity(String.class);
+        */
+
+        // TODO: check https://docs.spring.io/spring-framework/reference/web/webflux-webclient/client-retrieve.html
+        /*
+        CompletableFuture<?> result = WebClient
+            .create(MANAGER)
+            .post()
+            .uri(new URI("/"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(null)
+            .retrieve()
+            .bodyToMono(Object.class).toFuture();
+        */
+        
+        MatchInfoMongoDB match = this.matchCollection.save(
+            new MatchInfoMongoDB(lobby.getPlayers(), null));
+        
+        return new JoinLobbyResponse(LobbyTypeResponse.FOUND, match.getId());
     }
 
     /**

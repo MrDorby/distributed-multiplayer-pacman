@@ -15,25 +15,23 @@ public interface Matchmaker {
     /**
      * Call to let the user to be inserted in a lobby queue.
      * @param join the message transmitted with token and map.
-     * @return a Response.
+     * @return a Response containing the type and the specific identifier.
+     * Type WAITING will give a lobbyId, while Type FOUND will give matchId.
      */
     ResponseEntity<String> joinLobby(@RequestBody JoinLobbyRequest join);
 
     /**
      * Call to let the user to be deleted from the lobby queue.
      * @param quit the message transmitted with token and lobbyId.
-     * @return a Response.
+     * @return a Response containing a confirmation message.
      */
     ResponseEntity<String> quitLobby(@RequestBody QuitLobbyRequest quit);
 
-    //TODO: check it.
     /**
-     * 
-     * @param info
-     * @return
+     * Call to let the user gets the information about the GameServer.
+     * @param info the initial request.
+     * @return a Response containing the IP and ports of the GameServer.
      */
     ResponseEntity<String> getGameServer(@RequestBody GameServerRequest info);
-
-    //TODO: ADD METHODS.
     
 }

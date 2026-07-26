@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * 
- * QuitLobbyRequest
- * @param token
- * @param lobbyId
+ * Request of the client to quit from the lobby queue.
+ * @param token the token containing the identifier of the client.
+ * @param lobbyId the identifier of the lobby.
  */
 public record QuitLobbyRequest(
     @JsonProperty("token") String token,

@@ -15,8 +15,7 @@ public class MatchInfoMongoDB {
     @Id
     private String id;
     private List<String> users;
-    private Socket gameServerSocket; //TODO: Change because we need to understand
-    // how the information is stored.
+    private Socket gameServerSocket;
     
     public MatchInfoMongoDB() {
     
@@ -29,14 +28,23 @@ public class MatchInfoMongoDB {
         this.gameServerSocket = gameServerSocket;
     }
 
+    /**
+     * @return the matchId.
+     */
     public String getId() {
         return id;
     }
 
+    /**
+     * @return the list of the players' names.
+     */
     public List<String> getUsers() {
         return users;
     }
     
+    /**
+     * @return the infos about the GameServer.
+     */
     public Socket getGameServerSocket() {
         return gameServerSocket;
     }
