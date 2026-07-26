@@ -2,10 +2,14 @@ package it.unibo.controller.client.engine;
 
 import it.unibo.controller.shared.engine.RemoteGameEngineListener;
 import it.unibo.controller.shared.engine.AbstractFixedTimeStepGameEngine;
-import it.unibo.controller.shared.engine.GameEndedEvent;
-import it.unibo.controller.shared.engine.GameLifecycleEvent;
-import it.unibo.controller.shared.input.PacmanCommand;
+import it.unibo.controller.shared.engine.event.GameEndedEvent;
+import it.unibo.controller.shared.engine.event.GameEvent;
+import it.unibo.controller.shared.engine.command.PacmanCommand;
 import it.unibo.controller.client.GameCommandListener;
+import it.unibo.controller.shared.network.dto.GameContextDTO;
+import it.unibo.controller.shared.network.translation.GameContextDecoder;
+import it.unibo.controller.shared.network.translation.GameContextDecoderImpl;
+import it.unibo.model.entities.SpeculativeEntityFactoryImpl;
 import it.unibo.model.game.Game;
 import it.unibo.model.game.GameContext;
 import it.unibo.model.game.GameImpl;
@@ -14,11 +18,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ClientGameEngine extends AbstractFixedTimeStepGameEngine implements RemoteGameEngineListener {
-    private final AtomicReference<GameContext> latestContext = new AtomicReference<>();
-    private final Queue<GameLifecycleEvent> events = new ConcurrentLinkedQueue<>();
+    private final AtomicReference<GameContextDTO> latestContext = new AtomicReference<>();
+    private final AtomicLong maxReceivedTick = new AtomicLong(-1);
+    private final GameContextDecoder decoder = new GameContextDecoderImpl(new SpeculativeEntityFactoryImpl());
+
+    private final Queue<GameEvent> events = new ConcurrentLinkedQueue<>();
     private final List<GameCommandListener> listeners = new ArrayList<>();
 
     public ClientGameEngine(Game game) {
@@ -30,21 +38,17 @@ public class ClientGameEngine extends AbstractFixedTimeStepGameEngine implements
     }
 
     @Override
-    public void onGameEvent(GameLifecycleEvent event) {
+    public void onGameEvent(GameEvent event) {
         this.events.add(event);
     }
 
     @Override
-    public void onGameContextUpdate(GameContext context) {
-        this.latestContext.set(context);
-    }
-
-    private void processEvents() {
-        GameLifecycleEvent event;
-        while ((event = events.poll()) != null) {
-            if (event instanceof GameEndedEvent) {
-                this.stop();
-                break;
+    public void onGameContextUpdate(GameContextDTO context) {
+        long incomingTick = context.tick();
+        long currentMax = maxReceivedTick.get();
+        if (incomingTick > currentMax) {
+            if (maxReceivedTick.compareAndSet(currentMax, incomingTick)) {
+                this.latestContext.set(context);
             }
         }
     }
@@ -52,9 +56,21 @@ public class ClientGameEngine extends AbstractFixedTimeStepGameEngine implements
     @Override
     protected void beforeTick() {
         processEvents();
-        GameContext context = latestContext.getAndSet(null);
-        if (context != null) {
+        GameContextDTO dto = latestContext.getAndSet(null);
+        if (dto != null) {
+            GameContext context = decoder.decode(dto);
             this.game = new GameImpl(context);
+            this.setCurrentTick(context.getTick());
+        }
+    }
+
+    private void processEvents() {
+        GameEvent event;
+        while ((event = events.poll()) != null) {
+            if (event instanceof GameEndedEvent) {
+                this.stop();
+                break;
+            }
         }
     }
 

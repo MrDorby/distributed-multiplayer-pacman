@@ -2,12 +2,11 @@ package it.unibo.view;
 
 import it.unibo.controller.shared.input.InputHandler;
 import it.unibo.model.common.Direction;
-import it.unibo.model.game.GameContext;
 import it.unibo.view.screens.game.panels.GamePanel;
+import it.unibo.view.viewmodel.GameContextViewModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -45,12 +44,12 @@ public class SwingGameView implements GameView {
     }
 
     @Override
-    public JPanel getGamePanel() {
+    public GamePanel getGamePanel() {
         return this.gamePanel;
     }
 
     @Override
-    public void render(GameContext gameContext) {
-        this.gamePanel.setGameContext(gameContext);
+    public void render(GameContextViewModel context) {
+        this.gamePanel.setGameContext(context);
     }
 }

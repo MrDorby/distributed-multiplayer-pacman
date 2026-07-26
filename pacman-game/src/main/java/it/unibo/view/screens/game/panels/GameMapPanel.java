@@ -2,8 +2,9 @@ package it.unibo.view.screens.game.panels;
 
 import it.unibo.model.common.GameConstants;
 import it.unibo.model.common.Vector2D;
-import it.unibo.model.game.GameContext;
 import it.unibo.model.map.TileType;
+import it.unibo.view.viewmodel.GameContextViewModel;
+import it.unibo.view.viewmodel.PacmanViewModel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,28 +13,30 @@ public class GameMapPanel extends JPanel {
     private final static int TOP_PADDING = 20;
     private final static int BOTTOM_PADDING = 20;
 
-    private GameContext gameContext;
+    private GameContextViewModel context;
     private int mapPixelWidth;   // Total pixel width of the rendered map
     private int mapPixelHeight;  // Total pixel height of the rendered map
     private int tilePixelSize;   // Pixel size of a single tile (tiles are square)
+
+    private String localPlayerId;
 
     public GameMapPanel() {
         this.setOpaque(false);
         this.setVisible(true);
     }
 
-    public void setGameContext(GameContext gameContext) {
-        this.gameContext = gameContext;
+    public void setGameContext(GameContextViewModel context) {
+        this.context = context;
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (this.gameContext == null) return;
+        if (this.context == null) return;
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        int columns = this.gameContext.getMap().getGridSize().column();
-        int rows = this.gameContext.getMap().getGridSize().row();
+        int columns = this.context.map().col();
+        int rows = this.context.map().row();
         int availableWidth = this.getWidth();
         int availableHeight = this.getHeight() - TOP_PADDING - BOTTOM_PADDING;
         int maxTileWidth = availableWidth / columns;
@@ -43,40 +46,41 @@ public class GameMapPanel extends JPanel {
         this.mapPixelHeight = this.tilePixelSize * rows;
         int startX = startingX();
         int startY = startingY();
-        this.gameContext.getMap()
-                .getTiles()
+        this.context.map()
+                .tiles()
                 .forEach(tile -> {
-                    if (tile.getTileType() == TileType.WALL) {
+                    if (tile.type() == TileType.WALL) {
                         g2d.setColor(Color.BLACK);
                     } else {
                         g2d.setColor(Color.WHITE);
                     }
-                    int tileX = startX + (tile.getMatrixPosition().column() * this.tilePixelSize);
-                    int tileY = startY + (tile.getMatrixPosition().row() * this.tilePixelSize);
+                    int tileX = startX + (tile.matrixPosition().column() * this.tilePixelSize);
+                    int tileY = startY + (tile.matrixPosition().row() * this.tilePixelSize);
                     g2d.fillRect(tileX, tileY, tilePixelSize, tilePixelSize);
                 });
 
-        this.gameContext.getDotsMap().values().forEach(dot -> {
+        this.context.dots().forEach(dot -> {
             if (dot.isAlive()) {
                 boolean isSpecial = dot.isSpecial();
                 int size = getProportionalSize(GameConstants.GameEntityFeatures.DOT.getRadius()) * 2;
                 Color dotColor = isSpecial ? Color.ORANGE : Color.GREEN;
-                drawGameEntity(g2d, dot.getPosition(), size, dotColor, startX, startY);
+                drawGameEntity(g2d, dot.position(), size, dotColor, startX, startY);
             }
         });
 
-        this.gameContext.getGhosts().forEach(ghost -> {
+        this.context.ghosts().forEach(ghost -> {
             int size = getProportionalSize(GameConstants.GameEntityFeatures.GHOST.getRadius()) * 2;
-            drawGameEntity(g2d, ghost.getPosition(), size, Color.RED, startX, startY);
+            drawGameEntity(g2d, ghost.position(), size, Color.RED, startX, startY);
         });
 
-        this.gameContext.getPacmans().stream().filter(x -> x.isAlive()).forEach(pacman -> {
+        this.context.pacmans().stream().filter(PacmanViewModel::isAlive).forEach(pacman -> {
             // TODO: modify the view of pacman when is invincible (different tone of the color or grey)
             // maybe  wait until the pacman has the color attribute in its class.
-            int size = (int) (pacman.canEatGhost()
+            int size = (int) (pacman.canEatGhosts()
                     ? getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2.5
                     : getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2);
-            drawGameEntity(g2d, pacman.getPosition(), size, Color.YELLOW, startX, startY);
+            Color color = this.localPlayerId.equals(pacman.id()) ? Color.BLUE : Color.YELLOW;
+            drawGameEntity(g2d, pacman.position(), size, color, startX, startY);
         });
     }
 
@@ -112,5 +116,9 @@ public class GameMapPanel extends JPanel {
     private int startingY() {
         int availableHeight = this.getHeight() - TOP_PADDING - BOTTOM_PADDING;
         return TOP_PADDING + (availableHeight - this.mapPixelHeight) / 2;
+    }
+
+    public void setLocalPlayerId(String localPlayerId) {
+        this.localPlayerId = localPlayerId;
     }
 }

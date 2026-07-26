@@ -1,5 +1,8 @@
 package it.unibo.model.game;
 
+import it.unibo.controller.shared.network.dto.GameContextDTO;
+import it.unibo.controller.shared.network.translation.GameContextDecoder;
+import it.unibo.controller.shared.network.translation.GameContextDecoderImpl;
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
 import it.unibo.model.entities.*;
@@ -56,7 +59,7 @@ public class GameContextFactory {
         Set<Ghost> ghosts = new HashSet<>();
         ghosts.add(new GhostImpl(ghostSpawn, gameMap));
 
-        return new GameContextImpl(gameMap, dotsMap, ghosts, pacmans, GAME_DURATION_IN_MILLIS);
+        return new GameContextImpl(gameMap, 0, dotsMap, ghosts, pacmans, GAME_DURATION_IN_MILLIS);
     }
 
     public static GameContext createFromMap(String mapPath, GameEntityFactory gameEntityFactory) {
@@ -79,10 +82,16 @@ public class GameContextFactory {
         });
         return new GameContextImpl(
                 gameMap,
+                0,
                 dotsMap,
                 ghosts,
                 pacmans,
                 GAME_DURATION_IN_MILLIS
         );
+    }
+
+    public static GameContext createFromDTO(GameContextDTO dto, GameEntityFactory entityFactory) {
+        GameContextDecoder decoder = new GameContextDecoderImpl(entityFactory);
+        return decoder.decode(dto);
     }
 }

@@ -38,3 +38,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Ignore local development temp storage and match snapshots ###
+.temp/

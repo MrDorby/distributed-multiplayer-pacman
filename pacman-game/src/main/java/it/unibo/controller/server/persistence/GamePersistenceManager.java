@@ -1,8 +1,8 @@
 package it.unibo.controller.server.persistence;
 
-import it.unibo.controller.server.persistence.backup.GameBackupService;
+import it.unibo.controller.server.persistence.backup.GameSnapshotRepository;
 import it.unibo.controller.server.persistence.dto.MatchSnapshot;
-import it.unibo.controller.server.persistence.results.GameResultsService;
+import it.unibo.controller.server.persistence.results.GameResultsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,27 +12,27 @@ import java.util.concurrent.*;
  * Coordinates periodic and end-of-game persistence of game state.
  * <p>
  * While a game is running, periodically backs up the most recently supplied game
- * context via {@link GameBackupService}. Once the game ends, cancels the periodic
+ * context via {@link GameSnapshotRepository}. Once the game ends, cancels the periodic
  * schedule and concurrently saves a final backup and the game's results via
- * {@link GameResultsService}.
+ * {@link GameResultsRepository}.
  */
-public class GamePersistenceManager {
+public class GamePersistenceManager implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(GamePersistenceManager.class);
     private static final long PERIOD_IN_SECONDS = 10;
 
-    private final GameBackupService backupService;
-    private final GameResultsService resultsService;
+    private final GameSnapshotRepository snapshotRepository;
+    private final GameResultsRepository resultsRepository;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     private volatile MatchSnapshot currentSnapshot;
     private ScheduledFuture<?> periodicTask;
 
-    public GamePersistenceManager(GameBackupService backupService, GameResultsService resultsService) {
-        this.backupService = backupService;
-        this.resultsService = resultsService;
+    public GamePersistenceManager(GameSnapshotRepository snapshotRepository, GameResultsRepository resultsRepository) {
+        this.snapshotRepository = snapshotRepository;
+        this.resultsRepository = resultsRepository;
     }
 
-    public void updateContext(MatchSnapshot snapshot) {
+    public void updateSnapshot(MatchSnapshot snapshot) {
         this.currentSnapshot = snapshot;
     }
 
@@ -44,7 +44,7 @@ public class GamePersistenceManager {
     private void saveSnapShot() {
         MatchSnapshot snapshot = currentSnapshot;
         if (snapshot == null) return;
-        backupService.saveSnapshot(snapshot).exceptionally(ex -> {
+        snapshotRepository.saveSnapshot(snapshot).exceptionally(ex -> {
             logger.warn("Periodic snapshot failed", ex);
             return null;
         });
@@ -54,17 +54,35 @@ public class GamePersistenceManager {
         if (periodicTask != null) {
             periodicTask.cancel(false);
         }
-        CompletableFuture<Void> backupSaved = backupService.saveSnapshot(finalSnapshot);
-        CompletableFuture<Void> resultsSaved = resultsService.saveResults(finalSnapshot);
         try {
-            CompletableFuture.allOf(backupSaved, resultsSaved).get(5, TimeUnit.SECONDS);
+            CompletableFuture.allOf(
+                    snapshotRepository.saveSnapshot(finalSnapshot),
+                    resultsRepository.saveResults(finalSnapshot))
+                    .get(5, TimeUnit.SECONDS);
             logger.info("Final game context and results saved.");
         } catch (Exception e) {
             logger.error("Final backup and/or results save failed or timed out", e);
+        } finally {
+            close();
         }
     }
 
-    public void stop() {
+    @Override
+    public void close() {
+        stopScheduler();
+        try {
+            snapshotRepository.close();
+        } catch (Exception e) {
+            logger.warn("Failed to close snapshot repository cleanly", e);
+        }
+        try {
+            resultsRepository.close();
+        } catch (Exception e) {
+            logger.warn("Failed to close results service cleanly", e);
+        }
+    }
+
+    public void stopScheduler() {
         scheduler.shutdown();
         try {
             if (!scheduler.awaitTermination(2, TimeUnit.SECONDS)) {

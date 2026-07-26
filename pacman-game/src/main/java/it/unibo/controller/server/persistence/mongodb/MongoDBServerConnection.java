@@ -1,10 +1,13 @@
 package it.unibo.controller.server.persistence.mongodb;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import it.unibo.controller.shared.network.dto.PacmanDTO;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -19,6 +22,10 @@ import com.mongodb.reactivestreams.client.MongoDatabase;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Updates.*;
 
+import it.unibo.controller.server.persistence.dto.MatchSnapshot;
+import it.unibo.controller.server.persistence.mongodb.MongoDBConstants.ConnectToDatabase;
+import it.unibo.controller.server.persistence.mongodb.MongoDBConstants.LongTermFields;
+import it.unibo.controller.server.persistence.mongodb.MongoDBConstants.ShortTermFields;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -27,96 +34,157 @@ import reactor.core.publisher.Mono;
  * MongoDBServerConnection manages the GameServer connections with the MongoDB instances.
  */
 public class MongoDBServerConnection {
-    
-    private record DatabaseInfo(String stringConnection, String database, String collection) {
+
+    /* Internal record for make it easy check the content of the short-term database. */
+    private record Checkpoint(GameContextDTO gameContextDTO, Long timestamp) {
     }
-
-    // TODO: Is it ok to insert Connection String with password?
-    /* Connection String for a specific MongoDB database. */
-    private static final String LT = "mongodb://admin:password@queriesdb1:27017,queriesdb2:27017,queriesdb3:27017/authDB?authSource=admin&replicaSet=replicaSet";
-    private static final String ST = "";
-    
-    /* MongoDB Databases. */
-    private static final String LT_DB = "statsDB";
-    private static final String ST_DB = "";
-
-    /* MongoDB Colletions. */
-    private static final String LT_CL = "stats";
-    private static final String ST_CL = "";
 
     private final MongoClient mongoClient;
     private final MongoDatabase mongoDatabase;
     private final MongoCollection<Document> collection;
-    private final Map<ConnectToDatabase, DatabaseInfo> connections =  Map.of(
-        ConnectToDatabase.LONG_TERM, new DatabaseInfo(LT, LT_DB, LT_CL),
-        ConnectToDatabase.SHORT_TERM, new DatabaseInfo(ST, ST_DB, ST_CL)
-    );
+    private final ConnectToDatabase connectToDatabase;
 
-    private ConnectToDatabase connectToDatabase;
+    public MongoDBServerConnection(ConnectToDatabase connectToDatabase) {
+        this(connectToDatabase, null);
+    }
 
-    public MongoDBServerConnection(ConnectToDatabase connectionString) {
-        this.connectToDatabase = connectionString;
-        DatabaseInfo info = connections.get(connectionString);
-        this.mongoClient = MongoClients.create(info.stringConnection());
-        this.mongoDatabase = this.mongoClient.getDatabase(info.database());
-        this.collection = this.mongoDatabase.getCollection(info.collection());
+    public MongoDBServerConnection(ConnectToDatabase connectToDatabase, URI customConnectionURI) {
+        this.connectToDatabase = connectToDatabase;
+        String connectionUri = (customConnectionURI != null && !customConnectionURI.toString().isBlank())
+                ? customConnectionURI.toString()
+                : connectToDatabase.getConnectionString();
+        this.mongoClient = MongoClients.create(connectionUri);
+        this.mongoDatabase = this.mongoClient.getDatabase(connectToDatabase.getDatabaseName());
+        this.collection = this.mongoDatabase.getCollection(connectToDatabase.getCollectionName());
     }
 
     /**
-     * This methods handles database save requests, for both long-term and short-term databases.
-     * @param gameContextDTO containing the datas that need to be stored.
+     * This methods handles database save requests, for long-term databases.
+     * @param snapshot containing the datas that need to be stored.
+     * @return a CompletableFuture[] of the actions done.
+     */
+    public CompletableFuture<Void> saveResultsOnLongTermDB(MatchSnapshot snapshot) {
+        return longTermDB(snapshot.context());
+    }
+
+    /**
+     * This methods handles database save requests, for short-term databases.
+     * @param snapshot containing the datas that need to be stored.
      * @return a CompletableFuture of the action done.
      */
-    public CompletableFuture<Void> saveResultsOnDB(GameContextDTO gameContextDTO) {
-        if (this.connectToDatabase.equals(ConnectToDatabase.LONG_TERM)) {
-            return longTermDB(gameContextDTO);
-        } else {
-            return null; //TODO: Complete for the short term db.
-        }
-        
+    public CompletableFuture<Void> saveResultsOnShortTermDB(MatchSnapshot snapshot) {
+        return shortTermDB(snapshot);
+    }
+
+    /*  Performs all the operations with the short-term database. */
+    private CompletableFuture<Void> shortTermDB(MatchSnapshot snapshot) {
+        ShortTermFields shortTermFields = connectToDatabase.getShortTermFields(); 
+        //ObjectMapper objectMapper = new ObjectMapper();
+        CompletableFuture<Void> future = null;
+        //try {
+            Checkpoint checkpoint = new Checkpoint(snapshot.context(), snapshot.timestamp());
+            //String jsonCheckpoint = objectMapper.writeValueAsString(checkpoint);
+            // TODO: Check if it is necessary to perform the mapping to JSON for storing data.
+            Bson filter = eq(shortTermFields.getMatchIdLabel(), snapshot.matchId());
+            FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
+            Document doc = Flux.from(publisher).blockLast();
+            if (doc == null || doc.isEmpty()) {
+                //Document newDoc = Document.parse(jsonSnap);
+                Document newDoc = new Document(shortTermFields.getMatchIdLabel(), snapshot.matchId())
+                                .append(shortTermFields.getUserListLabel(), snapshot.context().pacmans().stream().map(PacmanDTO::id).toList())
+                                .append(shortTermFields.getCheckpointsLabel(), List.of(checkpoint));
+                Publisher<InsertOneResult> insertPublisher = this.collection.insertOne(newDoc);
+                future = Mono.from(insertPublisher).then().toFuture();
+            } else {
+                List<Checkpoint> checkpoints = (ArrayList<Checkpoint>) doc.get(shortTermFields.getCheckpointsLabel());
+                int sizeCheck = 3;
+                if (checkpoints.size() < sizeCheck) {
+                    Bson update = push(shortTermFields.getCheckpointsLabel(), checkpoint);
+                    Publisher<UpdateResult> result = this.collection.updateOne(filter, update);
+                    future = Mono.from(result).then().toFuture();
+                } else {
+                    Bson pop = popFirst(shortTermFields.getCheckpointsLabel());
+                    Publisher<UpdateResult> result = this.collection.updateOne(filter, pop);
+                    future = Mono.from(result).then().toFuture();
+                }
+            }
+            return future;
+        // } catch (JsonProcessingException e) {
+        //     return null;
+        // }
     }
 
     /* Handles the requests for the long-term database. */
     private CompletableFuture<Void> longTermDB(GameContextDTO gameContextDTO) {
+        LongTermFields longTermFields = connectToDatabase.getLongTermFields();
         Map<String, Integer> leaderboard = gameContextDTO.gameState().leaderboard();
-        CompletableFuture<?>[] futures = new CompletableFuture[4];
-        int index = 0;
+        List<CompletableFuture<Void>> futures = new ArrayList<>(leaderboard.size());
         for (var player: leaderboard.entrySet()) {
-            Bson filter = eq("username", player.getKey());
+            Bson filter = eq(longTermFields.getUsernameLabel(), player.getKey());
             FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
             Document doc = Flux.from(publisher).blockLast();
-            if (doc.isEmpty()) {
-                Document newDoc = new Document("username", player.getKey())
-                            .append("nMatch", 1)
-                            .append("nWins", player.getKey().equals(gameContextDTO.gameState().winnerId()) ? 1 : 0)
-                            .append("bestScore", player.getValue());
-                            
+            
+            /* Creates a new document if the player does not exist. Otherwise it updates datas. */
+            if (doc == null || doc.isEmpty()) {
+                Document newDoc = new Document(longTermFields.getUsernameLabel(), player.getKey())
+                            .append(longTermFields.getnMatchLabel(), 1)
+                            .append(longTermFields.getnWinsLabel(), player.getKey().equals(gameContextDTO.gameState().winnerId()) ? 1 : 0)
+                            .append(longTermFields.getBestScoreLabel(), player.getValue());
+                     
                 Publisher<InsertOneResult> insertPublisher = this.collection.insertOne(newDoc);
-                futures[index] = Mono.from(insertPublisher).toFuture();
+                futures.add(Mono.from(this.collection.insertOne(newDoc)).then().toFuture());
             } else {
-                int bestScore = (int) doc.get("bestScore");
+                int bestScore = (int) doc.get(longTermFields.getBestScoreLabel());
                 List<Bson> updates = new ArrayList<>();
                 if (player.getValue() > bestScore) {
-                    updates.add(set("bestScore", player.getValue()));
+                    updates.add(set(longTermFields.getBestScoreLabel(), player.getValue()));
                 }
                 if (player.getKey().equals(gameContextDTO.gameState().winnerId())) {
-                    updates.add(inc("nWins", 1));
+                    updates.add(inc(longTermFields.getnWinsLabel(), 1));
                 }
-                updates.add(inc("nMatch", 1));
-                Bson updt = combine(updates);
-                Publisher<UpdateResult> updateResult = this.collection.updateOne(filter, updt);
-                futures[index] = Mono.from(updateResult).toFuture();
+                updates.add(inc(longTermFields.getnMatchLabel(), 1));
+                futures.add(Mono.from(this.collection.updateOne(filter, combine(updates))).then().toFuture());
             }
-            index++;
         }
-        return CompletableFuture.allOf(futures);
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
-    /**
+    /*
      * Closes the MongoDB connection.
      */
     public void closeConnection() {
         this.mongoClient.close();
     }
 
+    /**
+     * Retrieves the last checkpoint from the short-term mongodb instance.
+     * @param matchId the identifier of the match.
+     * @return a MatchSnapshot containing all the info for the checkpoint.
+     */
+    public CompletableFuture<Optional<MatchSnapshot>> getCheckpoint(String matchId) {
+        return CompletableFuture.supplyAsync(() -> {
+            ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
+            Bson filter = eq(shortTermFields.getMatchIdLabel(), matchId);
+            FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
+            Document doc = Flux.from(publisher).blockLast();
+            if (doc == null || doc.isEmpty()) {
+                return Optional.empty();
+            }
+            List<?> rawCheckpoints = doc.get(shortTermFields.getCheckpointsLabel(), List.class);
+            if (rawCheckpoints == null || rawCheckpoints.isEmpty()) {
+                return Optional.empty();
+            }
+            Object lastItem = rawCheckpoints.getLast();
+            if (lastItem instanceof Checkpoint(GameContextDTO gameContextDTO, Long timestamp)) {
+                MatchSnapshot matchSnapshot = new MatchSnapshot(
+                        matchId,
+                        timestamp,
+                        List.of(),
+                        gameContextDTO
+                );
+                return Optional.of(matchSnapshot);
+            }
+            return Optional.empty();
+        });
+    }
 }

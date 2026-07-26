@@ -7,8 +7,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 
 import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
+import java.awt.event.*;
 
 public class LoginRegisterPanel extends JPanel {
     private static final int MIN_PANEL_SIZE = 800;
@@ -16,7 +15,7 @@ public class LoginRegisterPanel extends JPanel {
     private final static float BUTTON_FONT_SIZE = 14f;
     private final static String FONT_NAME = FontName.S2P.getFontName();
     private final static int maxBorder = 20;
-    private final static int minBorder = 10;
+    private final static int minBorder = 15;
 
     private final JPanel loginRegisterPanel = new JPanel();
     private final JPanel emailPanel = new JPanel();
@@ -34,7 +33,7 @@ public class LoginRegisterPanel extends JPanel {
     public LoginRegisterPanel(String textTitle, String textTop, String textBottom) {
         this.setBackground(Color.YELLOW);
         this.setLayout(new GridBagLayout());
-        this.addComponentListener(new ComponentListener() {
+        this.addComponentListener(new ComponentAdapter() {
 
             @Override
             public void componentResized(ComponentEvent e) {
@@ -50,33 +49,15 @@ public class LoginRegisterPanel extends JPanel {
                     bottomButtonPanel.setBorder(panelBorder);
                 }
             }
-
-            @Override
-            public void componentMoved(ComponentEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'componentMoved'");
-            }
-
-            @Override
-            public void componentShown(ComponentEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'componentShown'");
-            }
-
-            @Override
-            public void componentHidden(ComponentEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'componentHidden'");
-            }
-            
         });
 
-        emailPanel.setBackground(Color.ORANGE);
-        passwordPanel.setBackground(Color.ORANGE);
-        topButtonPanel.setBackground(Color.ORANGE);
-        bottomButtonPanel.setBackground(Color.ORANGE);
-        emailLabelPanel.setBackground(Color.ORANGE);
-        passwordLabelPanel.setBackground(Color.ORANGE);
+        Color colorPanel = Color.WHITE;
+        emailPanel.setBackground(colorPanel);
+        passwordPanel.setBackground(colorPanel);
+        topButtonPanel.setBackground(colorPanel);
+        bottomButtonPanel.setBackground(colorPanel);
+        emailLabelPanel.setBackground(colorPanel);
+        passwordLabelPanel.setBackground(colorPanel);
 
         JPanel titlePanel = new JPanel(new FlowLayout());
         titlePanel.setOpaque(false);
@@ -97,10 +78,9 @@ public class LoginRegisterPanel extends JPanel {
         this.add(titlePanel, titleCons);
 
         loginRegisterPanel.setLayout(new BoxLayout(loginRegisterPanel, BoxLayout.Y_AXIS));
-        loginRegisterPanel.setBorder(BorderFactory.createMatteBorder(THICKNESS_BORDER + 2, 0, THICKNESS_BORDER + 2, 0, Color.BLACK));
+        //loginRegisterPanel.setBorder(BorderFactory.createMatteBorder(THICKNESS_BORDER + 2, 0, THICKNESS_BORDER + 2, 0, Color.BLACK));
         loginRegisterPanel.setBackground(Color.WHITE);
-        loginRegisterPanel.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 4));
-        //login.setBorder(BorderFactory.createLineBorder(Color.BLACK, 4));
+        //loginRegisterPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
 
         emailPanel.setLayout(new BoxLayout(emailPanel, BoxLayout.Y_AXIS));
         emailPanel.setBorder(panelBorder);
@@ -113,7 +93,21 @@ public class LoginRegisterPanel extends JPanel {
                 BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER),
                 BorderFactory.createEmptyBorder(0, 10, 0, 10))
         );
-        usernameField.setFont(new Font(usernameField.getFont().getFontName(), Font.PLAIN, 20));
+        usernameField.setFont(FontManager.addingFont(20f, FONT_NAME));
+        usernameField.setBackground(Color.LIGHT_GRAY);
+        usernameField.setForeground(Color.WHITE);
+        usernameField.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+            
+        });
         emailTextFieldPanel.add(usernameField);
         emailPanel.add(emailLabelPanel);
         emailPanel.add(emailTextFieldPanel);
@@ -131,7 +125,21 @@ public class LoginRegisterPanel extends JPanel {
                 BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER),
                 BorderFactory.createEmptyBorder(0, 10, 0, 10))
         );
-        passwordField.setFont(new Font(emailLabel.getFont().getFontName(), Font.PLAIN, 20));
+        passwordField.setFont(FontManager.addingFont(20f, FONT_NAME));
+        passwordField.setBackground(Color.LIGHT_GRAY);
+        passwordField.setForeground(Color.WHITE);
+        passwordField.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+            
+        });
         passwordFieldPanel.add(passwordField);
         passwordPanel.add(passwordLabelPanel);
         passwordPanel.add(passwordFieldPanel);
@@ -222,11 +230,11 @@ public class LoginRegisterPanel extends JPanel {
     }
 
     public void onClickTopButton(Runnable action) {
-        topButton.addActionListener(e -> action.run());
+        topButton.addActionListener(_ -> action.run());
     }
 
     public void onClickBottomButton(Runnable action) {
-        bottomButton.addActionListener(e -> action.run());
+        bottomButton.addActionListener(_ -> action.run());
     }
 
     public String getUsername() {

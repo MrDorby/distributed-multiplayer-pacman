@@ -4,5 +4,5 @@ public interface CircleBoundingBox extends BoundingBox {
     /**
      * Returns the radius of the bounding box
      */
-    int getRadius();
+    int radius();
 }

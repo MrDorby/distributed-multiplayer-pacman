@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 public class GameContextImpl implements GameContext {
     private final GameMap map;
+    private long tick;
     private final Map<MatrixCoordinates, Dot> dotsMap;
     private final Set<Ghost> ghosts;
     private final Set<Pacman> pacmans;
@@ -17,13 +18,24 @@ public class GameContextImpl implements GameContext {
     private long timeLeftInMillis;
     private Map<GameEntity, Set<Collision>> collisions = new HashMap<>();
 
-    public GameContextImpl(GameMap map, Map<MatrixCoordinates, Dot> dotsMap, Set<Ghost> ghosts, Set<Pacman> pacmans, long timeLeftInMillis) {
+    public GameContextImpl(GameMap map, long tick, Map<MatrixCoordinates, Dot> dotsMap, Set<Ghost> ghosts, Set<Pacman> pacmans, long timeLeftInMillis) {
         this.map = map;
+        this.tick = tick;
         this.dotsMap = dotsMap;
         this.ghosts = ghosts;
         this.pacmans = pacmans;
         this.timeLeftInMillis = timeLeftInMillis;
         this.createGameState();
+    }
+
+    @Override
+    public long getTick() {
+        return this.tick;
+    }
+
+    @Override
+    public void setTick(long tick) {
+        this.tick = tick;
     }
 
     @Override

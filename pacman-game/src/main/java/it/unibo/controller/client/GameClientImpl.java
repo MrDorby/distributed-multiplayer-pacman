@@ -5,18 +5,17 @@ import it.unibo.controller.client.network.sockets.GameClientGateway;
 import it.unibo.controller.client.network.sockets.session.ConnectionState;
 import it.unibo.controller.client.network.sockets.session.ClientSessionListener;
 import it.unibo.controller.client.network.sockets.session.ClientGameSessionManager;
-import it.unibo.controller.shared.engine.GameEndedEvent;
+import it.unibo.controller.shared.engine.event.GameEndedEvent;
 import it.unibo.controller.shared.engine.GameEngine;
-import it.unibo.controller.shared.input.PacmanCommand;
-import it.unibo.controller.shared.input.PacmanMoveCommand;
+import it.unibo.controller.shared.engine.command.PacmanCommand;
+import it.unibo.controller.shared.engine.command.PacmanMoveCommand;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
 import it.unibo.controller.shared.network.sockets.packets.PacmanMovePacket;
-import it.unibo.model.game.GameContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameClientImpl implements GameClient, ClientSessionListener {
     private static final Logger logger = LoggerFactory.getLogger(GameClientImpl.class);
@@ -25,7 +24,7 @@ public class GameClientImpl implements GameClient, ClientSessionListener {
     private final ClientGameSessionManager sessionManager;
     private final ClientGameEngine engine;
 
-    private final List<GameClientListener> listeners = new ArrayList<>();
+    private final List<GameClientListener> listeners = new CopyOnWriteArrayList<>();
 
     public GameClientImpl(
             ClientGameEngine engine, GameClientGateway gateway,
@@ -68,11 +67,6 @@ public class GameClientImpl implements GameClient, ClientSessionListener {
     }
 
     @Override
-    public void disconnect() {
-        sessionManager.disconnect();
-    }
-
-    @Override
     public String getUsername() {
         return sessionManager.getUsername();
     }
@@ -89,7 +83,7 @@ public class GameClientImpl implements GameClient, ClientSessionListener {
      * ************************************ */
 
     @Override
-    public void onGameContext(GameContext context) {
+    public void onGameContext(GameContextDTO context) {
         logger.trace("Received authoritative game context update");
         engine.onGameContextUpdate(context);
     }
@@ -97,18 +91,17 @@ public class GameClientImpl implements GameClient, ClientSessionListener {
     @Override
     public void onGameStart() {
         logger.debug("Received signal to start the game. Starting the engine");
-        engine.start();
         for (GameClientListener listener : listeners) {
             listener.onGameStarted();
         }
     }
 
     @Override
-    public void onGameEnd(GameContextDTO gameContextDTO) {
+    public void onGameEnd(GameContextDTO context) {
         logger.debug("Received game end event from server");
-        engine.onGameEvent(new GameEndedEvent(engine.getGame().getContext()));
+        engine.onGameEvent(new GameEndedEvent(context));
         for (GameClientListener listener : listeners) {
-            listener.onGameEnded(gameContextDTO);
+            listener.onGameEnded(context);
         }
     }
 

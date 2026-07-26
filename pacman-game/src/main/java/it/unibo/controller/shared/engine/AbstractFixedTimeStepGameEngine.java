@@ -1,9 +1,10 @@
 package it.unibo.controller.shared.engine;
 
-import it.unibo.controller.shared.input.PacmanCommand;
+import it.unibo.controller.shared.engine.command.PacmanCommand;
 import it.unibo.model.game.Game;
 import it.unibo.view.GameView;
 import it.unibo.view.HeadlessView;
+import it.unibo.view.viewmodel.ViewModelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,18 +35,13 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine, Run
     protected GameView view = new HeadlessView();
     private final Queue<PacmanCommand> commandQueue = new ConcurrentLinkedQueue<>();
 
-    private volatile boolean running = true;
+    private volatile boolean running = false;
+    private long currentTick = 0;
     private volatile int currentTps = 0;
 
     public AbstractFixedTimeStepGameEngine(Game game) {
         this.game = game;
     }
-
-    protected abstract void beforeTick();
-
-    protected abstract void afterCommandExecuted(PacmanCommand command);
-
-    protected abstract void afterTick();
 
     @Override
     public void enqueueCommand(PacmanCommand command) {
@@ -53,13 +49,17 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine, Run
     }
 
     @Override
-    public Game getGame() {
-        return this.game;
+    public void start() {
+        if (this.running) {
+            throw new IllegalStateException("Engine is already running!");
+        }
+        this.running = true;
+        new Thread(this, "game-engine").start();
     }
 
     @Override
-    public void start() {
-        new Thread(this, "game-engine").start();
+    public void stop() {
+        this.running = false;
     }
 
     @Override
@@ -104,6 +104,7 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine, Run
     }
 
     private void tick() {
+        this.currentTick++;
         beforeTick();
         while (!commandQueue.isEmpty()) {
             PacmanCommand command = commandQueue.poll();
@@ -113,13 +114,22 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine, Run
             }
         }
         game.update(MILLIS_PER_TICK);
-        view.render(game.getContext());
+        view.render(ViewModelFactory.create(game.getContext()));
         afterTick();
     }
 
-    @Override
-    public void stop() {
-        this.running = false;
+    protected abstract void beforeTick();
+
+    protected abstract void afterCommandExecuted(PacmanCommand command);
+
+    protected abstract void afterTick();
+
+    protected long getCurrentTick() {
+        return this.currentTick;
+    }
+
+    protected void setCurrentTick(long tick) {
+        this.currentTick = tick;
     }
 
     @Override

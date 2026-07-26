@@ -20,12 +20,10 @@ class GameEngineImplTest {
     }
 
     @Test
-    void engineStartsAndStops() throws InterruptedException {
-        Thread thread = new Thread(engine::start);
-        thread.start();
+    void engineStartsAndStops() {
+        engine.start();
         assertTrue(engine.isRunning());
         engine.stop();
-        thread.join(500);
         assertFalse(engine.isRunning());
     }
 

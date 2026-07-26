@@ -1,45 +1,80 @@
 package it.unibo.view.screens.game.panels;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.GridBagLayout;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.border.Border;
+
+import it.unibo.view.font.FontManager;
+import it.unibo.view.font.FontName;
 
 public class ConnectionFailurePanel extends JPanel {
+    
+    private static final String FONT_NAME = FontName.S2P.getFontName();
+    private static final float LABEL_FONT_SIZE = 20f;
+    private static final float BUTTON_FONT_SIZE = 18f;
+    private static final int THICKNESS = 2;
+    private static final Border BUTTON_BORDERS = BorderFactory.createEmptyBorder(20, 20, 20, 20);
+
+    private final JPanel errorPanel = new JPanel();
+    private final JPanel backPanel = new JPanel();
+    private final JPanel reconnectPanel = new JPanel();
+
     private final JLabel errorLabel = new JLabel();
 
-    private Runnable onReconnectAction;
-    private Runnable onGoBackAction;
+    private final JButton backButton = new JButton("Go Back");
+    private final JButton reconnectButton = new JButton("Reconnect");
 
     public ConnectionFailurePanel() {
         setLayout(new GridBagLayout());
         setBackground(Color.YELLOW);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        add(errorLabel, gbc);
-        gbc.gridy = 1;
-        JButton reconnectButton = new JButton("Reconnect");
-        add(reconnectButton, gbc);
-        gbc.gridy = 2;
-        JButton backButton = new JButton("Go Back");
-        add(backButton, gbc);
-        reconnectButton.addActionListener(_ -> {
-            if (onReconnectAction != null) {
-                onReconnectAction.run();
-            }
-        });
-        backButton.addActionListener(_ -> {
-            if (onGoBackAction != null) {
-                onGoBackAction.run();
-            }
-        });
+        
+        errorLabel.setFont(FontManager.addingFont(LABEL_FONT_SIZE, FONT_NAME));
+        errorPanel.setOpaque(false);
+        errorPanel.add(errorLabel);
+        
+        reconnectButton.setFont(FontManager.addingFont(BUTTON_FONT_SIZE, FONT_NAME));
+        reconnectButton.setBackground(Color.WHITE);
+        reconnectButton.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.BLACK, THICKNESS), 
+            BUTTON_BORDERS)
+        );
+        reconnectButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        reconnectPanel.setOpaque(false);
+        reconnectPanel.add(reconnectButton);
+
+        backButton.setFont(FontManager.addingFont(BUTTON_FONT_SIZE, FONT_NAME));
+        backButton.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.BLACK, THICKNESS), 
+            BUTTON_BORDERS)
+        );
+        backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        backPanel.setOpaque(false);
+        backPanel.add(backButton);
+
+        JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+        container.setOpaque(false);
+        container.add(errorPanel);
+        container.add(reconnectPanel);
+        container.add(backPanel);
+
+        add(container);
+
     }
 
     public void setOnReconnect(Runnable action) {
-        this.onReconnectAction = action;
+        reconnectButton.addActionListener(_ -> action.run());
     }
 
     public void setOnGoBack(Runnable action) {
-        this.onGoBackAction = action;
+        backButton.addActionListener(_ -> action.run());
     }
 
     public void setErrorMessage(String text) {

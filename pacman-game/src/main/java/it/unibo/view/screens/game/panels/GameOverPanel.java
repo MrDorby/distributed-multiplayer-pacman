@@ -6,63 +6,61 @@ import it.unibo.view.font.FontManager;
 import it.unibo.view.font.FontName;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 
 public class GameOverPanel extends JPanel {
 
-    private Runnable onGoBackAction;
+    private static final String FONT_NAME = FontName.S2P.getFontName();
+    private static final float TITLE_SIZE = 50f;
+    private static final float WIN_LABEL_SIZE = 26f;
+    private static final float LEADERBOARD_SIZE = 18f;
+    private static final float BUTTON_SIZE = 30f;
 
-    private final JLabel winnerLabel;
-    private final JPanel leaderboardPanel;
+    private final JPanel titlePanel = new JPanel();
+    private final JPanel winnerPanel = new JPanel();
+    private final JPanel leaderboardPanel = new JPanel();
+    private final JPanel buttonPanel = new JPanel();
+
+    private final JLabel titleLabel = new JLabel("Game Over");
+    private final JLabel winnerLabel = new JLabel("Winner: Loading...", SwingConstants.CENTER);
+
+    private final JButton backButton = new JButton("Go Back");
 
     public GameOverPanel() {
-        setLayout(new GridLayout(3, 1));
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(Color.BLACK);
 
-        JLabel title = new JLabel("Game Over");
-        title.setForeground(Color.WHITE);
-        title.setHorizontalAlignment(SwingConstants.CENTER);
-        title.setOpaque(false);
-        title.setFont(FontManager.addingFont(50f, FontName.S2P.getFontName()));
-        add(title);
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(FontManager.addingFont(TITLE_SIZE, FONT_NAME));
+        titlePanel.setOpaque(false);
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 10, 0));
+        titlePanel.add(titleLabel);
+        add(titlePanel);
 
-        JPanel statsContainer = new JPanel(new BorderLayout());
+        JPanel statsContainer = new JPanel();
         statsContainer.setOpaque(false);
+        statsContainer.setLayout(new BoxLayout(statsContainer, BoxLayout.Y_AXIS));
 
-        winnerLabel = new JLabel("Winner: Loading...", SwingConstants.CENTER);
         winnerLabel.setForeground(Color.YELLOW);
-        winnerLabel.setFont(FontManager.addingFont(24f, FontName.S2P.getFontName()));
-        statsContainer.add(winnerLabel, BorderLayout.NORTH);
+        winnerLabel.setFont(FontManager.addingFont(WIN_LABEL_SIZE, FONT_NAME));
+        winnerPanel.setOpaque(false);
+        winnerPanel.add(winnerLabel);
+        winnerPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+        statsContainer.add(winnerPanel);
 
-        leaderboardPanel = new JPanel();
         leaderboardPanel.setLayout(new BoxLayout(leaderboardPanel, BoxLayout.Y_AXIS));
         leaderboardPanel.setOpaque(false);
-
-        JScrollPane scrollPane = new JScrollPane(leaderboardPanel);
-        scrollPane.setBorder(null);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        statsContainer.add(scrollPane, BorderLayout.CENTER);
+        statsContainer.add(leaderboardPanel);
 
         add(statsContainer);
 
-        JButton backButton = new JButton("Go Back");
         backButton.setForeground(Color.BLACK);
         backButton.setBackground(Color.WHITE);
-        backButton.setHorizontalAlignment(SwingConstants.CENTER);
-        backButton.setFont(FontManager.addingFont(40f, FontName.S2P.getFontName()));
+        backButton.setFont(FontManager.addingFont(BUTTON_SIZE, FONT_NAME));
+        backButton.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
         backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        backButton.addActionListener(_ -> {
-            if (onGoBackAction != null) {
-                onGoBackAction.run();
-            }
-        });
-
-        JPanel buttonPanel = new JPanel(new BorderLayout());
-        Border panelBorder = BorderFactory.createEmptyBorder(40, 140, 40, 140);
-        buttonPanel.setBorder(panelBorder);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         buttonPanel.setOpaque(false);
         buttonPanel.add(backButton);
         add(buttonPanel);
@@ -83,14 +81,17 @@ public class GameOverPanel extends JPanel {
                     .forEach(entry -> {
                         JLabel playerRow = new JLabel(entry.getKey() + " : " + entry.getValue() + " pts");
                         playerRow.setForeground(Color.WHITE);
-                        playerRow.setAlignmentX(Component.CENTER_ALIGNMENT);
-                        playerRow.setFont(FontManager.addingFont(18f, FontName.S2P.getFontName()));
-                        leaderboardPanel.add(playerRow);
+                        playerRow.setFont(FontManager.addingFont(LEADERBOARD_SIZE, FONT_NAME));
+                        JPanel panelRow = new JPanel();
+                        panelRow.setOpaque(false);
+                        //panelRow.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+                        panelRow.add(playerRow);
+                        leaderboardPanel.add(panelRow);
                     });
         }
     }
 
     public void setOnGoBack(Runnable action) {
-        this.onGoBackAction = action;
+        backButton.addActionListener(e -> action.run());
     }
 }
