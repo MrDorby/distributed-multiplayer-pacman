@@ -2,7 +2,7 @@ package it.unibo;
 
 import it.unibo.controller.server.GameServerBuilder;
 import it.unibo.controller.server.GameServer;
-import it.unibo.controller.server.orchestration.AgonesGameServerOrchestrator;
+import it.unibo.controller.server.orchestration.AgonesRESTGameServerOrchestrator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +34,10 @@ import java.util.UUID;
  *   <li>{@code --local}   : Forces local file-system persistence under {@code .temp/matches/}.</li>
  *   <li>{@code --remote}  : Forces remote database persistence. When active, required connection URIs
  *       ({@code BACKUP_SERVICE_URL}, {@code RESULTS_SERVICE_URL}) are loaded dynamically from environment variables.</li>
- *   <li>{@code --orchestrated} : Enables cluster orchestration. To be used when deploying the GameServer on a cluster. </li>
+ *   <li>{@code --orchestrated} : Enables cluster orchestration. To be used when deploying the GameServer on a cluster.
+ *        When active, the port used to communicate with the sidecar container ({@code AGONES_SIDECAR_HTTP_PORT}) can be
+ *        set dynamically via an environment variable. If no variable is specified, this parameter is set by default
+ *        to port 9358.</li>
  * </ul>
  *
  * <h2>Positional Argument Order</h2>
@@ -123,7 +126,7 @@ public class GameServerMain {
             builder = isRecovery ? builder.asRecovery() : builder.withMap(mapName);
             builder = usesLocalPersistence ? builder.withLocalPersistence() : builder.withRemotePersistence();
             if (isOrchestrated) {
-                builder = builder.withOrchestrator(new AgonesGameServerOrchestrator());
+                builder = builder.withOrchestrator(new AgonesRESTGameServerOrchestrator());
             }
             server = builder.build();
         } catch (Exception e) {
@@ -184,9 +187,13 @@ public class GameServerMain {
               --remote  : Uses database persistence (requires environment variables).
               --orchestrated : Enables cluster orchestration of the GameServer.
             
-            Environment Variables (Required when using --remote):
-              BACKUP_SERVICE_URL   : Connection URI for snapshot storage service.
-              RESULTS_SERVICE_URL  : Connection URI for results service.
+            Environment Variables:
+              - Required when using --remote:
+                BACKUP_SERVICE_URL   : Connection URI for snapshot storage service.
+                RESULTS_SERVICE_URL  : Connection URI for results service.
+              - Optional when using --orchestrated:
+                AGONES_SIDECAR_HTTP_PORT : Port to be used when interacting with the GameServer's sidecar container.
+                Defaults to 9358.
             
             Defaults:
               - Ports: TCP 7777, UDP 7777

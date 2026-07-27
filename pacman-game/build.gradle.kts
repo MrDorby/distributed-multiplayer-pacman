@@ -39,17 +39,6 @@ dependencies {
     implementation(platform("io.projectreactor:reactor-bom:2025.0.6"))
     implementation("io.projectreactor:reactor-core")
     implementation("org.mongodb:mongodb-driver-reactivestreams")
-
-    // Agones SDK dependencies
-    // Base module
-    implementation("net.infumia:agones4j:2.0.2")
-    // Required, https://mvnrepository.com/artifact/io.grpc/grpc-stub/
-    implementation("io.grpc:grpc-stub:1.64.0")
-    implementation("io.grpc:grpc-protobuf:1.64.0")
-    // Required, https://github.com/grpc/grpc-java/blob/master/gradle/libs.versions.toml#L46/
-    implementation("org.apache.tomcat:annotations-api:6.0.53")
-    // Source: https://mvnrepository.com/artifact/io.grpc/grpc-netty-shaded
-    implementation("io.grpc:grpc-netty-shaded:1.82.2")
 }
 
 java {
@@ -67,8 +56,6 @@ val shadowServer = tasks.register<com.github.jengelman.gradle.plugins.shadow.tas
     group = "shadow"
     description = "Builds the GameServer Fat JAR"
     archiveClassifier.set("server")
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    mergeServiceFiles()
     from(sourceSets.main.get().output)
     configurations = listOf(project.configurations.runtimeClasspath.get())
     manifest {

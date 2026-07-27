@@ -17,4 +17,4 @@ spec:
         - name: pacman-game-server
           image: pacman-game-server:latest
           imagePullPolicy: IfNotPresent
-          command: ["--orchestrated", "--local", "match-01"]
+          args: ["--orchestrated", "--local", "match-01"]
