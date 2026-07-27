@@ -12,7 +12,7 @@ import javax.crypto.Cipher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import it.unibo.controller.client.common.Stats;
+import it.unibo.controller.client.common.PlayerStats;
 import it.unibo.controller.client.common.TokenException;
 import it.unibo.controller.client.dto.PlayerInfoMongoDB;
 import it.unibo.controller.client.dto.PublicKeyRequestDTO;
@@ -26,19 +26,26 @@ import it.unibo.controller.client.key.KeyManager;
  */
 public class QueriesClient {
     
-    // TODO: Check the request addresses
-    private static final String SYN_REQUEST = "http://localhost:8080/queries/syn";
-    private static final String TOKEN_REQUEST = "http://localhost:8080/queries/token";
-    private static final String INFO_REQUEST = "http://localhost:8080/queries/info";
-    private static final String HASH_TYPE = "SHA-256"; 
+    private static final String SYN = "/syn";
+    private static final String TOKEN = "/token";
+    private static final String INFO = "/info";
+    private static final String HASH_TYPE = "SHA-256";
+
+    private final String syn_request;
+    private final String token_request;
+    private final String info_request;
+     
     private final HttpClient httpClient;
     private final KeyManager keyManager;
     private final ObjectMapper objectMapper;
 
-    public QueriesClient(HttpClient httpClient, KeyManager keyManager) {
+    public QueriesClient(HttpClient httpClient, KeyManager keyManager, UriReader uri) {
         this.httpClient = httpClient;
         this.keyManager = keyManager;
         this.objectMapper = new ObjectMapper();
+        this.syn_request = uri.queries() + SYN;
+        this.token_request = uri.queries() + TOKEN;
+        this.info_request = uri.queries() + INFO;
     }
 
     /**
@@ -48,16 +55,16 @@ public class QueriesClient {
      * @return a new Stat object that contains all the player statistics.
      * @throws Exception
      */
-    public Stats getPlayerStats(String username, String token) throws Exception {
+    public PlayerStats getPlayerStats(String username, String token) throws Exception {
         PublicKeyResponseDTO publicKeyResponseDTO = syn(username);
         checkToken(token);
         String encryptedRequest = keyManager.encryptDecryptDataRSA(
-                username, 
+                username,
                 Cipher.ENCRYPT_MODE, 
                 keyManager.getPublicKeyFromString(publicKeyResponseDTO.publicKey()));
         
         HttpRequest httpInfoRequest = HttpRequest.newBuilder()
-                                    .uri(URI.create(INFO_REQUEST))
+                                    .uri(URI.create(info_request))
                                     .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(encryptedRequest))
                                     .build();
@@ -67,11 +74,11 @@ public class QueriesClient {
             throw new Exception(infoResponse.body());
         }
         PlayerInfoMongoDB playerInfo = objectMapper.readValue(infoResponse.body(), PlayerInfoMongoDB.class);
-        return new Stats(
+        return new PlayerStats(
             playerInfo.username(), 
             playerInfo.nMatch(), 
             playerInfo.nWins(), 
-            playerInfo.nWins() / playerInfo.nMatch(), 
+            (float) playerInfo.nWins() / playerInfo.nMatch(),
             playerInfo.bestScore());
     }
 
@@ -79,7 +86,7 @@ public class QueriesClient {
     private void checkToken(String token) throws Exception {
         //String jsonFormat = objectMapper.writeValueAsString(token);
         HttpRequest httpTokenRequest = HttpRequest.newBuilder()
-                                    .uri(URI.create(TOKEN_REQUEST))
+                                    .uri(URI.create(token_request))
                                     .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(token))
                                     .build();
@@ -88,7 +95,6 @@ public class QueriesClient {
         if (tokenResponse.statusCode() != 200) {
             throw new TokenException(tokenResponse.body());
         }
-
     }
 
     /* Executes the syn procedure where the two services exchange their public key. */
@@ -100,17 +106,15 @@ public class QueriesClient {
         String publicKeyDTOString = objectMapper.writeValueAsString(publicKeyDTO);
 
         HttpRequest httpSynRequest = HttpRequest.newBuilder()
-                                    .uri(URI.create(SYN_REQUEST))
+                                    .uri(URI.create(syn_request))
                                     .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(publicKeyDTOString))
                                     .build();
-        
+
         HttpResponse<String> synResponse = httpClient.send(httpSynRequest, HttpResponse.BodyHandlers.ofString());
         if (synResponse.statusCode() != 200) {
             throw new Exception(synResponse.body());
         }
-
         return objectMapper.readValue(synResponse.body(), PublicKeyResponseDTO.class);
     }
-
 }

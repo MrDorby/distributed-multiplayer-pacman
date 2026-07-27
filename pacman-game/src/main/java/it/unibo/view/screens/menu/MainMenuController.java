@@ -8,11 +8,9 @@ import javax.swing.*;
 
 public class MainMenuController implements ScreenController {
     private final MainMenuPanel panel = new MainMenuPanel();
-    private final AppNavigator navigator;
 
     public MainMenuController(AppNavigator navigator) {
-        this.navigator = navigator;
-        panel.onPlay(() -> navigator.goTo(AppState.IN_GAME));
+        panel.onPlay(() -> navigator.goTo(AppState.MATCHMAKING));
         panel.onStats(() -> navigator.goTo(AppState.STATS));
         panel.onLogout(() -> navigator.goTo(AppState.LOGIN));
     }
@@ -23,12 +21,8 @@ public class MainMenuController implements ScreenController {
     }
 
     @Override
-    public void onEnter() {
-
-    }
+    public void onEnter() {}
 
     @Override
-    public void onExit() {
-
-    }
+    public void onExit() {}
 }

@@ -1,40 +1,41 @@
-# TODO: The longTermDB needs to be created outside the queries service because
-# it will be accessible also by matchmaker and game server manager, but each 
-# service can create its own collection.
 services:
-  queries:
+  auth-mongodb:
     image: mongo:latest
-    container_name: queries
+    container_name: authdb
     restart: always
+    env_file: "../.env"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: longTermDB  # Database to be created on startup
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}  # Database to be created on startup
     ports:
       - "27018:27017" # Port changed because possible conflict with MongoDb on local
     volumes:
       #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
     networks:
-      - long_term_db_network
+      - auth_mongodb_network
 
-  mongo-express-queries:
+  mongo-express:
     image: mongo-express:latest
-    container_name: mongo-express-queries
+    container_name: mongo-express
     restart: always
+    env_file: "../.env"
     environment:
+      #ME_CONFIG_MONGODB_SERVER: authDB
+      #ME_CONFIG_MONGODB_PORT: 27017
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@queries:27017/
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@auth-mongodb:27017/
       ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     ports:
-      - "8082:8081"
+      - "8081:8081"
     depends_on:
-      - queries
+      - auth-mongodb
     networks:
-      - long_term_db_network
+      - auth_mongodb_network
 
 networks:
-  long_term_db_network:
+  auth_mongodb_network:
     driver: bridge

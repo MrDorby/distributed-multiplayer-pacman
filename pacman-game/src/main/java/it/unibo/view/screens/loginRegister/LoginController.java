@@ -14,16 +14,18 @@ public class LoginController implements ScreenController {
         loginView.onLogin(() -> {
             String username = loginView.getUsername();
             String password = loginView.getPassword();
-            if (!username.isEmpty() && !password.isEmpty()) {
+            if (username.isEmpty() || password.isEmpty()) {
+                loginView.showMessage("Please fill in all fields");
+                return;
+            }
+            new Thread(() -> {
                 try {
-                    //serviceManager.login(username, password); // TODO: TO CHECK THE MAIN MENU, COMMENT THIS LINE.
+                    serviceManager.login(username, password); // TODO: TO CHECK THE MAIN MENU, COMMENT THIS LINE.
                     navigator.goTo(AppState.MAIN_MENU);
                 } catch (Exception e) {
-                    loginView.showMessage(e.getMessage());
+                    SwingUtilities.invokeLater(() -> loginView.showMessage(e.getMessage()));
                 }
-            } else {
-                loginView.showMessage("Please fill in all fields");
-            }
+            }).start();
         });
         loginView.onRegister(() -> navigator.goTo(AppState.REGISTER));
     }
@@ -34,13 +36,10 @@ public class LoginController implements ScreenController {
     }
 
     @Override
-    public void onEnter() {
-        // Setup login related stuff
-    }
+    public void onEnter() {}
 
     @Override
     public void onExit() {
         loginView.clearFields();
-        // Whatever needs to be done once finished
     }
 }

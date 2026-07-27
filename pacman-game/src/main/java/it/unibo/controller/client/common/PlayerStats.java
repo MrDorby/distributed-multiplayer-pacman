@@ -8,11 +8,10 @@ package it.unibo.controller.client.common;
  * @param winRate the ratio nWins / nMatch.
  * @param bestScore the best score of the player.
  */
-public record Stats(
+public record PlayerStats(
     String username,
     int nMatch,
     int nWins,
     float winRate,
-    int bestScore) {
-    
-}
+    int bestScore
+) {}

@@ -10,8 +10,6 @@ import it.unibo.controller.shared.engine.GameEngine;
 public interface GameClient extends GameClientNetworkListener, GameCommandListener {
     void joinServer();
 
-    void disconnect();
-
     String getUsername();
 
     GameEngine getEngine();

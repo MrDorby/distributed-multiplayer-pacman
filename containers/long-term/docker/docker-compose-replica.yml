@@ -1,9 +1,28 @@
-services:
+services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/518
+# https://github.com/docker-library/mongo/issues/475
+# https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-with-keyfile-access-control/
+#  THIS LINK IS ESSENTIAL: https://gist.github.com/harveyconnor/518e088bad23a273cae6ba7fc4643549
+  
+  # To create the key for the replica set do: openssl rand -base64 756 > replica.key
+  queries:
+    env_file: "../.env"
+    depends_on:
+      - longdb1
+      - longdb2
+      - longdb3
+    build: .
+    restart: on-failure
+    ports:
+      - $QUERIES_PORT:$QUERIES_PORT
+    networks:
+      - long_term_db_network
+
   # Primary
-  shortdb1:
+  longdb1:
     image: mongo:latest
-    container_name: shortdb1
+    container_name: longdb1
     restart: always
+    env_file: "../.env"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -11,20 +30,21 @@ services:
     ports:
       - ${MONGODB_PORT1}:27017 # Port changed due to possible conflict with MongoDb on local
     depends_on:
-      - shortdb2
-      - shortdb3
+      - longdb2
+      - longdb3
     volumes:
-      - ./replica.key:/data/replica.key
-      #- ./mongo-short:/data/db //TODO: Define the Volume where to mount the DB.
+      - ../key/replica.key:/data/replica.key
+      #- ./mongo-queries:/data/db //TODO: Define the Volume where to mount the DB.
     networks:
-      - short_term_db_network
+      - long_term_db_network
     command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/data/replica.key", "--bind_ip_all"]
 
   # Secondary
-  shortdb2:
+  longdb2:
     image: mongo:latest
-    container_name: shortdb2
+    container_name: longdb2
     restart: always
+    env_file: "../.env"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -32,18 +52,20 @@ services:
     ports:
       - ${MONGODB_PORT2}:27017
     volumes:
-      - ./replica.key:/data/replica.key
-      #- ./mongo-short:/data/db //TODO: Define the Volume where to mount the DB.
+      - ../key/replica.key:/data/replica.key
+      #- ./mongo-queries:/data/db //TODO: Define the Volume where to mount the DB.
+      #- ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
     networks:
-      - short_term_db_network
+      - long_term_db_network
     command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/data/replica.key", "--bind_ip_all"]
 
 
   # Arbiter
-  shortdb3:
+  longdb3:
     image: mongo:latest
-    container_name: shortdb3
+    container_name: longdb3
     restart: always
+    env_file: "../.env"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -51,29 +73,32 @@ services:
     ports:
       - ${MONGODB_PORT3}:27017
     volumes:
-      - ./replica.key:/data/replica.key
-      #- ./mongo-short:/data/db //TODO: Define the Volume where to mount the DB.
+      - ../key/replica.key:/data/replica.key
+      #- ./mongo-queries:/data/db //TODO: Define the Volume where to mount the DB.
     networks:
-      - short_term_db_network
+      - long_term_db_network
     command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/data/replica.key", "--bind_ip_all"]
+
+
 
   mongo-setup:
     image: mongo:latest
     container_name: mongo-setup
     restart: on-failure
+    env_file: "../.env"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     depends_on:
-      - shortdb1
-      - shortdb2
-      - shortdb3
+      - longdb1
+      - longdb2
+      - longdb3
     volumes:
-      - ./mongodb_init.sh:/scripts/mongodb_init.sh
+      - ../mongo-init/mongodb_init.sh:/scripts/mongodb_init.sh
     networks:
-      - short_term_db_network
+      - long_term_db_network
     entrypoint: ["/bin/bash", "/scripts/mongodb_init.sh"] 
 
 networks:
-  short_term_db_network:
+  long_term_db_network:
     driver: bridge

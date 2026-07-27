@@ -56,7 +56,7 @@ public class ConnectingPanel extends JPanel {
     }
 
     public void setOnCancel(Runnable action) {
-        cancelButton.addActionListener(e -> action.run());
+        cancelButton.addActionListener(_ -> action.run());
     }
 
     public void updateStatus(String text) {

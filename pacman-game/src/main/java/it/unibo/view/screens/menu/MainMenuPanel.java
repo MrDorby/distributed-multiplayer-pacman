@@ -6,8 +6,8 @@ import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -75,15 +75,15 @@ class MainMenuPanel extends JPanel {
     }
 
     public void onPlay(Runnable action) {
-        playButton.addActionListener(e -> action.run());
+        playButton.addActionListener(_ -> action.run());
     }
 
     public void onStats(Runnable action) {
-        statsButton.addActionListener(e -> action.run());
+        statsButton.addActionListener(_ -> action.run());
     }
 
     public void onLogout(Runnable action) {
-        logoutButton.addActionListener(e -> action.run());
+        logoutButton.addActionListener(_ -> action.run());
     }
 
     private void manageButtonFeatures(JButton button, JPanel container) {
@@ -94,26 +94,7 @@ class MainMenuPanel extends JPanel {
         button.setBorder(BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER));
         button.setFont(FontManager.addingFont(BUTTON_FONT_SIZE, FONT_NAME));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.addMouseListener(new MouseListener() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'mouseClicked'");
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'mousePressed'");
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException("Unimplemented method 'mouseReleased'");
-            }
-
+        button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
                 button.setBackground(Color.ORANGE);

@@ -4,10 +4,7 @@ public enum AppState {
     LOGIN,
     REGISTER,
     MAIN_MENU,
-    QUEUE,
-    READY_UP,
+    MATCHMAKING,
     IN_GAME,
-    GAME_OVER,
     STATS,
-    LEADERBOARD
 }

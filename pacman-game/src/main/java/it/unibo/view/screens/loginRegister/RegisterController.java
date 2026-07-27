@@ -1,6 +1,6 @@
 package it.unibo.view.screens.loginRegister;
 
-import javax.swing.JPanel;
+import javax.swing.*;
 
 import it.unibo.controller.client.services.ServiceManager;
 import it.unibo.view.navigation.AppNavigator;
@@ -15,17 +15,21 @@ public class RegisterController implements ScreenController {
         registerView.onRegister(() -> {
             String username = registerView.getUsername();
             String password = registerView.getPassword();
-            if (!username.isEmpty() && !password.isEmpty()) {
+            if (username.isBlank() || password.isBlank()) {
+                registerView.showMessage("Please fill in all fields");
+                return;
+            }
+            new Thread(() -> {
                 try {
                     String result = serviceManager.register(username, password);
-                    registerView.showMessage(result);
-                    navigator.goTo(AppState.LOGIN);
+                    SwingUtilities.invokeLater(() -> {
+                        registerView.showMessage(result);
+                        navigator.goTo(AppState.LOGIN);
+                    });
                 } catch (Exception e) {
-                    registerView.showMessage(e.getMessage());
+                    SwingUtilities.invokeLater(() -> registerView.showMessage(e.getMessage()));
                 }
-            } else {
-                registerView.showMessage("Please fill in all fields");
-            }
+            }).start();
         });
         registerView.onHome(() -> navigator.goTo(AppState.LOGIN));
     }
@@ -36,13 +40,10 @@ public class RegisterController implements ScreenController {
     }
 
     @Override
-    public void onEnter() {
-        // Setup register related stuff
-    }
+    public void onEnter() {}
 
     @Override
     public void onExit() {
         registerView.clearFields();
-        // Whatever needs to be done once finished}
     }
 }

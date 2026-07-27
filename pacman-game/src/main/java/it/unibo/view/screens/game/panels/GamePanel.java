@@ -174,9 +174,8 @@ public class GamePanel extends JPanel {
     }
 
     private static class ScoreboardPanel extends JPanel {
-        private record Triple(JLabel name, JLabel lives, JLabel points) {
-            
-        }
+        private record Triple(JLabel name, JLabel lives, JLabel points) {}
+
         private final Map<Integer, Triple> scoreLabels = new HashMap<>();
         private String localPlayerId;
 
@@ -241,7 +240,7 @@ public class GamePanel extends JPanel {
                     PacmanViewModel pacman = optionalPacman.get();
                     String lives = String.valueOf(pacman.lives());
                     String points = String.valueOf(list.get(i).getValue());
-                    String baseDisplayName = pacman.controlledByPlayer() ? id : " [Bot] " + id;
+                    String baseDisplayName = pacman.controlledByPlayer() ? id : " [B] " + id;
                     String finalDisplayName = baseDisplayName.length() > PLAYER_NAME_LENGTH
                             ? baseDisplayName.substring(0, PLAYER_NAME_LENGTH) + "..."
                             : baseDisplayName;

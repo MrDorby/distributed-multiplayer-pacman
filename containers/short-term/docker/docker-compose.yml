@@ -1,0 +1,40 @@
+# For short-term db.
+services:
+  short:
+    image: mongo:latest
+    container_name: short
+    restart: always
+    env_file: "../.env"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}  # Database to be created on startup
+    ports:
+      - "27018:27017" # Port changed because possible conflict with MongoDb on local
+    volumes:
+      #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
+      - ../mongo-init/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
+    networks:
+      - short_term_db_network
+
+  mongo-express-short:
+    image: mongo-express:latest
+    container_name: mongo-express-short
+    restart: always
+    env_file: "../.env"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@short:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "8082:8081"
+    depends_on:
+      - short
+    networks:
+      - short_term_db_network
+
+networks:
+  short_term_db_network:
+    driver: bridge

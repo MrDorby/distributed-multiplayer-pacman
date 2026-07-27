@@ -27,11 +27,14 @@ import it.unibo.controller.client.key.KeyManager;
  */
 public class AuthClient {
     
-    // TODO: Change the domain depending on the container info and network connected.
-    private static final String SYN_REQUEST = "http://localhost:8080/auth/syn";
-    private static final String LOGIN_REQUEST = "http://localhost:8080/auth/login";
-    private static final String REGISTER_REQUEST = "http://localhost:8080/auth/register";
+    private static final String SYN = "/syn";
+    private static final String LOGIN = "/login";
+    private static final String REGISTER = "/register";
     private static final String HASH_TYPE = "SHA-256";
+
+    private final String syn_request;
+    private final String login_request;
+    private final String register_request;
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -39,11 +42,14 @@ public class AuthClient {
     private String token;
     private String username;
 
-    public AuthClient(HttpClient httpClient, KeyManager keyManager) {
+    public AuthClient(HttpClient httpClient, KeyManager keyManager, UriReader uri) {
         this.httpClient = httpClient;
         this.keyManager = keyManager;
         this.objectMapper = new ObjectMapper();
         this.token = "";
+        this.syn_request = uri.authenticator() + SYN;
+        this.login_request = uri.authenticator() + LOGIN;
+        this.register_request = uri.authenticator() + REGISTER;
     }
 
     /**
@@ -60,7 +66,7 @@ public class AuthClient {
         PublicKey publicKeyAuth = keyManager.getPublicKeyFromString(authPublicKeyDTO.publicKey());
         String encryptedString = encryptedRegisterLoginRequest(username, password, publicKeyAuth);
         HttpRequest httpLoginRequest = HttpRequest.newBuilder()
-                                    .uri(URI.create(LOGIN_REQUEST))
+                                    .uri(URI.create(login_request))
                                     .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(encryptedString))
                                     .build();
@@ -99,7 +105,7 @@ public class AuthClient {
         }
         String encryptedString = encryptedRegisterLoginRequest(username, password, keyManager.getPublicKeyFromString(authPublicKeyDTO.publicKey()));
         HttpRequest httpRegisterRequest = HttpRequest.newBuilder()
-                                    .uri(URI.create(REGISTER_REQUEST))
+                                    .uri(URI.create(register_request))
                                     .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(encryptedString))
                                     .build();
@@ -121,7 +127,7 @@ public class AuthClient {
         String publicKeyDTOString = objectMapper.writeValueAsString(publicKeyDTO);
 
         HttpRequest httpSynRequest = HttpRequest.newBuilder()
-                                    .uri(URI.create(SYN_REQUEST))
+                                    .uri(URI.create(syn_request))
                                     .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(publicKeyDTOString))
                                     .build();

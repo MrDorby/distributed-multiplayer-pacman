@@ -1,38 +1,40 @@
-# For short-term db.
+# TODO: The longTermDB needs to be created outside the queries service because
+# it will be accessible also by matchmaker and game server manager, but each 
+# service can create its own collection.
 services:
-  short:
+  longdb:
     image: mongo:latest
-    container_name: short
+    container_name: longdb
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: shortTermDB  # Database to be created on startup
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}  # Database to be created on startup
     ports:
       - "27018:27017" # Port changed because possible conflict with MongoDb on local
     volumes:
       #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
     networks:
-      - short_term_db_network
+      - long_term_db_network
 
-  mongo-express-short:
+  mongo-express-queries:
     image: mongo-express:latest
-    container_name: mongo-express-short
+    container_name: mongo-express-queries
     restart: always
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@short:27017/
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@longdb:27017/
       ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     ports:
       - "8082:8081"
     depends_on:
-      - short
+      - longdb
     networks:
-      - short_term_db_network
+      - long_term_db_network
 
 networks:
-  short_term_db_network:
+  long_term_db_network:
     driver: bridge
