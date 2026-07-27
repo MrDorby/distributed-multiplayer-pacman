@@ -5,14 +5,20 @@ import it.unibo.view.screens.game.GameControllerWithManualConnection;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Main entry point for the standalone Pacman client.
+ * <p>
+ * Unlike {@link FullGameClientMain}, this entry point bypasses authentication
+ * and navigation menus, launching directly into the game view with a manual server address prompt.
+ * </p>
+ */
 public class GameClientMain {
 
-    private final JFrame frame;
+    private final JFrame frame = new JFrame("Pacman Standalone");
 
     public GameClientMain() {
-        frame = new JFrame("Pacman Standalone");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1280, 720);
+        frame.setSize(new Dimension(1280, 720));
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
         GameControllerWithManualConnection controller = new GameControllerWithManualConnection();

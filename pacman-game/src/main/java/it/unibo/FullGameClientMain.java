@@ -16,17 +16,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
-public class FullPacmanClientMain {
-    private final JFrame frame = new JFrame("Pacman");
-    private final static int WIDTH_FRAME = Toolkit.getDefaultToolkit().getScreenSize().width;
-    private final static int HEIGHT_FRAME = Toolkit.getDefaultToolkit().getScreenSize().height;
+/**
+ * Main entry point for the Pacman client application.
+ */
+public class FullGameClientMain {
+    public enum Mode {
+        /** Connects to live backend services via real networking implementations. */
+        REMOTE,
+        /** Uses local mock/in-memory implementations for testing and offline debugging. */
+        LOCAL
+    }
 
-    public FullPacmanClientMain(boolean isDebug) {
-        frame.setSize(WIDTH_FRAME, HEIGHT_FRAME);
-        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+    private final JFrame frame = new JFrame("Pacman");
+
+    public FullGameClientMain(Mode mode) {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(new Dimension(1280, 720));
+        frame.setLocationRelativeTo(null);
         ScreenRouter router = new ScreenRouter(frame);
-        ServiceManager serviceManager = isDebug ? new DummyServiceManager() : new ServiceManagerImpl();
+        ServiceManager serviceManager = (mode == Mode.LOCAL) ? new DummyServiceManager() : new ServiceManagerImpl();
         router.register(AppState.LOGIN, new LoginController(router, serviceManager));
         router.register(AppState.REGISTER, new RegisterController(router, serviceManager));
         router.register(AppState.MAIN_MENU, new MainMenuController(router));
@@ -40,10 +48,13 @@ public class FullPacmanClientMain {
         frame.setVisible(true);
     }
 
+    /**
+     * Pass {@code --local} to run with dummy backend services.
+     */
     static void main(String[] args) {
-        boolean isDebug = Arrays.stream(args).anyMatch(arg -> arg.equalsIgnoreCase("--debug"));
+        Mode mode = Arrays.stream(args).anyMatch(arg -> arg.equalsIgnoreCase("--local")) ? Mode.LOCAL : Mode.REMOTE;
         SwingUtilities.invokeLater(() -> {
-            FullPacmanClientMain app = new FullPacmanClientMain(isDebug);
+            FullGameClientMain app = new FullGameClientMain(mode);
             app.start();
         });
     }
