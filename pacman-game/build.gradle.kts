@@ -1,17 +1,11 @@
 plugins {
     java
     application
-    id("org.springframework.boot") version "4.1.0"
-    id("io.spring.dependency-management") version "1.1.7"
     id("com.gradleup.shadow") version "9.5.1"
 }
 
 group = "it.unibo"
 version = "1.0"
-
-val mockitoAgent = configurations.create("mockitoAgent") {
-    isTransitive = false
-}
 
 repositories {
     mavenCentral()
@@ -22,18 +16,20 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    implementation("tools.jackson.core:jackson-databind:3.1.2")
+    // Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.22.1")
     // Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-cbor
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.22.0")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.22.1")
     // Source: https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     implementation("ch.qos.logback:logback-classic:1.5.32")
-    // Source: https://mvnrepository.com/artifact/io.netty/netty-all
-    implementation("io.netty:netty-all:4.2.15.Final")
+    // Source: https://mvnrepository.com/artifact/io.netty/netty-transport
+    implementation("io.netty:netty-transport:4.2.16.Final")
+    // Source: https://mvnrepository.com/artifact/io.netty/netty-handler
+    implementation("io.netty:netty-handler:4.2.16.Final")
     // Source: https://mvnrepository.com/artifact/org.mockito/mockito-core
-    mockitoAgent("org.mockito:mockito-core:5.23.0")
-
+    testImplementation("org.mockito:mockito-core:5.23.0")
     // Source: https://mvnrepository.com/artifact/com.auth0/java-jwt
-    implementation("com.auth0:java-jwt:4.5.2") //TODO: check io.jsonwebtoken
+    implementation("com.auth0:java-jwt:4.5.2")
 
     implementation(platform("org.mongodb:mongodb-driver-bom:5.9.0"))
     implementation(platform("io.projectreactor:reactor-bom:2025.0.6"))
@@ -74,18 +70,30 @@ val shadowClient = tasks.register<com.github.jengelman.gradle.plugins.shadow.tas
     }
 }
 
+val shadowFullClient = tasks.register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowFullClient") {
+    group = "shadow"
+    description = "Builds the FullGameClient Fat JAR"
+    archiveClassifier.set("full-client")
+    from(sourceSets.main.get().output)
+    configurations = listOf(project.configurations.runtimeClasspath.get())
+    manifest {
+        attributes("Main-Class" to "it.unibo.FullGameClientMain")
+    }
+}
+
 tasks.register("buildShadow") {
     group = "build"
     description = "Dynamically builds shadow jars based on -PtargetJar flag"
     when (val target = project.findProperty("targetJar")?.toString()) {
         "server" -> dependsOn(shadowServer)
         "client" -> dependsOn(shadowClient)
-        "all" -> dependsOn(shadowServer, shadowClient)
+        "full-client" -> dependsOn(shadowFullClient)
+        "all" -> dependsOn(shadowServer, shadowClient, shadowFullClient)
         null -> {
             logger.lifecycle("No -PtargetJar specified. Defaulting to building ALL jars.")
-            dependsOn(shadowServer, shadowClient)
+            dependsOn(shadowServer, shadowClient, shadowFullClient)
         }
-        else -> throw GradleException("Unknown targetJar: '$target'. Allowed values: server, client, all")
+        else -> throw GradleException("Unknown targetJar: '$target'. Allowed values: server, client, full-client, all")
     }
 }
 
@@ -95,5 +103,4 @@ application {
 
 tasks.test {
     useJUnitPlatform()
-    jvmArgs.add("-javaagent:${mockitoAgent.asPath}")
 }

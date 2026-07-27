@@ -1,11 +1,12 @@
 package it.unibo.model.map;
 
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.unibo.model.common.MatrixCoordinates;
 import it.unibo.model.common.Vector2D;
-import tools.jackson.core.JacksonException;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class FourPlayersGameMapFactory implements GameMapFactory {
                     "The number of tiles does not correspond to the specified map size (rows * columns) in JSON file: "
                             + path);
             }
-        } catch (JacksonException e) {
+        } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
     }
