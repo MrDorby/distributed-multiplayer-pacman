@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.MatchmakerDetailsService;
 import it.unibo.dto.GameServerRequest;
+import it.unibo.dto.GameServerResponse;
 import it.unibo.dto.JoinLobbyRequest;
 import it.unibo.dto.JoinLobbyResponse;
 import it.unibo.dto.QuitLobbyRequest;
@@ -33,8 +34,8 @@ import it.unibo.mongodb.MatchInfoMongoDB;
 @RequestMapping(value = "/matchmaker")
 public class MatchmakerImpl implements Matchmaker{
 
-    // TODO: add to the env.
-    private static final String AUTHENTICATOR_REQUEST = "http://localhost:8080/auth/token";
+    private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
+    private static final String AUTHENTICATOR_REQUEST = System.getenv().get(AUTHENTICATOR_ENV) + "/token";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final MatchmakerDetailsService matchmakerDetailsService;
@@ -43,6 +44,7 @@ public class MatchmakerImpl implements Matchmaker{
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
         this.matchmakerDetailsService = matchmakerDetailsService;
+        
     }
 
     @Override
@@ -92,14 +94,14 @@ public class MatchmakerImpl implements Matchmaker{
         }
     }
 
-    // TODO: Change
     @Override
     @PostMapping(value = "/game_server", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getGameServer(@RequestBody GameServerRequest info) {
         try {
-            String username = checkTokenPermission(info.token());
-            MatchInfoMongoDB match = this.matchmakerDetailsService.getMatch(info.matchId()); // TODO: to change.
-            String result = this.objectMapper.writeValueAsString(match.getGameServerSocket());
+            checkTokenPermission(info.token());
+            MatchInfoMongoDB match = this.matchmakerDetailsService.getMatch(info.matchId());
+            GameServerResponse response = new GameServerResponse(match.getMatchId(), match.getGameServerSocket());
+            String result = this.objectMapper.writeValueAsString(response);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

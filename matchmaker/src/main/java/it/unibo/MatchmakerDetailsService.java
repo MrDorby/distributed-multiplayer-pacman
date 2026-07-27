@@ -4,24 +4,24 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.boot.webflux.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+
+import it.unibo.dto.GameServerResponse;
 import it.unibo.dto.JoinLobbyResponse;
 import it.unibo.dto.LobbyTypeResponse;
 import it.unibo.mongodb.LobbyInfoMongoDB;
 import it.unibo.mongodb.MatchInfoMongoDB;
+import it.unibo.mongodb.MongoBackground;
 import it.unibo.mongodb.ShortTermLobbyRepository;
 import it.unibo.mongodb.ShortTermMatchRepository;
-import reactor.core.publisher.Mono;
 
 //TODO: Check: https://dev.to/adamthedeveloper/spring-webflux-when-to-use-it-and-how-to-build-with-it-5a6e
 /**
@@ -39,6 +39,9 @@ public class MatchmakerDetailsService {
 
     @Autowired
     private ShortTermMatchRepository matchCollection;
+
+    @Autowired
+    private MongoBackground mongoBackground;
 
     /**
      * Find a lobby if it presents otherwise it throws an Exception.
@@ -66,8 +69,8 @@ public class MatchmakerDetailsService {
      * @param map the name of the map chosen by the player.
      * @return a Response containing the type of the response and the lobby id.
      */
-    @Async  //TODO: ok? nel caso fare una classe servizio a parte per tutti metodi che si eseguono in modo asyn.
-    public JoinLobbyResponse checkForLobby(String username, String map) {
+    public JoinLobbyResponse checkForLobby(String username, String map) throws Exception {
+        //TODO AGGIUNGERE ANCHE IL LOBBY ID O FARE NUOVO ENDPOINT PER IL WAITING?
         Optional<LobbyInfoMongoDB> lobby = lobbyCollection.findByUsername(username);
         if (lobby.isPresent()) {
             int size = lobby.get().getPlayers().size();
@@ -79,7 +82,7 @@ public class MatchmakerDetailsService {
         if (lobbies.isEmpty()) {
             List<String> players = new ArrayList<>();
             players.add(username);
-            LobbyInfoMongoDB newLobby = new LobbyInfoMongoDB(map, players);
+            LobbyInfoMongoDB newLobby = new LobbyInfoMongoDB("", map, players, 0);
             lobbyCollection.save(newLobby);
             return new JoinLobbyResponse(LobbyTypeResponse.WAITING, newLobby.getId());
         } else {
@@ -91,44 +94,54 @@ public class MatchmakerDetailsService {
                                     .get();
             
             newLobby.getPlayers().add(username);
-            return newLobby.getPlayers().size() == LOBBY_SIZE ? 
-                foundResponse(newLobby) : 
-                new JoinLobbyResponse(LobbyTypeResponse.WAITING, newLobby.getId());
+            LobbyInfoMongoDB res = this.lobbyCollection.save(newLobby);
+            return res.getPlayers().size() == LOBBY_SIZE ? 
+                foundResponse(res) : 
+                new JoinLobbyResponse(LobbyTypeResponse.WAITING, res.getId());
         }
     }
 
-    // TODO: quando si ha la risposta con found, aggiungere sulla collection matches un nuovo match
-    // e inviare la richiesta al manager.
-    private JoinLobbyResponse foundResponse(LobbyInfoMongoDB lobby) {
-        // TODO: chiamare il manager.
-        /* SYNC
-        ResponseEntity<String> result = RestClient
-            .create(MANAGER)
-            .post()
-            .uri(new URI("/"))
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)
-            .body(null)
-            .retrieve()
-            .toEntity(String.class);
-        */
+    /* Deals with the management of the FOUND type response. */
+    private JoinLobbyResponse foundResponse(LobbyInfoMongoDB lobby) throws Exception {
+        GameServerResponse gameServer = null;
+        if (lobby.getMatchId().isEmpty() | lobby.getMatchId() == null) {
+            /* SYNC */
+            ResponseEntity<String> result = RestClient
+                .create(MANAGER)
+                .post()
+                .uri(new URI("/"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(null)  // TODO: it will contain the lobby id.
+                .retrieve()
+                .toEntity(String.class);
 
-        // TODO: check https://docs.spring.io/spring-framework/reference/web/webflux-webclient/client-retrieve.html
-        /*
-        CompletableFuture<?> result = WebClient
-            .create(MANAGER)
-            .post()
-            .uri(new URI("/"))
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(null)
-            .retrieve()
-            .bodyToMono(Object.class).toFuture();
-        */
-        
-        MatchInfoMongoDB match = this.matchCollection.save(
-            new MatchInfoMongoDB(lobby.getPlayers(), null));
-        
-        return new JoinLobbyResponse(LobbyTypeResponse.FOUND, match.getId());
+
+            // TODO: check https://docs.spring.io/spring-framework/reference/web/webflux-webclient/client-retrieve.html
+            /*
+            CompletableFuture<?> result = WebClient
+                .create(MANAGER)
+                .post()
+                .uri(new URI("/"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(null)
+                .retrieve()
+                .bodyToMono(Object.class).toFuture();
+            */
+
+            ObjectMapper mapper = new ObjectMapper();
+            gameServer = mapper.readValue(result.getBody(), GameServerResponse.class);
+
+            this.mongoBackground.saveMatchInfo(
+                lobby,
+                gameServer,
+                lobbyCollection,
+                matchCollection
+            );
+        }
+        JoinLobbyResponse response = new JoinLobbyResponse(LobbyTypeResponse.FOUND, lobby.getMatchId());
+        this.mongoBackground.deleteLobby(lobby, lobbyCollection);
+        return response;
     }
 
     /**

@@ -3,7 +3,10 @@ services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/
 # https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-with-keyfile-access-control/
 #  THIS LINK IS ESSENTIAL: https://gist.github.com/harveyconnor/518e088bad23a273cae6ba7fc4643549
   
+
+  #TODO ADD env_file: to define which one to use.
   authenticator:
+    env_file: "../.env"
     depends_on:
       - auth-mongodb1
       - auth-mongodb2
@@ -26,6 +29,7 @@ services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/
     image: mongo:latest
     container_name: authdb1
     restart: always
+    env_file: "../.env"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -36,7 +40,7 @@ services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/
       - auth-mongodb2
       - auth-mongodb3
     volumes:
-      - ./replica.key:/data/replica.key
+      - ../key/replica.key:/data/replica.key
       #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
     networks:
       - auth_mongodb_network
@@ -47,6 +51,7 @@ services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/
     image: mongo:latest
     container_name: authdb2
     restart: always
+    env_file: "../.env"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -54,7 +59,7 @@ services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/
     ports:
       - ${MONGODB_PORT2}:27017
     volumes:
-      - ./replica.key:/data/replica.key
+      - ../key/replica.key:/data/replica.key
       #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
       #- ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
     networks:
@@ -68,6 +73,7 @@ services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/
     image: mongo:latest
     container_name: authdb3
     restart: always
+    env_file: "../.env"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -75,7 +81,7 @@ services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/
     ports:
       - ${MONGODB_PORT3}:27017
     volumes:
-      - ./replica.key:/data/replica.key
+      - ../key/replica.key:/data/replica.key
       #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
       #- ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
     networks:
@@ -89,6 +95,7 @@ services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/
     image: mongo:latest
     container_name: mongo-setup
     restart: on-failure
+    env_file: "../.env"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -98,7 +105,7 @@ services:   # Check HERE: https://github.com/mongo-express/mongo-express/issues/
       - auth-mongodb2
       - auth-mongodb3
     volumes:
-      - ./mongodb_init.sh:/scripts/mongodb_init.sh
+      - ../mongo-init/mongodb_init.sh:/scripts/mongodb_init.sh
       #- ./mongo-auth:/data/db //TODO: Define the Volume where to mount the DB.
       #- ./mongo-init-primary.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Mount init scripts folder
       #- ./mongo-init-primary.js:/init/mongo-init.js:ro
