@@ -16,10 +16,10 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    // Source: https://mvnrepository.com/artifact/tools.jackson.core/jackson-databind
-    implementation("tools.jackson.core:jackson-databind:3.2.1")
-    // Source: https://mvnrepository.com/artifact/tools.jackson.dataformat/jackson-dataformat-cbor
-    implementation("tools.jackson.dataformat:jackson-dataformat-cbor:3.2.1")
+    // Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.22.1")
+    // Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-cbor
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.22.1")
     // Source: https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     implementation("ch.qos.logback:logback-classic:1.5.32")
     // Source: https://mvnrepository.com/artifact/io.netty/netty-transport
