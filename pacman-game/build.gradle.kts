@@ -24,8 +24,8 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.32")
     // Source: https://mvnrepository.com/artifact/io.netty/netty-transport
     implementation("io.netty:netty-transport:4.2.16.Final")
-    // Source: https://mvnrepository.com/artifact/io.netty/netty-codec-http2
-    implementation("io.netty:netty-codec-http2:4.2.16.Final")
+    // Source: https://mvnrepository.com/artifact/io.netty/netty-handler
+    implementation("io.netty:netty-handler:4.2.16.Final")
     // Source: https://mvnrepository.com/artifact/org.mockito/mockito-core
     testImplementation("org.mockito:mockito-core:5.23.0")
     // Source: https://mvnrepository.com/artifact/com.auth0/java-jwt
@@ -77,7 +77,7 @@ val shadowFullClient = tasks.register<com.github.jengelman.gradle.plugins.shadow
     from(sourceSets.main.get().output)
     configurations = listOf(project.configurations.runtimeClasspath.get())
     manifest {
-        attributes("Main-Class" to "it.unibo.FullPacmanClientMain")
+        attributes("Main-Class" to "it.unibo.FullGameClientMain")
     }
 }
 
