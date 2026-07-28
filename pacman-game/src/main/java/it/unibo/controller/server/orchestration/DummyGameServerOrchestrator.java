@@ -7,6 +7,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * A dummy GameServerOrchestrator that does nothing but logging operations.
+ */
 public class DummyGameServerOrchestrator implements GameServerOrchestrator {
     private static final Logger logger = LoggerFactory.getLogger(DummyGameServerOrchestrator.class);
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -14,19 +17,18 @@ public class DummyGameServerOrchestrator implements GameServerOrchestrator {
 
 
     @Override
-    public void ready() {
+    public void start() {
+        startHeartbeat();
         logger.debug("Notifying orchestrator that the server is ready");
     }
 
-    @Override
-    public void startHeartbeat() {
+    private void startHeartbeat() {
         scheduler.scheduleAtFixedRate(() -> {
             logger.debug("Sending heartbeat to orchestrator");
         }, 0, PERIOD_IN_MILLIS, TimeUnit.MILLISECONDS);
     }
 
-    @Override
-    public void stopHeartbeat() {
+    private void stopHeartbeat() {
         logger.debug("Stopping heartbeat scheduler");
         scheduler.shutdown();
     }

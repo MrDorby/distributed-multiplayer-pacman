@@ -2,6 +2,7 @@ package it.unibo;
 
 import it.unibo.controller.server.GameServerBuilder;
 import it.unibo.controller.server.GameServer;
+import it.unibo.controller.server.orchestration.AgonesRESTGameServerOrchestrator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,10 @@ import java.util.UUID;
  *   <li>{@code --local}   : Forces local file-system persistence under {@code .temp/matches/}.</li>
  *   <li>{@code --remote}  : Forces remote database persistence. When active, required connection URIs
  *       ({@code BACKUP_SERVICE_URL}, {@code RESULTS_SERVICE_URL}) are loaded dynamically from environment variables.</li>
+ *   <li>{@code --orchestrated} : Enables cluster orchestration. To be used when deploying the GameServer on a cluster.
+ *        When active, the port used to communicate with the sidecar container ({@code AGONES_SIDECAR_HTTP_PORT}) can be
+ *        set dynamically via an environment variable. If no variable is specified, this parameter is set by default
+ *        to port 9358.</li>
  * </ul>
  *
  * <h2>Positional Argument Order</h2>
@@ -56,7 +61,11 @@ import java.util.UUID;
  *   <li>{@code java GameServerMain} <br>
  *       Standard local match with auto-generated UUID, default map ("map1"), and ports 7777/7777.</li>
  *   <li>{@code java GameServerMain match-101 map2 7777 8888} <br>
- *       Standard remote match using environment variable URIs for "match-101" on map "map2" listening on 7777/8888.</li>
+ *       Standard remote match with no orchestration using environment variable URIs for "match-101" on map "map2"
+ *       listening on 7777/8888.</li>
+ *   <li>{@code java GameServerMain --orchestrated match-101 map2 7777 8888} <br>
+ *       Standard remote match with cluster orchestration using environment variable URIs for "match-101" on map "map2"
+ *  *    listening on 7777/8888.</li>
  *   <li>{@code java GameServerMain --recover match-101 7777 8888} <br>
  *       Recovers "match-101" from remote snapshot using environment variable URIs on ports 7777/8888.</li>
  *   <li>{@code java GameServerMain --local --recover match-101 7777 8888} <br>
@@ -73,6 +82,7 @@ public class GameServerMain {
         boolean hasLocalFlag = false;
         boolean hasRemoteFlag = false;
         boolean isRecovery = false;
+        boolean isOrchestrated = false;
         String matchId = null;
         String mapName = null;
         Integer tcpPort = null;
@@ -86,6 +96,8 @@ public class GameServerMain {
                     hasLocalFlag = true;
                 } else if ("--remote".equalsIgnoreCase(arg)) {
                     hasRemoteFlag = true;
+                } else if ("--orchestrated".equalsIgnoreCase(arg)) {
+                    isOrchestrated = true;
                 } else if (matchId == null) {
                     matchId = arg;
                 } else if (!isRecovery && mapName == null) {
@@ -113,8 +125,12 @@ public class GameServerMain {
                     .withPorts(tcpPort, udpPort);
             builder = isRecovery ? builder.asRecovery() : builder.withMap(mapName);
             builder = usesLocalPersistence ? builder.withLocalPersistence() : builder.withRemotePersistence();
+            if (isOrchestrated) {
+                builder = builder.withOrchestrator(new AgonesRESTGameServerOrchestrator());
+            }
             server = builder.build();
         } catch (Exception e) {
+            logger.error(e.getMessage());
             printUsage();
             throw e;
         }
@@ -162,17 +178,22 @@ public class GameServerMain {
         System.err.println("""
             ================================================================================================
             Usage:
-              Standard Mode:  java GameServerMain [--local|--remote] <matchId> <mapName> [tcpPort] [udpPort]
-              Recovery Mode:  java GameServerMain --recover [--local|--remote] <matchId> [tcpPort] [udpPort]
+              Standard Mode:  java GameServerMain [--local|--remote] [--orchestrated] <matchId> <mapName> [tcpPort] [udpPort]
+              Recovery Mode:  java GameServerMain --recover [--local|--remote] [--orchestrated] <matchId> [tcpPort] [udpPort]
             
             Flags:
               --recover : Enables recovery mode (omits <mapName> parameter). Requires <matchId>.
               --local   : Uses local file-system storage.
               --remote  : Uses database persistence (requires environment variables).
+              --orchestrated : Enables cluster orchestration of the GameServer.
             
-            Environment Variables (Required when using --remote):
-              BACKUP_SERVICE_URL   : Connection URI for snapshot storage service.
-              RESULTS_SERVICE_URL  : Connection URI for results service.
+            Environment Variables:
+              - Required when using --remote:
+                BACKUP_SERVICE_URL   : Connection URI for snapshot storage service.
+                RESULTS_SERVICE_URL  : Connection URI for results service.
+              - Optional when using --orchestrated:
+                AGONES_SIDECAR_HTTP_PORT : Port to be used when interacting with the GameServer's sidecar container.
+                Defaults to 9358.
             
             Defaults:
               - Ports: TCP 7777, UDP 7777
