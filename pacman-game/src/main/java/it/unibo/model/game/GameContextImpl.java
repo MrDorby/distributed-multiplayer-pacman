@@ -126,12 +126,23 @@ public class GameContextImpl implements GameContext {
     }
 
     private String findWinnerId() {
-        if (checkGameOver()) {
-            return pacmans.stream()
-                    .filter(pacman -> pacman.getLives() > 0)
-                    .max(Comparator.comparingInt(Pacman::getScore))
-                    .map(Pacman::getId).orElse(null);
+        if (!checkGameOver()) {
+            return null;
         }
-        return null;
+        Pacman winner = null;
+        boolean isTie = false;
+        for (Pacman pacman : pacmans) {
+            if (pacman.getLives() <= 0) continue;
+            if (winner == null) {
+                winner = pacman;
+            } else if (pacman.getLives() > winner.getLives()
+                    || (pacman.getLives() == winner.getLives() && pacman.getScore() > winner.getScore())) {
+                winner = pacman;
+                isTie = false;
+            } else if (pacman.getLives() == winner.getLives() && pacman.getScore() == winner.getScore()) {
+                isTie = true;
+            }
+        }
+        return (winner != null && !isTie) ? winner.getId() : null;
     }
 }

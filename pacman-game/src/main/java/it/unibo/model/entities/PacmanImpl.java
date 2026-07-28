@@ -189,7 +189,8 @@ public class PacmanImpl extends GameEntityImpl implements Pacman {
                     .map(map::getTile)
                     .filter(y -> y.getTileType() == TileType.DOT || y.getTileType() == TileType.SPECIAL_DOT)
                     .collect(Collectors.collectingAndThen(Collectors.toList(), collected -> {
-                        Collections.shuffle(collected);return collected;
+                        Collections.shuffle(collected);
+                        return collected;
                     }));
             if (tiles.isEmpty()) {
                 this.movementManager.changeDirection(MovableEntity.getRandomDirection());

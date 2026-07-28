@@ -32,7 +32,8 @@ import it.unibo.mongodb.ShortTermMatchRepository;
 public class MatchmakerDetailsService {
 
     private static final int LOBBY_SIZE = 4;
-    private static final String MANAGER = "";
+    private static final String MANAGER = "MANAGER"; //TODO: change
+    private static final String CREATE_GAME_SERVER_URI = System.getenv(MANAGER) + "/create"; //TODO: change
     
     @Autowired
     private ShortTermLobbyRepository lobbyCollection;
@@ -70,7 +71,6 @@ public class MatchmakerDetailsService {
      * @return a Response containing the type of the response and the lobby id.
      */
     public JoinLobbyResponse checkForLobby(String username, String map) throws Exception {
-        //TODO AGGIUNGERE ANCHE IL LOBBY ID O FARE NUOVO ENDPOINT PER IL WAITING?
         Optional<LobbyInfoMongoDB> lobby = lobbyCollection.findByUsername(username);
         if (lobby.isPresent()) {
             int size = lobby.get().getPlayers().size();
@@ -104,7 +104,15 @@ public class MatchmakerDetailsService {
     /* Deals with the management of the FOUND type response. */
     private JoinLobbyResponse foundResponse(LobbyInfoMongoDB lobby) throws Exception {
         GameServerResponse gameServer = null;
-        if (lobby.getMatchId().isEmpty() | lobby.getMatchId() == null) {
+        if (lobby.getMatchId().isEmpty() || lobby.getMatchId() == null) {
+            
+            MatchInfoMongoDB match = matchCollection.save(
+                new MatchInfoMongoDB(lobby.getPlayers(), null, System.currentTimeMillis()));
+
+            lobby.setMatchId(match.getId());
+            lobby.setCounter(lobby.getCounter() + 1);
+            lobbyCollection.save(lobby);
+
             /* SYNC */
             ResponseEntity<String> result = RestClient
                 .create(MANAGER)
@@ -112,7 +120,7 @@ public class MatchmakerDetailsService {
                 .uri(new URI("/"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .body(null)  // TODO: it will contain the lobby id.
+                .body(null)  // TODO: it will contain the match id.
                 .retrieve()
                 .toEntity(String.class);
 
@@ -132,15 +140,10 @@ public class MatchmakerDetailsService {
             ObjectMapper mapper = new ObjectMapper();
             gameServer = mapper.readValue(result.getBody(), GameServerResponse.class);
 
-            this.mongoBackground.saveMatchInfo(
-                lobby,
-                gameServer,
-                lobbyCollection,
-                matchCollection
-            );
+            this.mongoBackground.saveMatchInfo(match, gameServer.gameServer(), matchCollection);
         }
         JoinLobbyResponse response = new JoinLobbyResponse(LobbyTypeResponse.FOUND, lobby.getMatchId());
-        this.mongoBackground.deleteLobby(lobby, lobbyCollection);
+        this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection);
         return response;
     }
 
@@ -153,6 +156,41 @@ public class MatchmakerDetailsService {
     public MatchInfoMongoDB getMatch(String matchId) throws Exception {
         return matchCollection.findByMatchId(matchId)
             .orElseThrow(() -> new Exception("Match does not exist!"));
+    }
+
+    /**
+     * Searches for the last match joined by the user when it got kicked out because of a crash.
+     * @param username of the player interested in re-joining the match.
+     * @return the last match joined.
+     * @throws Exception
+     */
+    public MatchInfoMongoDB getMatchByToken(String username) throws Exception {
+        Optional<MatchInfoMongoDB> match = matchCollection
+            .findByUsername(username)
+            .stream()
+            .sorted((x, y) -> Long.compare(x.getTimeOfCreation(), x.getTimeOfCreation()))
+            .findFirst();
+        if (match.isEmpty()) {
+            throw new Exception("No active match found!");
+        }
+        return match.get();
+    }
+
+    /**
+     * Deletes the match from the mongo db.
+     * @param matchId the identifier of the match.
+     */
+    public void deleteMatch(String matchId) {
+        this.matchCollection.deleteById(matchId);
+    }
+
+    /**
+     * It deletes the player from the match.
+     * @param matchId the identifier of the match.
+     * @param username the identifier of the user who wants to quit the game.
+     */
+    public void deleteUserFromMatch(String matchId, String username) {
+        this.matchCollection.removeUserFromMatch(matchId, username);
     }
 
 }

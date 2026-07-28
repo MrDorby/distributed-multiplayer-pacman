@@ -1,8 +1,11 @@
 package it.unibo.mongodb;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.mongodb.repository.Update;
 import org.springframework.stereotype.Repository;
 
 //TODO: Check: 
@@ -21,4 +24,22 @@ public interface ShortTermMatchRepository extends MongoRepository<MatchInfoMongo
      * @return an Optional for a MatchInfoMongoDB.
      */
     Optional<MatchInfoMongoDB> findByMatchId(String matchId);
+
+    /**
+     * Finds all the matches containing the specific username.
+     * @param username the user that it needed to find.
+     * @return the list containing all the matches found.
+     */
+    @Query("{ 'users' : ?0 }")
+    List<MatchInfoMongoDB> findByUsername(String username);
+
+    /**
+     * Removes a user from the specific match when the user identified 
+     * by the username decides to exit the game.
+     * @param matchId is the identifier of the match.
+     * @param username the identifier of the player.
+     */
+    @Query("{ '_id' : ?0 }")
+    @Update("{ '$pull' : { 'users' : ?1 }}")
+    void removeUserFromMatch(String matchId, String username);
 }

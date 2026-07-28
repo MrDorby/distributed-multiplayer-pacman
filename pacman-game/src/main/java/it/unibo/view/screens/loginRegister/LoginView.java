@@ -14,11 +14,11 @@ public class LoginView {
         return loginPanel;
     }
 
-    public void onLogin(Runnable action) {
+    public void setOnLogin(Runnable action) {
         loginPanel.onClickTopButton(action);
     }
 
-    public void onRegister(Runnable action) {
+    public void setOnRegister(Runnable action) {
         loginPanel.onClickBottomButton(action);
     }
 

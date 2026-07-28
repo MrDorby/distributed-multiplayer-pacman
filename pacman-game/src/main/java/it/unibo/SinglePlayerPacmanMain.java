@@ -33,6 +33,7 @@ public class SinglePlayerPacmanMain {
             frame.setSize(1200, 800);
             JPanel gamePanel = view.getGamePanel();
             frame.add(gamePanel);
+            view.getGamePanel().onClose(() -> System.exit(0));
             frame.setVisible(true);
             gamePanel.requestFocusInWindow();
             engine.start();

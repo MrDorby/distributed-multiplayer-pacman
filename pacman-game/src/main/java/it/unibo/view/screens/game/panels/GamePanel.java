@@ -23,8 +23,7 @@ public class GamePanel extends JPanel {
     private final MenuPanel menuPanel;
     private final LifePanel lifePanel;
 
-    private String localPlayerId;
-    private Runnable onEscapePressed;
+    private Runnable onCloseRequested;
 
     public GamePanel() {
         this.setBackground(Color.BLACK);
@@ -66,7 +65,7 @@ public class GamePanel extends JPanel {
 
         // Creates the upper panel.
         this.menuPanel = new MenuPanel(() -> {
-            if (onEscapePressed != null) onEscapePressed.run();
+            if (onCloseRequested != null) onCloseRequested.run();
         });
 
         menuPanel.setBackground(Color.CYAN);
@@ -79,14 +78,13 @@ public class GamePanel extends JPanel {
     }
 
     public void setLocalPlayerId(String localPlayerId) {
-        this.localPlayerId = localPlayerId;
         this.lifePanel.setLocalPlayerId(localPlayerId);
         this.gameMapPanel.setLocalPlayerId(localPlayerId);
         this.scoreboardPanel.setLocalPlayerId(localPlayerId);
     }
 
-    public void onEscape(Runnable action) {
-        this.onEscapePressed = action;
+    public void onClose(Runnable action) {
+        this.onCloseRequested = action;
     }
 
     private static class LifePanel extends JPanel {

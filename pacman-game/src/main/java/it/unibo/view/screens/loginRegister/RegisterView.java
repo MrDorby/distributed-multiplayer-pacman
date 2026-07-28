@@ -14,11 +14,11 @@ public class RegisterView {
         return registerPanel;
     }
 
-    public void onRegister(Runnable action) {
+    public void setOnRegister(Runnable action) {
         registerPanel.onClickTopButton(action);
     }
 
-    public void onHome(Runnable action) {
+    public void setOnHome(Runnable action) {
         registerPanel.onClickBottomButton(action);
     }
 

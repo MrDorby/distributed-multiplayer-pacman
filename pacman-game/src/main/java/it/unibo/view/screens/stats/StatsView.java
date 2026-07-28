@@ -20,6 +20,10 @@ public class StatsView {
         return statsPanel;
     }
 
+    /**
+     * Sets the username to be displayed
+     * @param username the username to be displayed
+     */
     public void setUsername(String username) {
         this.statsPanel.setUsername(username);
     }
@@ -36,8 +40,8 @@ public class StatsView {
      * Adds an action listener to the home button.
      * @param action to be performed.
      */
-    public void onHome(Runnable action) {
-        statsPanel.onHomeButton(action);
+    public void setOnHome(Runnable action) {
+        statsPanel.setOnHome(action);
     }
 
     /**
@@ -49,16 +53,9 @@ public class StatsView {
     }
 
     /**
-     * Clears statistic fields back to default state.
-     */
-    public void clear() {
-        this.statsPanel.clearFields();
-    }
-
-    /**
      * Sets the view into a loading visual state.
      */
-    public void showLoadingState() {
+    public void showLoading() {
         this.statsPanel.showLoading();
     }
 }

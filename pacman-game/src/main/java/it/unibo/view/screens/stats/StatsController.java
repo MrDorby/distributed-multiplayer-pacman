@@ -8,6 +8,8 @@ import it.unibo.view.navigation.AppNavigator;
 import it.unibo.view.navigation.AppState;
 import it.unibo.view.screens.ScreenController;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * StatsController for the player statistics.
  */
@@ -19,7 +21,7 @@ public class StatsController implements ScreenController {
     public StatsController(AppNavigator navigator, ServiceManager serviceManager) {
         this.serviceManager = serviceManager;
         this.statsView = new StatsView();
-        this.statsView.onHome(() -> navigator.goTo(AppState.MAIN_MENU));
+        this.statsView.setOnHome(() -> navigator.goTo(AppState.MAIN_MENU));
     }
 
     @Override
@@ -29,23 +31,24 @@ public class StatsController implements ScreenController {
 
     @Override
     public void onEnter() {
-        statsView.setUsername(serviceManager.getUsername());
-        statsView.showLoadingState();
-        new Thread(() -> {
+        statsView.showLoading();
+        CompletableFuture.runAsync(() -> {
             try {
+                String username = serviceManager.getUsername();
                 PlayerStats stats = serviceManager.getPlayerInfo();
-                SwingUtilities.invokeLater(() -> statsView.setStats(stats));
+                SwingUtilities.invokeLater(() -> {
+                    statsView.setUsername(username);
+                    statsView.setStats(stats);
+                });
             } catch (Exception e) {
                 SwingUtilities.invokeLater(() -> {
                     statsView.setStats(null);
-                    statsView.showMessage(e.getMessage());
+                    statsView.showMessage("Failed to load stats");
                 });
             }
-        }).start();
+        });
     }
 
     @Override
-    public void onExit() {
-        statsView.clear();
-    }
+    public void onExit() {}
 }

@@ -126,6 +126,15 @@ public class StatsPanel extends JPanel {
     }
 
     /**
+     * Sets the username displayed in the title header.
+     *
+     * @param username the username to show
+     */
+    public void setUsername(String username) {
+        title.setText(username);
+    }
+
+    /**
      * Adds the player statistics to the different labels.
      * @param stats the user's info.
      */
@@ -155,37 +164,18 @@ public class StatsPanel extends JPanel {
      * Adds an action listener to the home button.
      * @param action the action performed by the button.
      */
-    public void onHomeButton(Runnable action) {
+    public void setOnHome(Runnable action) {
         homeButton.addActionListener(_ -> action.run());
     }
 
     /**
-     * Sets the username displayed in the title header.
-     *
-     * @param username the username to show
-     */
-    public void setUsername(String username) {
-        if (Objects.isNull(username) || username.isBlank()) {
-            title.setText("Unknown");
-        } else {
-            title.setText(username);
-        }
-    }
-
-    /**
-     * Sets all statistic labels to a temporary loading indicator.
+     * Sets all statistic labels and username to a temporary loading indicator.
      */
     public void showLoading() {
+        title.setText("...");
         matches.setText("...");
         wins.setText("...");
         winRate.setText("...");
         bestScore.setText("...");
-    }
-
-    /**
-     * Clears all statistic fields back to default placeholders.
-     */
-    public void clearFields() {
-        setStats(null);
     }
 }

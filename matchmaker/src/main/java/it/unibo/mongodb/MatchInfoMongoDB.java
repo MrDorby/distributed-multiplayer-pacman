@@ -15,23 +15,21 @@ public class MatchInfoMongoDB {
     
     @Id
     private String id;
-
-    @Indexed(unique = true)
-    private String matchId;
     private List<String> users;
     private Socket gameServerSocket;
-    
+    private Long timeOfCreation;
+
     public MatchInfoMongoDB() {
     
     }
 
     public MatchInfoMongoDB(
-        String matchId,
         List<String> users, 
-        Socket gameServerSocket) {
-        this.matchId = matchId;
+        Socket gameServerSocket,
+        Long timeOfCreation) {
         this.users = users;
         this.gameServerSocket = gameServerSocket;
+        this.timeOfCreation = timeOfCreation;
     }
 
     /**
@@ -47,21 +45,6 @@ public class MatchInfoMongoDB {
      */
     public void setId(String id) {
         this.id = id;
-    }
-
-    /**
-     * @return the matchId.
-     */
-    public String getMatchId() {
-        return matchId;
-    }
-
-    /**
-     * Sets the matchId.
-     * @param matchId
-     */
-    public void setMatchId(String matchId) {
-        this.matchId = matchId;
     }
 
     /**
@@ -92,5 +75,20 @@ public class MatchInfoMongoDB {
      */
     public void setGameServerSocket(Socket gameServerSocket) {
         this.gameServerSocket = gameServerSocket;
+    }
+
+    /**
+     * @return the timestamp indicating when the match was created.
+     */
+    public Long getTimeOfCreation() {
+        return timeOfCreation;
+    }
+
+    /**
+     * Sets the time of creation for the specified match.
+     * @param timeOfCreation
+     */
+    public void setTimeOfCreation(Long timeOfCreation) {
+        this.timeOfCreation = timeOfCreation;
     }
 }

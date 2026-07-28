@@ -66,7 +66,7 @@ public class GameOverPanel extends JPanel {
         add(buttonPanel);
     }
 
-    public void updateStats(GameContextDTO context) {
+    public void setStats(GameContextDTO context) {
         if (context == null || context.gameState() == null) return;
         GameStateDTO state = context.gameState();
         if (state.winnerId() != null) {
@@ -92,6 +92,6 @@ public class GameOverPanel extends JPanel {
     }
 
     public void setOnGoBack(Runnable action) {
-        backButton.addActionListener(e -> action.run());
+        backButton.addActionListener(_ -> action.run());
     }
 }

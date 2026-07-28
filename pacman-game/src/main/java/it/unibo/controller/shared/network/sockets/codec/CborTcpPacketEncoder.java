@@ -11,11 +11,12 @@ import java.io.IOException;
 
 public final class CborTcpPacketEncoder extends MessageToByteEncoder<NetworkPacket> {
     private static final Logger logger = LoggerFactory.getLogger(CborTcpPacketEncoder.class);
+    private final NetworkPacketCodec codec = PacketCodecFactory.getCompactCborCodec();
 
     @Override
     protected void encode(ChannelHandlerContext ctx, NetworkPacket packet, ByteBuf out) throws IOException {
         try {
-            CborPacketSerializer.serialize(packet, out);
+            codec.encode(packet, out);
         } catch (IOException e) {
             logger.error("Failed to serialize TCP packet destined for {}", ctx.channel().remoteAddress(), e);
             throw e;

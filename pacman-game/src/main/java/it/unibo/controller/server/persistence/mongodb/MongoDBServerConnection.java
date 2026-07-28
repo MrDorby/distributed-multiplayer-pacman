@@ -187,4 +187,23 @@ public class MongoDBServerConnection {
             return Optional.empty();
         });
     }
+
+    /**
+     * Retrieves the list containing the usernames of the players.
+     * @param matchId the identifier of the match.
+     * @return a List of Strings containing the users identifiers.
+     */
+    public CompletableFuture<List<String>> retrievePlayer(String matchId) {
+        return CompletableFuture.supplyAsync(() -> {
+            ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
+            Bson filter = eq(shortTermFields.getMatchIdLabel(), matchId);
+            FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
+            Document doc = Mono.from(publisher).block();
+            if (doc == null || doc.isEmpty()) {
+                return new ArrayList<>();
+            }
+            List<String> players = (ArrayList<String>) doc.get(shortTermFields.getUserListLabel());
+            return players;
+        });
+    }
 }

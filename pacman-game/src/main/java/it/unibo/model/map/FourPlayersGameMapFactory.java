@@ -1,6 +1,5 @@
 package it.unibo.model.map;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.unibo.model.common.MatrixCoordinates;
