@@ -74,12 +74,11 @@ public class GameMapPanel extends JPanel {
         });
 
         this.context.pacmans().stream().filter(PacmanViewModel::isAlive).forEach(pacman -> {
-            // TODO: modify the view of pacman when is invincible (different tone of the color or grey)
-            // maybe  wait until the pacman has the color attribute in its class.
             int size = (int) (pacman.canEatGhosts()
                     ? getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2.5
                     : getProportionalSize(GameConstants.GameEntityFeatures.PACMAN.getRadius()) * 2);
-            Color color = this.localPlayerId.equals(pacman.id()) ? Color.BLUE : Color.YELLOW;
+            Color baseColor = this.localPlayerId.equals(pacman.id()) ? Color.CYAN : Color.YELLOW;
+            Color color = pacman.isInvincible() ? baseColor.darker() : baseColor;
             drawGameEntity(g2d, pacman.position(), size, color, startX, startY);
         });
     }
