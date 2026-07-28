@@ -1,8 +1,8 @@
 #!/bin/bash
 
-m1=queriesdb1
-m2=queriesdb2
-m3=queriesdb3
+m1=longdb1
+m2=longdb2
+m3=longdb3
 port=27017
 
 echo "###### Waiting for ${m1} instance startup.."

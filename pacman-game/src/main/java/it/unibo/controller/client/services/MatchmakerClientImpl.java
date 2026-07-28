@@ -46,9 +46,9 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         if (response.statusCode() != 200) return false;
         LobbyResponse lobbyResponse = objectMapper.readValue(response.body(), LobbyResponse.class);
         if (lobbyResponse.isMatchFound()) {
-            this.currentMatchId = lobbyResponse.matchId();
+            this.currentMatchId = lobbyResponse.id();
         } else {
-            this.currentLobbyId = lobbyResponse.lobbyId();
+            this.currentLobbyId = lobbyResponse.id();
         }
         return this.currentLobbyId != null || this.currentMatchId != null;
     }
@@ -84,7 +84,7 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         if (response.statusCode() == 200 && response.body() != null && !response.body().isBlank()) {
             LobbyResponse pollResponse = objectMapper.readValue(response.body(), LobbyResponse.class);
             if (pollResponse.isMatchFound()) {
-                this.currentMatchId = pollResponse.matchId();
+                this.currentMatchId = pollResponse.id();
                 return true;
             }
         }
@@ -143,11 +143,10 @@ public class MatchmakerClientImpl implements MatchmakerClient {
 
     public record LobbyResponse(
             @JsonProperty("type") LobbyTypeResponse typeResponse,
-            @JsonProperty("lobby") String lobbyId,
-            @JsonProperty("matchId") String matchId
+            @JsonProperty("id") String id
     ) {
         public boolean isMatchFound() {
-            return typeResponse == LobbyTypeResponse.FOUND && matchId != null && !matchId.isBlank();
+            return typeResponse == LobbyTypeResponse.FOUND && id != null && !id.isBlank();
         }
     }
 

@@ -43,8 +43,6 @@ public interface ServiceManager {
      * @throws Exception
      */
     PlayerStats getPlayerInfo() throws Exception;
-    
-    // TODO: add for matchmaker and queries.
 
     /**
      * Enters the player into the matchmaking queue for a specific map.

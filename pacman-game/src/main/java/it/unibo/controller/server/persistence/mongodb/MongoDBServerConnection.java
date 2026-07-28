@@ -89,7 +89,7 @@ public class MongoDBServerConnection {
             FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
             Document doc = Flux.from(publisher).blockLast();
             if (doc == null || doc.isEmpty()) {
-                //Document newDoc = Document.parse(jsonSnap);
+                //Document newDoc = Document.parse(jsonSnap);//TODO: Check when short term db is correctly defined bc of the matchid.
                 Document newDoc = new Document(shortTermFields.getMatchIdLabel(), snapshot.matchId())
                                 .append(shortTermFields.getUserListLabel(), snapshot.context().pacmans().stream().map(PacmanDTO::id).toList())
                                 .append(shortTermFields.getCheckpointsLabel(), List.of(checkpoint));

@@ -25,6 +25,7 @@ public class MatchmakerSearchingPanel extends JPanel {
                 BorderFactory.createLineBorder(Color.BLACK, THICKNESS),
                 BorderFactory.createEmptyBorder(15, 25, 15, 25))
         );
+        cancelButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         JPanel statusPanel = new JPanel();
         statusPanel.setOpaque(false);
         statusPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));

@@ -5,7 +5,7 @@ package it.unibo.controller.server.persistence.mongodb;
  */
 public class MongoDBConstants {
 
-    // TODO: Is it ok to insert Connection String with password?
+    // TODO: Is it ok to insert Connection String with password? //TODO: METTERE LONGTERM AL POSTO DI QUERIES
     /* Connection String for a specific MongoDB database. */
     private static final String LT = "mongodb://admin:password@queriesdb1:27017,queriesdb2:27017,queriesdb3:27017/statsDB?authSource=admin&replicaSet=replicaSet";
     private static final String ST = "mongodb://admin:password@shortdb1:27017,shortdb2:27017,shortdb3:27017/shortDB?authSource=admin&replicaSet=replicaSet";
@@ -20,7 +20,7 @@ public class MongoDBConstants {
 
     /* Label of the different fields in each database. */
     private static final LongTermFields longTermFields = new LongTermFields("username", "nMatch", "nWins", "bestScore");
-    private static final ShortTermFields shortTermFields = new ShortTermFields("matchId", "users", "checkpoints");
+    private static final ShortTermFields shortTermFields = new ShortTermFields("_id", "users", "checkpoints");  //TODO_ change matchid.
 
     private MongoDBConstants() {}
 

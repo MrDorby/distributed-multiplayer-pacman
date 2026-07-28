@@ -4,6 +4,7 @@ import it.unibo.view.font.FontManager;
 import it.unibo.view.font.FontName;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.util.List;
 
@@ -52,6 +53,7 @@ public class MatchmakerMenuPanel extends JPanel {
                 BorderFactory.createLineBorder(Color.BLACK, THICKNESS),
                 BorderFactory.createEmptyBorder(15, 25, 15, 25))
         );
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
     }
 
     public String getSelectedMap() {

@@ -25,6 +25,7 @@ public class MatchmakerFailurePanel extends JPanel {
                 BorderFactory.createLineBorder(Color.BLACK, THICKNESS),
                 BorderFactory.createEmptyBorder(15, 25, 15, 25))
         );
+        okButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         JPanel labelPanel = new JPanel();
         labelPanel.setOpaque(false);
         labelPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
