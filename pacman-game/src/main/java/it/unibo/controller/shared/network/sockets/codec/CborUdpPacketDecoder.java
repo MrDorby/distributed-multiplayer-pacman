@@ -13,11 +13,12 @@ import java.util.List;
 
 public class CborUdpPacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
     private static final Logger logger = LoggerFactory.getLogger(CborUdpPacketDecoder.class);
+    private final NetworkPacketCodec codec = PacketCodecFactory.getCompactCborCodec();
 
     @Override
     protected void decode(ChannelHandlerContext ctx, DatagramPacket msg, List<Object> out) throws IOException {
         try {
-            NetworkPacket packet = CborPacketSerializer.deserialize(msg.content());
+            NetworkPacket packet = codec.decode(msg.content());
             out.add(new DefaultAddressedEnvelope<>(packet, msg.recipient(), msg.sender()));
         } catch (IOException e) {
             logger.warn("Received bad UDP packet from {}", msg.sender());
