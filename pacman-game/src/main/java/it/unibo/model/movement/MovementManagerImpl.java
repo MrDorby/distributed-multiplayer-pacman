@@ -143,7 +143,6 @@ public class MovementManagerImpl implements MovementManager {
         }
     }
 
-    // TODO: modify this method
     @Override
     public MatrixCoordinates currentMatrixCoordinates() {
         return this.currentMatrixCoordinates;
