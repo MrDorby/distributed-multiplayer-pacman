@@ -15,12 +15,13 @@ import java.util.List;
 
 public class CborUdpPacketEncoder extends MessageToMessageEncoder<AddressedEnvelope<NetworkPacket, InetSocketAddress>> {
     private static final Logger logger = LoggerFactory.getLogger(CborUdpPacketEncoder.class);
+    private final NetworkPacketCodec codec = PacketCodecFactory.getCompactCborCodec();
 
     @Override
     protected void encode(ChannelHandlerContext ctx, AddressedEnvelope<NetworkPacket, InetSocketAddress> msg, List<Object> out) throws IOException {
         ByteBuf buffer = ctx.alloc().buffer();
         try {
-            CborPacketSerializer.serialize(msg.content(), buffer);
+            codec.encode(msg.content(), buffer);
             out.add(new DatagramPacket(buffer, msg.recipient()));
         } catch (IOException e) {
             logger.warn("Failed to serialize UDP packet destined for {}", msg.recipient());
