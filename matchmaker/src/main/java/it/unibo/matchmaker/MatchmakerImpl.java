@@ -23,6 +23,7 @@ import it.unibo.dto.GameServerResponse;
 import it.unibo.dto.JoinLobbyRequest;
 import it.unibo.dto.JoinLobbyResponse;
 import it.unibo.dto.QuitLobbyRequest;
+import it.unibo.dto.RemoveRequest;
 import it.unibo.mongodb.MatchInfoMongoDB;
 
 /**
@@ -93,18 +94,41 @@ public class MatchmakerImpl implements Matchmaker{
             throw new Exception(e.getMessage());
         }
     }
-
+    
     @Override
     @PostMapping(value = "/game_server", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getGameServer(@RequestBody GameServerRequest info) {
         try {
-            checkTokenPermission(info.token());
-            MatchInfoMongoDB match = this.matchmakerDetailsService.getMatch(info.matchId());
-            GameServerResponse response = new GameServerResponse(match.getMatchId(), match.getGameServerSocket());
+            String username = checkTokenPermission(info.token());
+            MatchInfoMongoDB match;
+            if (info.matchId() != null && !info.matchId().isBlank()) {
+                match = this.matchmakerDetailsService.getMatch(info.matchId());
+            } else {
+                match = this.matchmakerDetailsService.getMatchByToken(username);
+            }
+            GameServerResponse response = new GameServerResponse(match.getId(), match.getGameServerSocket());
             String result = this.objectMapper.writeValueAsString(response);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @Override
+    @PostMapping(value = "/delete_match", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void deleteMatchOnDB(@RequestBody String matchId) {
+        this.matchmakerDetailsService.deleteMatch(matchId);
+    }
+
+    @Override
+    @PostMapping(value = "/quit_match", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> removePlayerFromMatch(@RequestBody RemoveRequest remove) {
+        try {
+            String username = checkTokenPermission(remove.token());
+            this.matchmakerDetailsService.deleteUserFromMatch(remove.matchId(), username);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

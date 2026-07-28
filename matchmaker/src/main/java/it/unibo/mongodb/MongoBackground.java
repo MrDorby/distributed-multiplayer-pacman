@@ -3,27 +3,36 @@ package it.unibo.mongodb;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import it.unibo.dto.GameServerResponse;
-
+/**
+ * MongoBackground manages the execution of asynchronous 
+ * operations without blocking the main thread.
+ */
 @Service
 public class MongoBackground {
-    //TODO: DOCS
+    
+    /**
+     * It saves the match informations on db.
+     * @param match the object to store on the db.
+     * @param gameServer the socket information about the GameServer.
+     * @param matchCollection the match repository.
+     */
     @Async
     public void saveMatchInfo(
-        LobbyInfoMongoDB lobby, 
-        GameServerResponse gameServer,
-        ShortTermLobbyRepository lobbyCollection,
+        MatchInfoMongoDB match,
+        Socket gameServer,
         ShortTermMatchRepository matchCollection) {
-
-        lobby.setMatchId(gameServer.matchId());
-        lobbyCollection.save(lobby);
             
-        matchCollection.save(
-            new MatchInfoMongoDB(gameServer.matchId(), lobby.getPlayers(), gameServer.gameServer()));
+        match.setGameServerSocket(gameServer);
+        matchCollection.save(match);
     }
 
+    /**
+     * 
+     * @param lobby
+     * @param lobbyCollection
+     */
     @Async
-    public void deleteLobby(LobbyInfoMongoDB lobby, ShortTermLobbyRepository lobbyCollection) {
+    public void checkLobbyToDelete(LobbyInfoMongoDB lobby, ShortTermLobbyRepository lobbyCollection) {
         lobby.setCounter(lobby.getCounter() + 1);
         if (lobby.getCounter() == lobby.getPlayers().size()) {
             lobbyCollection.delete(lobby);
