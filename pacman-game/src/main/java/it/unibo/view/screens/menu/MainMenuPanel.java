@@ -74,15 +74,15 @@ class MainMenuPanel extends JPanel {
         emptyPanel(1, 2);
     }
 
-    public void onPlay(Runnable action) {
+    public void setOnPlay(Runnable action) {
         playButton.addActionListener(_ -> action.run());
     }
 
-    public void onStats(Runnable action) {
+    public void setOnStats(Runnable action) {
         statsButton.addActionListener(_ -> action.run());
     }
 
-    public void onLogout(Runnable action) {
+    public void setOnLogout(Runnable action) {
         logoutButton.addActionListener(_ -> action.run());
     }
 
@@ -108,7 +108,6 @@ class MainMenuPanel extends JPanel {
                 //button.setForeground(Color.BLACK);
                 //button.setBorder(BorderFactory.createLineBorder(Color.BLACK, THICKNESS_BORDER));
             }
-            
         });
         panel.add(button);
         container.add(panel);

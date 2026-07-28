@@ -10,9 +10,9 @@ public class MainMenuController implements ScreenController {
     private final MainMenuPanel panel = new MainMenuPanel();
 
     public MainMenuController(AppNavigator navigator) {
-        panel.onPlay(() -> navigator.goTo(AppState.MATCHMAKING));
-        panel.onStats(() -> navigator.goTo(AppState.STATS));
-        panel.onLogout(() -> navigator.goTo(AppState.LOGIN));
+        panel.setOnPlay(() -> navigator.goTo(AppState.MATCHMAKING));
+        panel.setOnStats(() -> navigator.goTo(AppState.STATS));
+        panel.setOnLogout(() -> navigator.goTo(AppState.LOGIN));
     }
 
     @Override
