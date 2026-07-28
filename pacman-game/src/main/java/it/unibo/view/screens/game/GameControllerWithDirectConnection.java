@@ -78,6 +78,13 @@ public class GameControllerWithDirectConnection extends AbstractGameController {
     }
 
     @Override
+    protected void handleClose() {
+        this.retryCount = 0;
+        this.lastParameters = null;
+        handleExitToMainMenu();
+    }
+
+    @Override
     protected AbstractGameScreen getGameScreen() {
         return screen;
     }

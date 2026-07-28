@@ -67,6 +67,11 @@ public class GameControllerWithManualConnection extends AbstractGameController {
     }
 
     @Override
+    protected void handleClose() {
+        handleExitToSetup();
+    }
+
+    @Override
     protected AbstractGameScreen getGameScreen() {
         return screen;
     }

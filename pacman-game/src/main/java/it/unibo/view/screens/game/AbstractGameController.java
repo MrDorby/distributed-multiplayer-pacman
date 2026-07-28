@@ -66,16 +66,19 @@ public abstract class AbstractGameController implements GameClientListener, Scre
         GameView gameView = getGameScreen().getGameView();
         gameView.getGamePanel().setLocalPlayerId(client.getUsername());
         gameView.setInputHandler(inputHandler);
+        gameView.getGamePanel().onClose(this::handleClose);
         engine.setView(gameView);
         engine.start();
         SwingUtilities.invokeLater(getGameScreen()::showGameView);
     }
 
+    protected abstract void handleClose();
+
     @Override
     public void onGameEnded(GameContextDTO context) {
         disconnect();
         SwingUtilities.invokeLater(() -> {
-            getGameScreen().getGameOverPanel().updateStats(context);
+            getGameScreen().getGameOverPanel().setStats(context);
             getGameScreen().showGameOverView();
         });
     }
