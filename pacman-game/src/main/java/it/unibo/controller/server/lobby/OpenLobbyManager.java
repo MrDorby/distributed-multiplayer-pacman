@@ -12,14 +12,12 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
- * Manages the lifecycle of a fresh standard match.
+ * Manages the lobby for an open match.
  * <p>
  * Waits for the lobby to fill to capacity before starting the game.
- * Mid-game disconnections substitute human players with AI bots.
- * Mid-game reconnections give control back to the human players.
  */
-public class StandardMatchLifecycleManager implements MatchLifecycleManager {
-    private static final Logger logger = LoggerFactory.getLogger(StandardMatchLifecycleManager.class);
+public class OpenLobbyManager implements LobbyManager {
+    private static final Logger logger = LoggerFactory.getLogger(OpenLobbyManager.class);
 
     private final int capacity;
     private final ServerGameEngine engine;
@@ -29,7 +27,7 @@ public class StandardMatchLifecycleManager implements MatchLifecycleManager {
     private final Set<String> activePlayers = new HashSet<>();
     private LobbyState state = LobbyState.WAITING;
 
-    public StandardMatchLifecycleManager(
+    public OpenLobbyManager(
             int capacity,
             ServerGameEngine engine,
             GameServerGateway gateway
@@ -49,23 +47,12 @@ public class StandardMatchLifecycleManager implements MatchLifecycleManager {
         this.state = state;
     }
 
-    @Override
-    public Collection<String> getActivePlayers() {
-        return List.copyOf(activePlayers);
-    }
-
     /**
-     * Standard matches do not require grace periods or pre-game timers, so this is a no-op.
+     * Open matches do not require grace periods or pre-game timers.
      */
     @Override
     public synchronized void onServerStart() {}
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Registers player in pre-game lobby. Automatically triggers {@link #startGame()}
-     * once capacity is reached.
-     */
     @Override
     public synchronized void onPlayerConnected(GameSession session) {
         String username = session.getUsername();
@@ -82,11 +69,6 @@ public class StandardMatchLifecycleManager implements MatchLifecycleManager {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Re-registers player in lobby if waiting, or restores human control if rejoining mid-game.
-     */
     @Override
     public synchronized void onPlayerReconnected(GameSession session) {
         String username = session.getUsername();
@@ -112,11 +94,6 @@ public class StandardMatchLifecycleManager implements MatchLifecycleManager {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Removes player from the waiting set if waiting, or substitutes them with a bot if mid-game.
-     */
     @Override
     public synchronized void onPlayerDisconnected(GameSession session) {
         String username = session.getUsername();
@@ -136,6 +113,9 @@ public class StandardMatchLifecycleManager implements MatchLifecycleManager {
     }
 
     private synchronized void startGame() {
+        if (state != LobbyState.WAITING) {
+            return;
+        }
         setState(LobbyState.PLAYING);
         activePlayers.addAll(waitingPlayers);
         logger.info("Required player count reached. Starting game with players: {}", activePlayers);

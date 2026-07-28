@@ -1,4 +1,4 @@
-package it.unibo.controller.server.persistence.backup;
+package it.unibo.controller.server.persistence.snapshot;
 
 import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 import it.unibo.controller.server.persistence.mongodb.MongoDBConstants;
@@ -9,15 +9,14 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * HTTP-based implementation of {@link GameSnapshotRepository} that POSTs the game snapshot
- * as JSON to a configured backup endpoint.
+ * MongoDB-backed implementation of {@link GameSnapshotRepository}
  */
 public class MongoGameSnapshotRepository implements GameSnapshotRepository {
 
     private final MongoDBServerConnection connection;
 
-    public MongoGameSnapshotRepository(URI backupRepositoryURI) {
-        this.connection = new MongoDBServerConnection(MongoDBConstants.ConnectToDatabase.SHORT_TERM, backupRepositoryURI);
+    public MongoGameSnapshotRepository(URI databaseURI) {
+        this.connection = new MongoDBServerConnection(MongoDBConstants.ConnectToDatabase.SHORT_TERM, databaseURI);
     }
 
     @Override

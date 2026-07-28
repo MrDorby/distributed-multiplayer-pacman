@@ -2,7 +2,7 @@ package it.unibo.controller.server;
 
 import it.unibo.controller.server.engine.ServerGameEngine;
 import it.unibo.controller.server.lobby.LobbyState;
-import it.unibo.controller.server.lobby.StandardMatchLifecycleManager;
+import it.unibo.controller.server.lobby.OpenLobbyManager;
 import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.session.GameSession;
 import it.unibo.controller.shared.engine.command.ChangePacmanBehaviourCommand;
@@ -14,13 +14,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class StandardMatchLifecycleManagerTest {
+class OpenLobbyManagerTest {
 
     private ServerGameEngine engine;
     private GameServerGateway gateway;
     private GameSession session1;
     private GameSession session2;
-    private StandardMatchLifecycleManager manager;
+    private OpenLobbyManager manager;
 
     @BeforeEach
     void setUp() {
@@ -30,7 +30,7 @@ class StandardMatchLifecycleManagerTest {
         session2 = mock(GameSession.class);
         when(session1.getUsername()).thenReturn("alice");
         when(session2.getUsername()).thenReturn("bob");
-        manager = new StandardMatchLifecycleManager(2, engine, gateway);
+        manager = new OpenLobbyManager(2, engine, gateway);
     }
 
     @Test

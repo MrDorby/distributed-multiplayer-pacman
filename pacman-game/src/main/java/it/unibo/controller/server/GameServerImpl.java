@@ -2,7 +2,7 @@ package it.unibo.controller.server;
 
 import it.unibo.controller.server.engine.ServerGameEngine;
 import it.unibo.controller.server.lobby.LobbyState;
-import it.unibo.controller.server.lobby.MatchLifecycleManager;
+import it.unibo.controller.server.lobby.LobbyManager;
 import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.session.GameSession;
 import it.unibo.controller.server.orchestration.GameServerOrchestrator;
@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,7 +33,7 @@ public class GameServerImpl implements GameServer {
     private final GamePersistenceManager persistenceManager;
     private final GameServerOrchestrator orchestrator;
 
-    private final MatchLifecycleManager matchLifecycleManager;
+    private final LobbyManager lobbyManager;
 
     private final ScheduledExecutorService shutdownScheduler = Executors.newSingleThreadScheduledExecutor();
     private final ExecutorService networkWorker = Executors.newSingleThreadExecutor();
@@ -45,14 +44,14 @@ public class GameServerImpl implements GameServer {
             GameServerGateway gateway,
             GamePersistenceManager persistenceManager,
             GameServerOrchestrator orchestrator,
-            MatchLifecycleManager matchLifecycleManager
+            LobbyManager lobbyManager
     ) {
         this.matchId = matchId;
         this.engine = engine;
         this.gateway = gateway;
         this.persistenceManager = persistenceManager;
         this.orchestrator = orchestrator;
-        this.matchLifecycleManager = matchLifecycleManager;
+        this.lobbyManager = lobbyManager;
     }
 
     @Override
@@ -62,7 +61,7 @@ public class GameServerImpl implements GameServer {
             persistenceManager.start();
             orchestrator.ready();
             orchestrator.startHeartbeat();
-            matchLifecycleManager.onServerStart();
+            lobbyManager.onServerStart();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -89,17 +88,17 @@ public class GameServerImpl implements GameServer {
 
     @Override
     public void onPlayerConnected(GameSession session) {
-        matchLifecycleManager.onPlayerConnected(session);
+        lobbyManager.onPlayerConnected(session);
     }
 
     @Override
     public void onPlayerReconnected(GameSession session) {
-        matchLifecycleManager.onPlayerReconnected(session);
+        lobbyManager.onPlayerReconnected(session);
     }
 
     @Override
     public void onPlayerDisconnected(GameSession session) {
-        matchLifecycleManager.onPlayerDisconnected(session);
+        lobbyManager.onPlayerDisconnected(session);
     }
 
     /* ******************************** *
@@ -124,7 +123,7 @@ public class GameServerImpl implements GameServer {
     public void onGameContextUpdate(GameContextDTO context) {
         networkWorker.submit(() -> {
             logger.trace("Broadcasting game context to all clients");
-            MatchSnapshot snapshot = createSnapshot(context);
+            MatchSnapshot snapshot = new MatchSnapshot(this.matchId, System.currentTimeMillis(), context);
             persistenceManager.updateSnapshot(snapshot);
             gateway.broadcastUdp(new GameContextPacket(context));
         });
@@ -136,11 +135,11 @@ public class GameServerImpl implements GameServer {
      */
     @Override
     public void onGameEvent(GameEvent event) {
-        matchLifecycleManager.setState(LobbyState.FINISHED);
+        lobbyManager.setState(LobbyState.FINISHED);
         if (event instanceof GameEndedEvent(GameContextDTO context)) {
             networkWorker.submit(() -> {
                 logger.info("Game has ended");
-                MatchSnapshot snapshot = createSnapshot(context);
+                MatchSnapshot snapshot = new MatchSnapshot(this.matchId, System.currentTimeMillis(), context);
                 persistenceManager.saveFinalSnapshot(snapshot);
                 gateway.broadcastTcp(new GameContextPacket(context));
                 gateway.broadcastTcp(new GameEndPacket(context));
@@ -148,11 +147,6 @@ public class GameServerImpl implements GameServer {
                 scheduleServerShutdown(Duration.ofSeconds(SERVER_SHUTDOWN_DELAY_SECONDS));
             });
         }
-    }
-
-    private MatchSnapshot createSnapshot(GameContextDTO context) {
-        List<String> activePlayers = List.copyOf(matchLifecycleManager.getActivePlayers());
-        return new MatchSnapshot(this.matchId, System.currentTimeMillis(), activePlayers, context);
     }
 
     private void scheduleServerShutdown(Duration delay) {

@@ -1,4 +1,4 @@
-package it.unibo.controller.server.persistence.backup;
+package it.unibo.controller.server.persistence.snapshot;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

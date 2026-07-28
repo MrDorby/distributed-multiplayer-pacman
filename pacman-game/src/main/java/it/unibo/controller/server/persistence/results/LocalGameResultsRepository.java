@@ -42,5 +42,5 @@ public class LocalGameResultsRepository implements GameResultsRepository {
     }
 
     @Override
-    public void close() throws Exception {}
+    public void close() {}
 }

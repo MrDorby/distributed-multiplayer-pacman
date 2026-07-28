@@ -176,12 +176,7 @@ public class MongoDBServerConnection {
             }
             Object lastItem = rawCheckpoints.getLast();
             if (lastItem instanceof Checkpoint(GameContextDTO gameContextDTO, Long timestamp)) {
-                MatchSnapshot matchSnapshot = new MatchSnapshot(
-                        matchId,
-                        timestamp,
-                        List.of(),
-                        gameContextDTO
-                );
+                MatchSnapshot matchSnapshot = new MatchSnapshot(matchId, timestamp, gameContextDTO);
                 return Optional.of(matchSnapshot);
             }
             return Optional.empty();
@@ -193,17 +188,20 @@ public class MongoDBServerConnection {
      * @param matchId the identifier of the match.
      * @return a List of Strings containing the users identifiers.
      */
-    public CompletableFuture<List<String>> retrievePlayer(String matchId) {
+    public CompletableFuture<Optional<List<String>>> retrievePlayers(String matchId) {
         return CompletableFuture.supplyAsync(() -> {
             ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
             Bson filter = eq(shortTermFields.getMatchIdLabel(), matchId);
             FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
             Document doc = Mono.from(publisher).block();
             if (doc == null || doc.isEmpty()) {
-                return new ArrayList<>();
+                return Optional.empty();
             }
-            List<String> players = (ArrayList<String>) doc.get(shortTermFields.getUserListLabel());
-            return players;
+            List<String> players = (List<String>) doc.get(shortTermFields.getUserListLabel());
+            if (players == null || players.isEmpty()) {
+                return Optional.empty();
+            }
+            return Optional.of(players);
         });
     }
 }
