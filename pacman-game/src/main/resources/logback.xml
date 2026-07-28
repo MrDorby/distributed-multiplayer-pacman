@@ -4,7 +4,7 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-<!--    <appender name="FILE" class="ch.qos.logback.core.FileAppender"> TODO: uncomment for file writing -->
+<!--    <appender name="FILE" class="ch.qos.logback.core.FileAppender"> NOTE: uncomment for file writing -->
 <!--        <file>access.log</file>-->
 <!--        <append>true</append>-->
 <!--        <encoder>-->
@@ -13,6 +13,6 @@
 <!--    </appender>-->
     <root level="debug">
         <appender-ref ref="STDOUT" />
-<!--        <appender-ref ref="FILE" />-->
+<!--        <appender-ref ref="FILE" NOTE: uncomment for file writing />-->
     </root>
 </configuration>

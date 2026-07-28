@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class AgonesRESTGameServerOrchestrator implements GameServerOrchestrator {
     private static final String AGONES_SIDECAR_DEFAULT_HTTP_PORT = "9358";
     private static final String AGONES_REST_API_ADDRESS = "http://localhost:";
-    private static final long INITIAL_DELAY_MILLIS = 1000; //TODO: could also be 0
+    private static final long INITIAL_DELAY_MILLIS = 1000;
     private static final long HEALTHCHECK_PERIOD_IN_MILLIS = 2000;
 
     private final String agonesRestApiBaseUrl;
@@ -50,6 +50,7 @@ public class AgonesRESTGameServerOrchestrator implements GameServerOrchestrator 
             stopHealthCheck();
             this.logger.info("Shutting down game server orchestration");
             shutdownRequest();
+            //TODO: send match ended signal to Manager
         } catch (Exception e) {
             this.logger.error(e.getMessage());
         }
