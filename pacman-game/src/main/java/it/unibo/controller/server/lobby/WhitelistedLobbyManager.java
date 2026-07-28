@@ -58,6 +58,11 @@ public class WhitelistedLobbyManager implements LobbyManager {
     }
 
     @Override
+    public synchronized Set<String> getConnectedPlayers() {
+        return Set.copyOf(connectedPlayers);
+    }
+
+    @Override
     public synchronized void onServerStart() {
         engine.initialize(new ArrayList<>(expectedPlayers));
         logger.info("Whitelisted game server ready. Waiting {} seconds for players {}" , connectionTimeoutSeconds, expectedPlayers);

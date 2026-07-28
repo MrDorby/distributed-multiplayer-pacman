@@ -23,8 +23,7 @@ public class OpenLobbyManager implements LobbyManager {
     private final ServerGameEngine engine;
     private final GameServerGateway gateway;
 
-    private final Set<String> waitingPlayers = new LinkedHashSet<>();
-    private final Set<String> activePlayers = new HashSet<>();
+    private final Set<String> connectedPlayers = new LinkedHashSet<>();
     private LobbyState state = LobbyState.WAITING;
 
     public OpenLobbyManager(
@@ -47,6 +46,11 @@ public class OpenLobbyManager implements LobbyManager {
         this.state = state;
     }
 
+    @Override
+    public synchronized Set<String> getConnectedPlayers() {
+        return Set.copyOf(connectedPlayers);
+    }
+
     /**
      * Open matches do not require grace periods or pre-game timers.
      */
@@ -58,9 +62,9 @@ public class OpenLobbyManager implements LobbyManager {
         String username = session.getUsername();
         switch (state) {
             case WAITING -> {
-                waitingPlayers.add(username);
-                logger.info("Player {} joined waiting lobby ({}/{})", username, waitingPlayers.size(), capacity);
-                if (waitingPlayers.size() == capacity) {
+                connectedPlayers.add(username);
+                logger.info("Player {} joined waiting lobby ({}/{})", username, connectedPlayers.size(), capacity);
+                if (connectedPlayers.size() == capacity) {
                     startGame();
                 }
             }
@@ -74,17 +78,13 @@ public class OpenLobbyManager implements LobbyManager {
         String username = session.getUsername();
         switch (state) {
             case WAITING -> {
-                waitingPlayers.add(username);
-                logger.info("Player {} reconnected to pre-game lobby ({}/{})", username, waitingPlayers.size(), capacity);
-                if (waitingPlayers.size() == capacity) {
+                connectedPlayers.add(username);
+                logger.info("Player {} reconnected to pre-game lobby ({}/{})", username, connectedPlayers.size(), capacity);
+                if (connectedPlayers.size() == capacity) {
                     startGame();
                 }
             }
             case PLAYING -> {
-                if (!activePlayers.contains(username)) {
-                    logger.warn("Unexpected player {} attempted reconnection", username);
-                    return;
-                }
                 logger.info("Player {} reconnected mid-game, restoring human control", username);
                 engine.enqueueCommand(new ChangePacmanBehaviourCommand(username, true));
                 gateway.sendTcp(username, new GameContextPacket(engine.getLatestContext()));
@@ -99,14 +99,12 @@ public class OpenLobbyManager implements LobbyManager {
         String username = session.getUsername();
         switch (state) {
             case WAITING -> {
-                waitingPlayers.remove(username);
-                logger.info("Player {} left pre-game lobby ({}/{})", username, waitingPlayers.size(), capacity);
+                connectedPlayers.remove(username);
+                logger.info("Player {} left pre-game lobby ({}/{})", username, connectedPlayers.size(), capacity);
             }
             case PLAYING -> {
-                if (activePlayers.contains(username)) {
-                    logger.info("Player {} disconnected mid-game, substituting with a bot", username);
-                    engine.enqueueCommand(new ChangePacmanBehaviourCommand(username, false));
-                }
+                logger.info("Player {} disconnected mid-game, substituting with a bot", username);
+                engine.enqueueCommand(new ChangePacmanBehaviourCommand(username, false));
             }
             case FINISHED -> logger.info("Player {} disconnected after the game has ended", username);
         }
@@ -117,9 +115,8 @@ public class OpenLobbyManager implements LobbyManager {
             return;
         }
         setState(LobbyState.PLAYING);
-        activePlayers.addAll(waitingPlayers);
-        logger.info("Required player count reached. Starting game with players: {}", activePlayers);
-        engine.initialize(new ArrayList<>(activePlayers));
+        logger.info("Required player count reached. Starting game with players: {}", connectedPlayers);
+        engine.initialize(new ArrayList<>(connectedPlayers));
         engine.start();
         gateway.broadcastTcp(new GameContextPacket(engine.getLatestContext()));
         gateway.broadcastTcp(new GameStartPacket());
