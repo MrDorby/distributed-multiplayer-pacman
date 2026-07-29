@@ -1,4 +1,4 @@
-package it.unibo.dto;
+package it.unibo.gameservermanager.dto;
 
 /**
  * The current status of a GameServer.

@@ -1,4 +1,4 @@
-package it.unibo.dto;
+package it.unibo.gameservermanager.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
