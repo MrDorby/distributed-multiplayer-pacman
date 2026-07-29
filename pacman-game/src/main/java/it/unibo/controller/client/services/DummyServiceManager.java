@@ -5,6 +5,7 @@ import it.unibo.controller.client.common.ConnectionParameters;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -38,7 +39,7 @@ public class DummyServiceManager implements ServiceManager {
 
     @Override
     public void login(String username, String password) throws Exception {
-        Thread.sleep(300);
+        Thread.sleep(1000);
         if (!userDatabase.containsKey(username)) {
             throw new Exception("User does not exist");
         }
@@ -51,7 +52,7 @@ public class DummyServiceManager implements ServiceManager {
 
     @Override
     public String register(String username, String password) throws Exception {
-        Thread.sleep(300);
+        Thread.sleep(1000);
         if (userDatabase.containsKey(username)) {
             throw new Exception("Username is already taken");
         }
@@ -103,8 +104,37 @@ public class DummyServiceManager implements ServiceManager {
     }
 
     @Override
-    public ConnectionParameters getGameServerParameters() {
-        return new ConnectionParameters("127.0.0.1", 7777, 7777);
+    public Optional<ConnectionParameters> getGameServerParametersByMatchId(String matchId) throws Exception {
+        if (matchId == null || matchId.isBlank()) {
+            throw new IllegalArgumentException("matchId cannot be null or blank");
+        }
+        Thread.sleep(1000);
+        return Optional.of(new ConnectionParameters("127.0.0.1", 7777, 7777));
+    }
+
+    @Override
+    public Optional<ConnectionParameters> getGameServerParametersByToken() throws Exception {
+        if (currentToken == null) {
+            throw new IllegalStateException("Not authenticated");
+        }
+        Thread.sleep(1000);
+        if (Math.random() > 0.5) {
+            if (this.currentMatchId == null) {
+                this.currentMatchId = "recovered_match_" + UUID.randomUUID().toString().substring(0, 8);
+            }
+            return Optional.of(new ConnectionParameters("127.0.0.1", 7777, 7777));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean quitMatch() throws Exception {
+        if (this.currentMatchId == null) {
+            return false;
+        }
+        Thread.sleep(1000);
+        clearMatchmakingData();
+        return true;
     }
 
     @Override

@@ -1,14 +1,13 @@
 package it.unibo.controller.client.services;
 
 import java.net.http.HttpClient;
+import java.util.Optional;
 
 import it.unibo.controller.client.common.PlayerStats;
 import it.unibo.controller.client.common.ConnectionParameters;
 import it.unibo.controller.client.key.KeyManager;
 
 public class ServiceManagerImpl implements ServiceManager {
-    private static final String MATCHMAKER_URL = "http://localhost:8080"; // TODO change to proper endpoint
-
     private final HttpClient httpClient;
     private final KeyManager keyManager;
     private final AuthClient authClient;
@@ -65,8 +64,18 @@ public class ServiceManagerImpl implements ServiceManager {
     }
 
     @Override
-    public ConnectionParameters getGameServerParameters() throws Exception {
-        return this.matchmakerClient.getServerParameters(getToken());
+    public Optional<ConnectionParameters> getGameServerParametersByMatchId(String matchId) throws Exception {
+        return this.matchmakerClient.getServerParametersByMatchId(matchId, getToken());
+    }
+
+    @Override
+    public Optional<ConnectionParameters> getGameServerParametersByToken() throws Exception {
+        return this.matchmakerClient.getServerParametersByToken(getToken());
+    }
+
+    @Override
+    public boolean quitMatch() throws Exception {
+        return this.matchmakerClient.quitMatch(getToken());
     }
 
     @Override
