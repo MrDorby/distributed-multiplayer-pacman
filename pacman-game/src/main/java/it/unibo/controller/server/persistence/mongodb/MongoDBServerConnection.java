@@ -39,7 +39,7 @@ public class MongoDBServerConnection {
 
     /* Internal record for make it easy check the content of the short-term database. */
     private record Checkpoint(
-        @JsonProperty("context") GameContextDTO gameContextDTO, 
+        @JsonProperty("gamecontext") GameContextDTO gameContextDTO, 
         @JsonProperty("timestamp") Long timestamp) {
     }
 

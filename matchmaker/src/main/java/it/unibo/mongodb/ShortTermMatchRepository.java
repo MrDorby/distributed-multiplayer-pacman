@@ -43,4 +43,11 @@ public interface ShortTermMatchRepository extends MongoRepository<MatchInfoMongo
     @Update("{ '$pull' : { 'users' : ?1 }}")
     void removeUserFromMatch(String matchId, String username);
 
+    /**
+     * Gets the time left from the specified match.
+     * @param matchId the identifier of the match.
+     * @return a Long representing the timeLeftInMillis.
+     */
+    @Query(value = "{ '_id' : ?0 }", fields = "{ 'checkpoints.gamecontext.gamestate.timeLeftInMillis' : 1, '_id' : 0 }")
+    Long getTimeLeft(String matchId);
 }

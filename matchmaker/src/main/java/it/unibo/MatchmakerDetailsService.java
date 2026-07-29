@@ -210,7 +210,7 @@ public class MatchmakerDetailsService {
      * @throws Exception
      */
     public GameServerInfo checkGameServerAvailability(MatchInfoMongoDB match) throws Exception {
-        Long timeLeft = match.getCheckpoints().getLast().timestamp() - match.getTimeOfCreation(); //TODO change when start time is defined.
+        Long timeLeft = this.matchCollection.getTimeLeft(match.getId());
         GameServerCheckRequest gameServerRequest = new GameServerCheckRequest(match.getGameServerName(), timeLeft);
         String request = mapper.writeValueAsString(gameServerRequest);
 
