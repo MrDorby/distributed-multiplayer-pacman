@@ -3,7 +3,6 @@ package it.unibo.controller.server;
 import it.unibo.controller.server.engine.ServerGameEngine;
 import it.unibo.controller.server.lobby.LobbyManager;
 import it.unibo.controller.server.lobby.WhitelistedLobbyManager;
-import it.unibo.controller.server.lobby.OpenLobbyManager;
 import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.NettyGameServerGateway;
 import it.unibo.controller.server.network.sockets.handlers.*;
@@ -36,17 +35,7 @@ import java.util.List;
  */
 public class GameServerBuilder {
 
-    private enum MatchLaunchMode {
-        /** Fresh match open to any first-come players up to capacity. */
-        OPEN,
-        /** Fresh match restricted to a pre-defined list of players. */
-        WHITELISTED,
-        /** Recovered match using the latest snapshot. */
-        RECOVERY
-    }
-
     private static final String MAP_PATH_FORMAT = "maps/%s.json";
-    private static final int DEFAULT_OPEN_LOBBY_CAPACITY = 4;
     private static final int DEFAULT_WHITELIST_LOBBY_TIMEOUT_SECONDS = 10;
 
     private String matchId;
@@ -54,7 +43,8 @@ public class GameServerBuilder {
     private int tcpPort;
     private int udpPort;
 
-    private MatchLaunchMode launchMode = MatchLaunchMode.OPEN;
+    private boolean isRecovery = false;
+    private boolean isLocalPersistence = false;
 
     private GameSnapshotRepository snapshotRepository;
     private GameResultsRepository resultsRepository;
@@ -77,33 +67,23 @@ public class GameServerBuilder {
         return this;
     }
 
-    public GameServerBuilder asStandard() {
-        this.launchMode = MatchLaunchMode.OPEN;
-        return this;
-    }
-
     public GameServerBuilder asWhitelisted() {
-        this.launchMode = MatchLaunchMode.WHITELISTED;
+        this.isRecovery = false;
         return this;
     }
 
     public GameServerBuilder asRecovery() {
-        this.launchMode = MatchLaunchMode.RECOVERY;
+        this.isRecovery = true;
         return this;
     }
 
     public GameServerBuilder withLocalPersistence() {
-        this.snapshotRepository = new LocalGameSnapshotRepository();
-        this.resultsRepository = new LocalGameResultsRepository();
-        this.matchRepository = new LocalGameMatchRepository();
+        this.isLocalPersistence = true;
         return this;
     }
 
     public GameServerBuilder withRemotePersistence() {
-        GameServicesConfig config = GameServicesConfig.fromEnv();
-        this.snapshotRepository = new MongoGameSnapshotRepository(config.backup().endpoint());
-        this.resultsRepository = new MongoGameResultsRepository(config.results().endpoint());
-        this.matchRepository = new MongoGameMatchRepository(config.backup().endpoint());
+        this.isLocalPersistence = false;
         return this;
     }
 
@@ -113,13 +93,14 @@ public class GameServerBuilder {
     }
 
     public GameServer build() {
+        configureRepositories();
         if (orchestrator == null) {
             orchestrator = new DummyGameServerOrchestrator();
         }
         GamePersistenceManager persistence = new GamePersistenceManager(snapshotRepository, resultsRepository);
         GameContext gameContext;
 
-        if (launchMode == MatchLaunchMode.RECOVERY) {
+        if (isRecovery) {
             MatchSnapshot snapshot = snapshotRepository.findLatestSnapshot(matchId)
                     .join()
                     .orElseThrow(() -> new IllegalStateException("Cannot recover match " + matchId));
@@ -154,18 +135,26 @@ public class GameServerBuilder {
         return server;
     }
 
+    private void configureRepositories() {
+        if (isLocalPersistence) {
+            this.snapshotRepository = new LocalGameSnapshotRepository();
+            this.resultsRepository = new LocalGameResultsRepository();
+            this.matchRepository = new LocalGameMatchRepository();
+        } else {
+            GameServicesConfig config = GameServicesConfig.fromEnv();
+            this.snapshotRepository = new MongoGameSnapshotRepository(config.backup().endpoint());
+            this.resultsRepository = new MongoGameResultsRepository(config.results().endpoint());
+            this.matchRepository = new MongoGameMatchRepository(config.backup().endpoint());
+        }
+    }
+
     private LobbyManager createLobbyManager(
             ServerGameEngine engine,
             GameServerGateway gateway
     ) {
-        return switch (launchMode) {
-            case OPEN -> new OpenLobbyManager(DEFAULT_OPEN_LOBBY_CAPACITY, engine, gateway);
-            case WHITELISTED, RECOVERY -> {
-                List<String> expectedPlayers = matchRepository.findExpectedPlayers(matchId)
-                        .join()
-                        .orElseThrow(() -> new IllegalStateException("No player list found in repository for match " + matchId));
-                yield new WhitelistedLobbyManager(expectedPlayers, DEFAULT_WHITELIST_LOBBY_TIMEOUT_SECONDS, engine, gateway);
-            }
-        };
+        List<String> expectedPlayers = matchRepository.findExpectedPlayers(matchId)
+                .join()
+                .orElseThrow(() -> new IllegalStateException("No player list found in repository for match " + matchId));
+        return new WhitelistedLobbyManager(expectedPlayers, DEFAULT_WHITELIST_LOBBY_TIMEOUT_SECONDS, engine, gateway);
     }
 }
