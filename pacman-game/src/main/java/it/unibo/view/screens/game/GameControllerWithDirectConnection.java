@@ -9,24 +9,19 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Controller for managing direct server connections resolved via matchmaker parameters.
  * <p>
- * Manages the connection lifecycle for direct matches by querying server parameters
- * and handling cached retry attempts up to a maximum threshold.
- * </p>
+ * Queries the matchmaker for active game server parameters on join and retry attempts.
  */
 public class GameControllerWithDirectConnection extends AbstractGameController {
     private static final Logger logger = LoggerFactory.getLogger(GameControllerWithDirectConnection.class);
-    private static final int MAX_CACHE_RETRIES = 3;
 
     private final GameScreenWithDirectConnection screen = new GameScreenWithDirectConnection();
     private final AppNavigator navigator;
     private final ServiceManager serviceManager;
-
-    private int retryCount = 0;
-    private ConnectionParameters lastParameters;
 
     public GameControllerWithDirectConnection(AppNavigator navigator, ServiceManager serviceManager) {
         this.navigator = navigator;
@@ -39,66 +34,52 @@ public class GameControllerWithDirectConnection extends AbstractGameController {
 
     @Override
     public void onEnter() {
-        this.retryCount = 0;
-        this.lastParameters = null;
-        fetchFreshServerDetailsAndConnect();
+        fetchServerParametersAndConnect();
     }
 
     private void handleRetry() {
-        if (retryCount < MAX_CACHE_RETRIES && lastParameters != null) {
-            retryCount++;
-            logger.info("Retrying connection with cached parameters (Attempt {}/{})", retryCount, MAX_CACHE_RETRIES);
-            super.startConnection(lastParameters, serviceManager.getUsername());
-        } else {
-            logger.info("Max cached retries reached. Re-querying matchmaker for fresh server details...");
-            retryCount = 0;
-            fetchFreshServerDetailsAndConnect();
-        }
+        logger.info("Retrying connection. Querying matchmaker for fresh server details...");
+        fetchServerParametersAndConnect();
     }
 
-    private void fetchFreshServerDetailsAndConnect() {
-        screen.showConnectingView("Fetching server details...");
-        new Thread(() -> {
+    private void fetchServerParametersAndConnect() {
+        screen.showConnectingView("Fetching server parameters...");
+        CompletableFuture.runAsync(() -> {
             try {
-                Optional<ConnectionParameters> paramsOptional = serviceManager.getGameServerParametersByMatchId();
-                if (paramsOptional.isPresent()) {
-                    ConnectionParameters parameters = paramsOptional.get();
-                    this.lastParameters = parameters;
-                    super.startConnection(parameters, serviceManager.getUsername());
+                // Try fetching by match ID
+                Optional<ConnectionParameters> parameters = serviceManager.getGameServerParametersByMatchId();
+                // If local matchId was lost/null, query backend by session token
+                if (parameters.isEmpty()) {
+                    logger.info("Match ID parameter lookup returned empty. Attempting recovery via user token...");
+                    parameters = serviceManager.getGameServerParametersByToken();
+                }
+                if (parameters.isPresent()) {
+                    super.startConnection(parameters.get(), serviceManager.getUsername());
                 } else {
-                    logger.warn("No active game server parameters returned for match ID: {}", serviceManager.getCurrentMatchId());
-                    SwingUtilities.invokeLater(() -> screen.showFailureView("Game server is not available for this match. Please try re-queueing."));
+                    logger.warn("No game server parameters were found for match ID: {}", serviceManager.getCurrentMatchId());
+                    SwingUtilities.invokeLater(() -> screen.showFailureView("Game server is not available"));
                 }
             } catch (Exception e) {
-                logger.error("Failed to fetch server details from matchmaker", e);
-                SwingUtilities.invokeLater(() -> screen.showFailureView("Could not fetch server details"));
+                logger.error("Failed to fetch server parameters from matchmaker", e);
+                SwingUtilities.invokeLater(() -> screen.showFailureView("Could not fetch server parameters"));
             }
-        }).start();
-    }
-
-    private void handleExitToMainMenu() {
-        disconnect();
-        new Thread(() -> {
-            try {
-                // serviceManager.quitMatch();
-            } catch (Exception e) {
-                logger.warn("Failed to send quitMatch request on exit");
-            }
-        }).start();
-        if (navigator != null) {
-            navigator.goTo(AppState.MAIN_MENU);
-        }
+        });
     }
 
     @Override
     protected void handleClose() {
-        this.retryCount = 0;
-        this.lastParameters = null;
         handleExitToMainMenu();
     }
 
     @Override
     protected AbstractGameScreen getGameScreen() {
         return screen;
+    }
+
+    private void handleExitToMainMenu() {
+        super.disconnect();
+        if (navigator != null) {
+            navigator.goTo(AppState.MAIN_MENU);
+        }
     }
 }

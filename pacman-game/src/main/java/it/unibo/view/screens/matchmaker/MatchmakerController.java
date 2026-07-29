@@ -4,17 +4,23 @@ import it.unibo.controller.client.services.ServiceManager;
 import it.unibo.view.navigation.AppNavigator;
 import it.unibo.view.navigation.AppState;
 import it.unibo.view.screens.ScreenController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MatchmakerController implements ScreenController {
+    private static final Logger logger = LoggerFactory.getLogger(MatchmakerController.class);
+
     private final MatchmakerScreen screen;
     private final AppNavigator navigator;
     private final ServiceManager serviceManager;
 
-    private Thread matchmakingThread;
-    private volatile boolean searching = false;
+    private final AtomicBoolean searching = new AtomicBoolean(false);
+    private CompletableFuture<Void> matchmakingFuture;
 
     public MatchmakerController(AppNavigator navigator, ServiceManager serviceManager) {
         this.navigator = navigator;
@@ -27,62 +33,81 @@ public class MatchmakerController implements ScreenController {
     }
 
     private void handleStartQueue() {
-        String selectedMap = screen.getMenuPanel().getSelectedMap();
-        startQueue(selectedMap);
+        startQueue(screen.getMenuPanel().getSelectedMap());
     }
 
     private void startQueue(String selectedMap) {
-        searching = true;
+        searching.set(true);
+        logger.info("Starting matchmaking for map: {}", selectedMap);
         SwingUtilities.invokeLater(screen::showSearchingView);
-        matchmakingThread = new Thread(() -> {
+        matchmakingFuture = CompletableFuture.runAsync(() -> {
             try {
-                SwingUtilities.invokeLater(() -> screen.getSearchingPanel().updateStatus("Queueing for " + selectedMap + "..."));
-                boolean joinedSuccessfully = serviceManager.queue(selectedMap);
-                if (!joinedSuccessfully) {
-                    SwingUtilities.invokeLater(() -> screen.showFailureView("Failed to join queue."));
+                updateSearchingStatus("Queueing for " + selectedMap + "...");
+                if (!serviceManager.queue(selectedMap)) {
+                    logger.warn("Failed to join queue for map: {}", selectedMap);
+                    showFailureView("Failed to join queue. Please try again.");
                     return;
                 }
-                boolean ready = (serviceManager.getCurrentMatchId() != null);
-                while (searching && !ready) {
-                    SwingUtilities.invokeLater(() -> screen.getSearchingPanel().updateStatus("Searching for players..."));
-                    ready = serviceManager.checkQueueStatus();
-                }
-                if (!searching) return;
-                SwingUtilities.invokeLater(() -> screen.getSearchingPanel().updateStatus("Match found!"));
-                Thread.sleep(500);
-                SwingUtilities.invokeLater(() -> navigator.goTo(AppState.IN_GAME));
+                pollQueueStatus();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             } catch (Exception e) {
-                if (searching) {
-                    SwingUtilities.invokeLater(() -> screen.showFailureView("Network Error: " + e.getMessage()));
+                if (searching.get()) {
+                    logger.error("Matchmaking failed unexpectedly", e);
+                    showFailureView("Network Error during queueing");
                 }
             }
         });
-        matchmakingThread.start();
+    }
+
+    private void pollQueueStatus() throws Exception {
+        boolean matchFound = (serviceManager.getCurrentMatchId() != null);
+        while (searching.get() && !matchFound) {
+            updateSearchingStatus("Searching for players...");
+            matchFound = serviceManager.checkQueueStatus();
+        }
+        searching.set(false);
+        logger.info("Match found! Match ID: {}", serviceManager.getCurrentMatchId());
+        updateSearchingStatus("Match found!");
+        Thread.sleep(500);
+        SwingUtilities.invokeLater(() -> navigator.goTo(AppState.IN_GAME));
     }
 
     private void cancelQueue() {
-        stopMatchmakingThread();
-        new Thread(() -> {
+        if (searching.get()) {
+            logger.info("Matchmaking cancelled by user.");
+        }
+        stopMatchmaking();
+        CompletableFuture.runAsync(() -> {
             try {
                 serviceManager.cancelQueue();
-            } catch (Exception _) {
+            } catch (Exception e) {
+                logger.warn("Error while attempting to cancel queue on backend", e);
             } finally {
                 serviceManager.clearMatchmakingData();
             }
-        }).start();
+        });
         SwingUtilities.invokeLater(screen::showMenuView);
     }
 
-    private void stopMatchmakingThread() {
-        searching = false;
-        if (matchmakingThread != null && matchmakingThread.isAlive()) {
-            matchmakingThread.interrupt();
-            matchmakingThread = null;
+    private void stopMatchmaking() {
+        searching.set(false);
+        if (matchmakingFuture != null && !matchmakingFuture.isDone()) {
+            matchmakingFuture.cancel(true);
+            matchmakingFuture = null;
         }
     }
 
     private void handleReturnToMainMenu() {
         navigator.goTo(AppState.MAIN_MENU);
+    }
+
+    private void updateSearchingStatus(String message) {
+        SwingUtilities.invokeLater(() -> screen.getSearchingPanel().updateStatus(message));
+    }
+
+    private void showFailureView(String errorMessage) {
+        SwingUtilities.invokeLater(() -> screen.showFailureView(errorMessage));
     }
 
     @Override
@@ -92,19 +117,11 @@ public class MatchmakerController implements ScreenController {
 
     @Override
     public void onEnter() {
-        SwingUtilities.invokeLater(screen::showMenuView);
+        this.screen.showMenuView();
     }
 
     @Override
     public void onExit() {
-        stopMatchmakingThread();
-        new Thread(() -> {
-            try {
-                serviceManager.cancelQueue();
-            } catch (Exception _) {
-            } finally {
-                serviceManager.clearMatchmakingData();
-            }
-        }).start();
+        cancelQueue();
     }
 }
