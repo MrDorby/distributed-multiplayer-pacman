@@ -20,7 +20,7 @@ public class MongoDBConstants {
 
     /* Label of the different fields in each database. */
     private static final LongTermFields longTermFields = new LongTermFields("username", "nMatch", "nWins", "bestScore");
-    private static final ShortTermFields shortTermFields = new ShortTermFields("_id", "users", "checkpoints");  //TODO_ change matchid.
+    private static final ShortTermFields shortTermFields = new ShortTermFields("_id", "users", "checkpoints");
 
     private MongoDBConstants() {}
 

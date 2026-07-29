@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import it.unibo.dto.GameServerRequest;
 import it.unibo.dto.JoinLobbyRequest;
 import it.unibo.dto.QuitLobbyRequest;
-import it.unibo.dto.RemoveRequest;
+import it.unibo.dto.RemoveFromMatchRequest;
 
 /**
  * Concept of the service that manages the matchmaking part.
@@ -46,5 +46,5 @@ public interface Matchmaker {
      * @param remove the request of the user containing the token and the match id.
      * @return a Response empty containing a HttpCode.
      */
-    ResponseEntity<Void> removePlayerFromMatch(@RequestBody RemoveRequest remove);
+    ResponseEntity<Void> removePlayerFromMatch(@RequestBody RemoveFromMatchRequest remove);
 }
