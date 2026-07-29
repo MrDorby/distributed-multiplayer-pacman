@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param token the string containing the token.
  * @param matchId the identifier of the match.
  */
-public record RemoveRequest(
+public record RemoveFromMatchRequest(
     @JsonProperty("token") String token,
     @JsonProperty("match") String matchId) {
     

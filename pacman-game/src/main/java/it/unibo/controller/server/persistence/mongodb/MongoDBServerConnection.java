@@ -30,13 +30,17 @@ import it.unibo.controller.shared.network.dto.GameContextDTO;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * MongoDBServerConnection manages the GameServer connections with the MongoDB instances.
  */
 public class MongoDBServerConnection {
 
     /* Internal record for make it easy check the content of the short-term database. */
-    private record Checkpoint(GameContextDTO gameContextDTO, Long timestamp) {
+    private record Checkpoint(
+        @JsonProperty("context") GameContextDTO gameContextDTO, 
+        @JsonProperty("timestamp") Long timestamp) {
     }
 
     private final MongoClient mongoClient;
@@ -132,7 +136,7 @@ public class MongoDBServerConnection {
                             .append(longTermFields.getBestScoreLabel(), player.getValue());
                      
                 Publisher<InsertOneResult> insertPublisher = this.collection.insertOne(newDoc);
-                futures.add(Mono.from(this.collection.insertOne(newDoc)).then().toFuture());
+                futures.add(Mono.from(insertPublisher).then().toFuture());
             } else {
                 int bestScore = (int) doc.get(longTermFields.getBestScoreLabel());
                 List<Bson> updates = new ArrayList<>();

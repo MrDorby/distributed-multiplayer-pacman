@@ -15,20 +15,26 @@ public class MatchInfoMongoDB {
     
     @Id
     private String id;
+
+    @Indexed(unique = true)
+    private String gameServerName;
     private List<String> users;
-    private Socket gameServerSocket;
+    private ServerParameters serverParameters;
     private Long timeOfCreation;
+    private List<Checkpoint> checkpoints;
 
     public MatchInfoMongoDB() {
     
     }
 
     public MatchInfoMongoDB(
+        String gameServerName,
         List<String> users, 
-        Socket gameServerSocket,
+        ServerParameters serverParameters,
         Long timeOfCreation) {
+        this.gameServerName = gameServerName;
         this.users = users;
-        this.gameServerSocket = gameServerSocket;
+        this.serverParameters = serverParameters;
         this.timeOfCreation = timeOfCreation;
     }
 
@@ -45,6 +51,21 @@ public class MatchInfoMongoDB {
      */
     public void setId(String id) {
         this.id = id;
+    }
+
+    /**
+     * @return the GameServer's unique name.
+     */
+    public String getGameServerName() {
+        return gameServerName;
+    }
+
+    /**
+     * Sets the unique name of the GameServer.
+     * @param gameServerName the name.
+     */
+    public void setGameServerName(String gameServerName) {
+        this.gameServerName = gameServerName;
     }
 
     /**
@@ -65,16 +86,16 @@ public class MatchInfoMongoDB {
     /**
      * @return the infos about the GameServer.
      */
-    public Socket getGameServerSocket() {
-        return gameServerSocket;
+    public ServerParameters getServerParameters() {
+        return serverParameters;
     }
 
     /**
      * Sets the infos about the GameServer. 
      * @param gameServerSocket
      */
-    public void setGameServerSocket(Socket gameServerSocket) {
-        this.gameServerSocket = gameServerSocket;
+    public void setServerParameters(ServerParameters gameServerSocket) {
+        this.serverParameters = gameServerSocket;
     }
 
     /**
@@ -90,5 +111,20 @@ public class MatchInfoMongoDB {
      */
     public void setTimeOfCreation(Long timeOfCreation) {
         this.timeOfCreation = timeOfCreation;
+    }
+
+    /**
+     * @return the checkpoints.
+     */
+    public List<Checkpoint> getCheckpoints() {
+        return checkpoints;
+    }
+
+    /**
+     * Sets the list of the checkpoints.
+     * @param checkpoints
+     */
+    public void setCheckpoints(List<Checkpoint> checkpoints) {
+        this.checkpoints = checkpoints;
     }
 }

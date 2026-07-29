@@ -42,4 +42,5 @@ public interface ShortTermMatchRepository extends MongoRepository<MatchInfoMongo
     @Query("{ '_id' : ?0 }")
     @Update("{ '$pull' : { 'users' : ?1 }}")
     void removeUserFromMatch(String matchId, String username);
+
 }

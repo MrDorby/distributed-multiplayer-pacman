@@ -13,10 +13,13 @@ import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-
-import it.unibo.dto.GameServerResponse;
+import it.unibo.dto.GameServerCheckRequest;
+import it.unibo.dto.GameServerCheckResponse;
+import it.unibo.dto.GameServerInfo;
+import it.unibo.dto.GameServerStatus;
 import it.unibo.dto.JoinLobbyResponse;
 import it.unibo.dto.LobbyTypeResponse;
+import it.unibo.dto.ManagerCreateServer;
 import it.unibo.mongodb.LobbyInfoMongoDB;
 import it.unibo.mongodb.MatchInfoMongoDB;
 import it.unibo.mongodb.MongoBackground;
@@ -32,8 +35,13 @@ import it.unibo.mongodb.ShortTermMatchRepository;
 public class MatchmakerDetailsService {
 
     private static final int LOBBY_SIZE = 4;
-    private static final String MANAGER = "MANAGER"; //TODO: change
-    private static final String CREATE_GAME_SERVER_URI = System.getenv(MANAGER) + "/create"; //TODO: change
+    private static final String MANAGER = "MANAGER";
+    private static final String MANAGER_URI = System.getenv(MANAGER);
+    private static final String GAMESERVER_DIR = MANAGER_URI + "/gameserver";
+    private static final String CREATE_GAMESERVER_URI =  "/create";
+    private static final String CHECK_GAMESERVER_URI = "/check";
+
+    private final ObjectMapper mapper = new ObjectMapper();
     
     @Autowired
     private ShortTermLobbyRepository lobbyCollection;
@@ -103,24 +111,27 @@ public class MatchmakerDetailsService {
 
     /* Deals with the management of the FOUND type response. */
     private JoinLobbyResponse foundResponse(LobbyInfoMongoDB lobby) throws Exception {
-        GameServerResponse gameServer = null;
         if (lobby.getMatchId().isEmpty() || lobby.getMatchId() == null) {
             
             MatchInfoMongoDB match = matchCollection.save(
-                new MatchInfoMongoDB(lobby.getPlayers(), null, System.currentTimeMillis()));
+                new MatchInfoMongoDB("", 
+                    lobby.getPlayers(), 
+                    null, 
+                    System.currentTimeMillis()));
 
             lobby.setMatchId(match.getId());
             lobby.setCounter(lobby.getCounter() + 1);
             lobbyCollection.save(lobby);
 
+            String createGameServer = mapper.writeValueAsString(new ManagerCreateServer(match.getId(), lobby.getMap()));
             /* SYNC */
             ResponseEntity<String> result = RestClient
-                .create(MANAGER)
+                .create(GAMESERVER_DIR)
                 .post()
-                .uri(new URI("/"))
+                .uri(new URI(CREATE_GAMESERVER_URI))
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .body(null)  // TODO: it will contain the match id.
+                .body(createGameServer)
                 .retrieve()
                 .toEntity(String.class);
 
@@ -128,22 +139,21 @@ public class MatchmakerDetailsService {
             // TODO: check https://docs.spring.io/spring-framework/reference/web/webflux-webclient/client-retrieve.html
             /*
             CompletableFuture<?> result = WebClient
-                .create(MANAGER)
+                .create(GAMESERVER_DIR)
                 .post()
-                .uri(new URI("/"))
+                .uri(new URI(CREATE_GAMESERVER_URI))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(null)
+                .body(createGameServer)
                 .retrieve()
                 .bodyToMono(Object.class).toFuture();
             */
-
-            ObjectMapper mapper = new ObjectMapper();
-            gameServer = mapper.readValue(result.getBody(), GameServerResponse.class);
-
-            this.mongoBackground.saveMatchInfo(match, gameServer.gameServer(), matchCollection);
+            GameServerInfo gameServerInfo = mapper.readValue(result.getBody(), GameServerInfo.class);
+            this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
         }
         JoinLobbyResponse response = new JoinLobbyResponse(LobbyTypeResponse.FOUND, lobby.getMatchId());
-        this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection);
+        lobby.setCounter(lobby.getCounter() + 1);
+        lobbyCollection.save(lobby);
+        this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
         return response;
     }
 
@@ -191,6 +201,43 @@ public class MatchmakerDetailsService {
      */
     public void deleteUserFromMatch(String matchId, String username) {
         this.matchCollection.removeUserFromMatch(matchId, username);
+    }
+
+    /**
+     * Contacts the Manager to check the availability of the GameServer for the match.
+     * @param match the match.
+     * @return the information of the new GameServer to connect with or null if it's ok.
+     * @throws Exception
+     */
+    public GameServerInfo checkGameServerAvailability(MatchInfoMongoDB match) throws Exception {
+        Long timeLeft = match.getCheckpoints().getLast().timestamp() - match.getTimeOfCreation(); //TODO change when start time is defined.
+        GameServerCheckRequest gameServerRequest = new GameServerCheckRequest(match.getGameServerName(), timeLeft);
+        String request = mapper.writeValueAsString(gameServerRequest);
+
+        ResponseEntity<String> result = RestClient
+            .create(GAMESERVER_DIR)
+            .post()
+            .uri(new URI(CHECK_GAMESERVER_URI))
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
+            .body(request)
+            .retrieve()
+            .toEntity(String.class);
+
+        GameServerCheckResponse checkResponse = mapper.readValue(result.getBody(), GameServerCheckResponse.class);
+        if (checkResponse.status() == GameServerStatus.UNHEALTHY) {
+            return checkResponse.serverInfo();
+        }
+        return null;
+    }
+
+    /**
+     * Updates the match with the new informations about the GameServer.
+     * @param match the match to update.
+     * @param info the new informations about the GameServer.
+     */
+    public void setNewGameServerInfo(MatchInfoMongoDB match, GameServerInfo info) {
+        this.mongoBackground.saveNewGameServerInfo(match, info, this.matchCollection);
     }
 
 }
