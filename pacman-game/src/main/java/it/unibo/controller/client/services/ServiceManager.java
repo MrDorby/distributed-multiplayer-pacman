@@ -71,10 +71,9 @@ public interface ServiceManager {
     /**
      * Retrieves network connection parameters using a specific match ID.
      *
-     * @param matchId the active match identifier
      * @return the {@link ConnectionParameters} for the game server connection.
      */
-    Optional<ConnectionParameters> getGameServerParametersByMatchId(String matchId) throws Exception;
+    Optional<ConnectionParameters> getGameServerParametersByMatchId() throws Exception;
 
     /**
      * Retrieves network connection parameters using the current user's token.

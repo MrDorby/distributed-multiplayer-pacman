@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.util.Optional;
 
 /**
  * Controller for managing direct server connections resolved via matchmaker parameters.
@@ -59,19 +60,31 @@ public class GameControllerWithDirectConnection extends AbstractGameController {
         screen.showConnectingView("Fetching server details...");
         new Thread(() -> {
             try {
-                String user = serviceManager.getUsername();
-                ConnectionParameters parameters = serviceManager.getGameServerParameters();
-                this.lastParameters = parameters;
-                super.startConnection(parameters, user);
+                Optional<ConnectionParameters> paramsOptional = serviceManager.getGameServerParametersByMatchId();
+                if (paramsOptional.isPresent()) {
+                    ConnectionParameters parameters = paramsOptional.get();
+                    this.lastParameters = parameters;
+                    super.startConnection(parameters, serviceManager.getUsername());
+                } else {
+                    logger.warn("No active game server parameters returned for match ID: {}", serviceManager.getCurrentMatchId());
+                    SwingUtilities.invokeLater(() -> screen.showFailureView("Game server is not available for this match. Please try re-queueing."));
+                }
             } catch (Exception e) {
                 logger.error("Failed to fetch server details from matchmaker", e);
-                SwingUtilities.invokeLater(() -> screen.showFailureView("Could not fetch server details: " + e.getMessage()));
+                SwingUtilities.invokeLater(() -> screen.showFailureView("Could not fetch server details"));
             }
         }).start();
     }
 
     private void handleExitToMainMenu() {
         disconnect();
+        new Thread(() -> {
+            try {
+                // serviceManager.quitMatch();
+            } catch (Exception e) {
+                logger.warn("Failed to send quitMatch request on exit");
+            }
+        }).start();
         if (navigator != null) {
             navigator.goTo(AppState.MAIN_MENU);
         }
