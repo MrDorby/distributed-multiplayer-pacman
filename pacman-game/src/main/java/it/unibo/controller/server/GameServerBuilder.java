@@ -3,7 +3,6 @@ package it.unibo.controller.server;
 import it.unibo.controller.server.engine.ServerGameEngine;
 import it.unibo.controller.server.lobby.LobbyManager;
 import it.unibo.controller.server.lobby.WhitelistedLobbyManager;
-import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.NettyGameServerGateway;
 import it.unibo.controller.server.network.sockets.handlers.*;
 import it.unibo.controller.server.network.sockets.session.GameSessionController;
@@ -113,7 +112,18 @@ public class GameServerBuilder {
         GameSessionController sessionController = new GameSessionController();
         NettyGameServerGateway gateway = new NettyGameServerGateway(tcpPort, udpPort, sessionController);
         ServerGameEngine engine = new ServerGameEngine(game);
-        LobbyManager lobbyManager = createLobbyManager(engine, gateway);
+
+        List<String> expectedPlayers = fetchExpectedPlayers();
+        if (!isRecovery) {
+            engine.initialize(expectedPlayers);
+        }
+
+        LobbyManager lobbyManager = new WhitelistedLobbyManager(
+                expectedPlayers,
+                DEFAULT_WHITELIST_LOBBY_TIMEOUT_SECONDS,
+                engine,
+                gateway
+        );
 
         GameServer server = new GameServerImpl(
                 matchId,
@@ -148,13 +158,9 @@ public class GameServerBuilder {
         }
     }
 
-    private LobbyManager createLobbyManager(
-            ServerGameEngine engine,
-            GameServerGateway gateway
-    ) {
-        List<String> expectedPlayers = matchRepository.findExpectedPlayers(matchId)
+    private List<String> fetchExpectedPlayers() {
+        return matchRepository.findExpectedPlayers(matchId)
                 .join()
                 .orElseThrow(() -> new IllegalStateException("No player list found in repository for match " + matchId));
-        return new WhitelistedLobbyManager(expectedPlayers, DEFAULT_WHITELIST_LOBBY_TIMEOUT_SECONDS, engine, gateway);
     }
 }

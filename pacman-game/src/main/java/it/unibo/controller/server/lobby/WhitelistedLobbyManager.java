@@ -64,7 +64,6 @@ public class WhitelistedLobbyManager implements LobbyManager {
 
     @Override
     public synchronized void onServerStart() {
-        engine.initialize(new ArrayList<>(expectedPlayers));
         logger.info("Whitelisted game server ready. Waiting {} seconds for players {}" , connectionTimeoutSeconds, expectedPlayers);
         this.matchStartTask = scheduler.schedule(
                 this::startGame,
@@ -78,7 +77,6 @@ public class WhitelistedLobbyManager implements LobbyManager {
         String username = session.getUsername();
         if (!expectedPlayers.contains(username)) {
             logger.warn("Unauthorized player {} tried to connect to match", username);
-            // TODO disconnect session
             return;
         }
         switch (state) {
