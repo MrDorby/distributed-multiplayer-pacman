@@ -3,6 +3,7 @@ package it.unibo.gameservermanager.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 
 /**
  * The results of a liveness check on a GameServer.
@@ -15,6 +16,7 @@ public record GameServerCheckResults(
         @JsonProperty("status") GameServerStatus status,
         @JsonProperty("server-info") @Nullable GameServerInfo serverInfo) {
     public GameServerCheckResults {
+        Objects.requireNonNull(status);
         if (!status.equals(GameServerStatus.UNHEALTHY) && serverInfo != null) {
             throw new IllegalArgumentException("Can't specify GameServer information unless the status is "
                     + GameServerStatus.UNHEALTHY);

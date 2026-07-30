@@ -1,5 +1,6 @@
 package it.unibo.gameservermanager.controller;
 
+import it.unibo.gameservermanager.dto.CheckGameServerRequest;
 import it.unibo.gameservermanager.dto.GameServerCheckResults;
 import it.unibo.gameservermanager.dto.GameServerInfo;
 import it.unibo.gameservermanager.dto.GameServerInitParameters;
@@ -14,14 +15,14 @@ public interface GameServerManagerController {
      * Creates a new GameServer for the specified match, and returns information about it once it's been allocated.<br>
      * Reachable at endpoint: {@code /gameservermanager/gameserver/create}.
      * @param initParameters the initialization parameters of the GameServer.
-     * @return a record containing information about the GameServer. Information provided are:
+     * @return a {@link GameServerInfo} record containing information about the GameServer. Information provided are:
      * <ul>
      *     <li>The GameServer's unique name.</li>
      *     <li>Its IP address.</li>
      *     <li>Its TCP and UDP port numbers.</li>
      * </ul>
      */
-    ResponseEntity<GameServerInfo> createGameServer(@RequestBody GameServerInitParameters initParameters);
+    ResponseEntity<String> createGameServer(@RequestBody GameServerInitParameters initParameters);
 
     /**
      * Checks the current status of the GameServer associated to the specified match.
@@ -30,11 +31,12 @@ public interface GameServerManagerController {
      * based on the match's time left. If a recovery GameServer has been instantiated, also returns the information
      * about it.<br>
      * Reachable at endpoint: {@code /gameservermanager/gameserver/check}.
-     * @param matchID the unique ID of the match.
-     * @return the results of the check on the GameServer, which contain its current status and can contain the
+     * @param checkRequest the information needed to check the status of a GameServer.
+     * @return a {@link GameServerCheckResults} record with the results of the check on the GameServer,
+     * which contain its current status and can contain the
      * information about the newly instantiated recovery GameServer.
      */
-    ResponseEntity<GameServerCheckResults> checkGameServer(@RequestBody String matchID);
+    ResponseEntity<String> checkGameServer(@RequestBody CheckGameServerRequest checkRequest);
 
     /**
      * Signals that the specified match is over, so that related data can be deallocated.

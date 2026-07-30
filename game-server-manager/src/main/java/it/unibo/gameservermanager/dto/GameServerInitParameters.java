@@ -2,6 +2,8 @@ package it.unibo.gameservermanager.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 /**
  * The initialization parameters of a GameServer.
  * @param matchID the unique ID of the match.
@@ -9,4 +11,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public record GameServerInitParameters(
         @JsonProperty("match-id") String matchID,
-        @JsonProperty("map-id") String mapID) {}
+        @JsonProperty("map-id") String mapID) {
+    public GameServerInitParameters {
+        Objects.requireNonNull(matchID);
+        Objects.requireNonNull(mapID);
+    }
+}

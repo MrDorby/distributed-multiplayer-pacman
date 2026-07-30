@@ -35,10 +35,10 @@ tasks.test {
 
 tasks.jar {
     manifest {
-        attributes("Main-Class" to "") // TODO: SET MAIN CLASS
+        attributes("Main-Class" to "it.unibo.gameservermanager.GameServerManagerMain")
     }
 }
 
 application {
-    mainClass.set("") // TODO: SET MAIN CLASS
+    mainClass.set("it.unibo.gameservermanager.GameServerManagerMain")
 }
