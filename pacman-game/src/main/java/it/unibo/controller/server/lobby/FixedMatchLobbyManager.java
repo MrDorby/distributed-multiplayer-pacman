@@ -21,8 +21,8 @@ import java.util.concurrent.TimeUnit;
  * Grants a configurable grace window for expected players to join or reconnect.
  * Automatically starts the game once all expected players connect or when the timer expires.
  */
-public class WhitelistedLobbyManager implements LobbyManager {
-    private static final Logger logger = LoggerFactory.getLogger(WhitelistedLobbyManager.class);
+public class FixedMatchLobbyManager implements LobbyManager {
+    private static final Logger logger = LoggerFactory.getLogger(FixedMatchLobbyManager.class);
 
     private final int connectionTimeoutSeconds;
     private final ServerGameEngine engine;
@@ -35,7 +35,7 @@ public class WhitelistedLobbyManager implements LobbyManager {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> matchStartTask;
 
-    public WhitelistedLobbyManager(
+    public FixedMatchLobbyManager(
             Collection<String> expectedPlayers,
             int connectionTimeoutSeconds,
             ServerGameEngine engine,
@@ -64,21 +64,13 @@ public class WhitelistedLobbyManager implements LobbyManager {
 
     @Override
     public synchronized void onServerStart() {
-        logger.info("Whitelisted game server ready. Waiting {} seconds for players {}" , connectionTimeoutSeconds, expectedPlayers);
-        this.matchStartTask = scheduler.schedule(
-                this::startGame,
-                connectionTimeoutSeconds,
-                TimeUnit.SECONDS
-        );
+        logger.info("Fixed-match game server ready. Waiting {} seconds for players {}" , connectionTimeoutSeconds, expectedPlayers);
+        this.matchStartTask = scheduler.schedule(this::startGame, connectionTimeoutSeconds, TimeUnit.SECONDS);
     }
 
     @Override
     public synchronized void onPlayerConnected(GameSession session) {
         String username = session.getUsername();
-        if (!expectedPlayers.contains(username)) {
-            logger.warn("Unauthorized player {} tried to connect to match", username);
-            return;
-        }
         switch (state) {
             case WAITING -> {
                 connectedPlayers.add(username);

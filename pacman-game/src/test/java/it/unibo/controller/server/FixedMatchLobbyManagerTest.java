@@ -1,8 +1,8 @@
 package it.unibo.controller.server;
 
 import it.unibo.controller.server.engine.ServerGameEngine;
+import it.unibo.controller.server.lobby.FixedMatchLobbyManager;
 import it.unibo.controller.server.lobby.LobbyState;
-import it.unibo.controller.server.lobby.WhitelistedLobbyManager;
 import it.unibo.controller.server.network.sockets.GameServerGateway;
 import it.unibo.controller.server.network.sockets.session.GameSession;
 import it.unibo.controller.shared.network.sockets.packets.GameStartPacket;
@@ -15,14 +15,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
-class WhitelistLobbyManagerTest {
+class FixedMatchLobbyManagerTest {
 
     private ServerGameEngine engine;
     private GameServerGateway gateway;
     private GameSession aliceSession;
     private GameSession bobSession;
-    private GameSession strangerSession;
-    private WhitelistedLobbyManager manager;
+    private FixedMatchLobbyManager manager;
 
     @BeforeEach
     void setUp() {
@@ -30,12 +29,10 @@ class WhitelistLobbyManagerTest {
         gateway = mock(GameServerGateway.class);
         aliceSession = mock(GameSession.class);
         bobSession = mock(GameSession.class);
-        strangerSession = mock(GameSession.class);
         when(aliceSession.getUsername()).thenReturn("alice");
         when(bobSession.getUsername()).thenReturn("bob");
-        when(strangerSession.getUsername()).thenReturn("charlie");
-        Set<String> whitelist = Set.of("alice", "bob");
-        manager = new WhitelistedLobbyManager(whitelist, 15, engine, gateway);
+        Set<String> expectedPlayers = Set.of("alice", "bob");
+        manager = new FixedMatchLobbyManager(expectedPlayers, 15, engine, gateway);
     }
 
     @Test
@@ -45,29 +42,17 @@ class WhitelistLobbyManagerTest {
     }
 
     @Test
-    void testWhitelistedPlayerCanConnect() {
+    void testExpectedPlayerCanConnect() {
         manager.onPlayerConnected(aliceSession);
         assertEquals(LobbyState.WAITING, manager.getState());
         assertEquals(Set.of("alice"), manager.getConnectedPlayers());
     }
 
     @Test
-    void testNonWhitelistedPlayerIsRejected() {
-        manager.onPlayerConnected(strangerSession);
-        assertEquals(LobbyState.WAITING, manager.getState());
-        assertTrue(manager.getConnectedPlayers().isEmpty());
-    }
-
-    @Test
-    void testGameStartsWhenWhitelistedCapacityReached() {
+    void testGameStartsWhenExpectedCapacityReached() {
         manager.onPlayerConnected(aliceSession);
         assertEquals(Set.of("alice"), manager.getConnectedPlayers());
         assertEquals(LobbyState.WAITING, manager.getState());
-        // Charlie tries to join but is ignored
-        manager.onPlayerConnected(strangerSession);
-        assertEquals(Set.of("alice"), manager.getConnectedPlayers());
-        assertEquals(LobbyState.WAITING, manager.getState());
-        // Bob connects, hitting full capacity of valid players
         manager.onPlayerConnected(bobSession);
         verify(engine, timeout(1000)).start();
         verify(gateway, timeout(1000)).broadcastTcp(any(GameStartPacket.class));

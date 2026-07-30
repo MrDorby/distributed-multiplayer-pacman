@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.net.InetSocketAddress;
 import java.time.Instant;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -20,7 +21,7 @@ class GameSessionControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new GameSessionController();
+        controller = new GameSessionController(List.of());
     }
 
     @Test
@@ -109,5 +110,33 @@ class GameSessionControllerTest {
         assertEquals(UdpHandshakeResult.EXPIRED_TOKEN, result);
         assertEquals(GameSessionState.CONNECTING, session.getState());
         assertNull(session.getUdpAddress());
+    }
+
+    @Test
+    void whitelistRejectsUnapprovedPlayer() {
+        GameSessionController whitelistedController = new GameSessionController(List.of("alice", "bob"));
+        Channel channel = mock(Channel.class);
+        GameSession session = whitelistedController.onTcpConnect("charlie", channel);
+        assertNull(session);
+        verify(channel).close();
+    }
+
+    @Test
+    void whitelistAllowsApprovedPlayer() {
+        GameSessionController whitelistedController = new GameSessionController(List.of("alice", "bob"));
+        Channel channel = mock(Channel.class);
+        GameSession session = whitelistedController.onTcpConnect("alice", channel);
+        assertNotNull(session);
+        assertEquals("alice", session.getUsername());
+        verify(channel, never()).close();
+    }
+
+    @Test
+    void emptyListAllowsAllPlayers() {
+        Channel channel = mock(Channel.class);
+        GameSession session = controller.onTcpConnect("anybody", channel);
+        assertNotNull(session);
+        assertEquals("anybody", session.getUsername());
+        verify(channel, never()).close();
     }
 }

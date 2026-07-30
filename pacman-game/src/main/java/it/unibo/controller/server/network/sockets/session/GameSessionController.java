@@ -7,10 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Coordinates player session lifecycle events and maintains the collection of
@@ -25,11 +22,16 @@ public class GameSessionController {
     private static final Logger logger = LoggerFactory.getLogger(GameSessionController.class);
     private static final Duration UDP_HANDSHAKE_TIMEOUT = Duration.ofSeconds(15);
 
+    private final Set<String> expectedPlayers;
     private final GameSessionRegistry registry = new GameSessionRegistry();
     private final List<GameSessionLifecycleListener> listeners = new ArrayList<>();
 
     public void addListener(GameSessionLifecycleListener listener) {
         this.listeners.add(listener);
+    }
+
+    public GameSessionController(Collection<String> expectedPlayers) {
+        this.expectedPlayers = expectedPlayers != null ? Set.copyOf(expectedPlayers) : Set.of();
     }
 
     /**
@@ -48,6 +50,11 @@ public class GameSessionController {
      * @return the created or reconnected player session
      */
     public GameSession onTcpConnect(String username, Channel channel) {
+        if (!expectedPlayers.isEmpty() && !expectedPlayers.contains(username)) {
+            logger.warn("Rejecting unauthorized TCP connection attempt from username: {} ({})", username, channel.remoteAddress());
+            channel.close();
+            return null;
+        }
         GameSession currentSession = registry.getByUsername(username);
         GameSession session;
         if (currentSession != null) {

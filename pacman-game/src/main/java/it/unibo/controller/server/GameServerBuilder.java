@@ -2,7 +2,7 @@ package it.unibo.controller.server;
 
 import it.unibo.controller.server.engine.ServerGameEngine;
 import it.unibo.controller.server.lobby.LobbyManager;
-import it.unibo.controller.server.lobby.WhitelistedLobbyManager;
+import it.unibo.controller.server.lobby.FixedMatchLobbyManager;
 import it.unibo.controller.server.network.sockets.NettyGameServerGateway;
 import it.unibo.controller.server.network.sockets.handlers.*;
 import it.unibo.controller.server.network.sockets.session.GameSessionController;
@@ -109,16 +109,18 @@ public class GameServerBuilder {
         }
 
         Game game = new GameImpl(gameContext);
-        GameSessionController sessionController = new GameSessionController();
+
+        List<String> expectedPlayers = fetchExpectedPlayers();
+
+        GameSessionController sessionController = new GameSessionController(expectedPlayers);
         NettyGameServerGateway gateway = new NettyGameServerGateway(tcpPort, udpPort, sessionController);
         ServerGameEngine engine = new ServerGameEngine(game);
 
-        List<String> expectedPlayers = fetchExpectedPlayers();
         if (!isRecovery) {
             engine.initialize(expectedPlayers);
         }
 
-        LobbyManager lobbyManager = new WhitelistedLobbyManager(
+        LobbyManager lobbyManager = new FixedMatchLobbyManager(
                 expectedPlayers,
                 DEFAULT_WHITELIST_LOBBY_TIMEOUT_SECONDS,
                 engine,
