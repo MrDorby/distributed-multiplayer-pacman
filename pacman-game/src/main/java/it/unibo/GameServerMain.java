@@ -2,6 +2,7 @@ package it.unibo;
 
 import it.unibo.controller.server.GameServerBuilder;
 import it.unibo.controller.server.GameServer;
+import it.unibo.controller.server.GameServicesConfig;
 import it.unibo.controller.server.orchestration.AgonesRESTGameServerOrchestrator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,10 +123,13 @@ public class GameServerMain {
             throw new IllegalArgumentException("UDP port must be between 1 and 65535, got: " + udpPort);
         }
         if (!isLocal) {
-            String shortTermDbUri = System.getenv("SHORT_TERM_DB_URI");
-            String longTermDbUri = System.getenv("LONG_TERM_DB_URI");
-            if (shortTermDbUri == null || shortTermDbUri.isBlank() || longTermDbUri == null || longTermDbUri.isBlank()) {
-                throw new IllegalStateException("Remote persistence requires SHORT_TERM_DB_URI and LONG_TERM_DB_URI environment variables to be set.");
+            String shortTermUri = System.getenv(GameServicesConfig.SHORT_TERM_DB_KEY);
+            if (shortTermUri == null || shortTermUri.isBlank()) {
+                throw new IllegalStateException("Remote persistence requires " + GameServicesConfig.SHORT_TERM_DB_KEY + " environment variable to be set.");
+            }
+            String longTermUri = System.getenv(GameServicesConfig.LONG_TERM_DB_KEY);
+            if (longTermUri == null || longTermUri.isBlank()) {
+                throw new IllegalStateException("Remote persistence requires " + GameServicesConfig.LONG_TERM_DB_KEY + " environment variable to be set.");
             }
         }
     }

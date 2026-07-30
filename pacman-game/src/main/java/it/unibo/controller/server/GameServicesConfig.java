@@ -3,30 +3,23 @@ package it.unibo.controller.server;
 import java.net.URI;
 
 public record GameServicesConfig(
-        BackupConfig backup,
-        ResultsConfig results,
-        MatchmakingConfig matchmaking,
-        AgonesConfig agones
+        ShortTermDB shortTermDB,
+        LongTermDB longTermDB
 ) {
-    public record BackupConfig(URI endpoint) {}
-    public record ResultsConfig(URI endpoint) {}
-    public record MatchmakingConfig(URI endpoint) {}
-    public record AgonesConfig(URI endpoint) {}
+    public static final String SHORT_TERM_DB_KEY = "SHORT_TERM_DB_URI";
+    public static final String LONG_TERM_DB_KEY = "LONG_TERM_DB_URI";
+
+    public record ShortTermDB(URI endpoint) {}
+    public record LongTermDB(URI endpoint) {}
 
     public static GameServicesConfig fromEnv() {
         return new GameServicesConfig(
-                new BackupConfig(getUri("BACKUP_SERVICE_URL", "")),
-                new ResultsConfig(getUri("RESULTS_SERVICE_URL", "")),
-                new MatchmakingConfig(getUri("MATCHMAKER_URL", "")),
-                new AgonesConfig(getUri("AGONES_SDK_URL", ""))
+                new ShortTermDB(getUri(SHORT_TERM_DB_KEY)),
+                new LongTermDB(getUri(LONG_TERM_DB_KEY))
         );
     }
 
-    private static URI getUri(String environmentVariable, String defaultValue) {
-        return URI.create(getEnv(environmentVariable, defaultValue));
-    }
-
-    private static String getEnv(String environmentVariable, String defaultValue) {
-        return System.getenv().getOrDefault(environmentVariable, defaultValue);
+    private static URI getUri(String key) {
+        return URI.create(System.getenv().getOrDefault(key, ""));
     }
 }

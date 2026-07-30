@@ -154,9 +154,9 @@ public class GameServerBuilder {
             this.matchRepository = new LocalGameMatchRepository();
         } else {
             GameServicesConfig config = GameServicesConfig.fromEnv();
-            this.snapshotRepository = new MongoGameSnapshotRepository(config.backup().endpoint());
-            this.resultsRepository = new MongoGameResultsRepository(config.results().endpoint());
-            this.matchRepository = new MongoGameMatchRepository(config.backup().endpoint());
+            this.snapshotRepository = new MongoGameSnapshotRepository(config.shortTermDB().endpoint());
+            this.resultsRepository = new MongoGameResultsRepository(config.longTermDB().endpoint());
+            this.matchRepository = new MongoGameMatchRepository(config.shortTermDB().endpoint());
         }
     }
 
