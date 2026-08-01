@@ -1,5 +1,6 @@
 package it.unibo.gameservermanager.controller;
 
+import it.unibo.gameservermanager.controller.exceptions.MatchmakerCommunicationException;
 import it.unibo.gameservermanager.instantiator.exceptions.GameServerCheckException;
 import it.unibo.gameservermanager.instantiator.exceptions.GameServerInstantiationException;
 import org.slf4j.Logger;
@@ -24,6 +25,15 @@ public class ControllerExceptionHandler {
     @ExceptionHandler(GameServerCheckException.class)
     public ResponseEntity<String> handleGameServerCheckException(GameServerCheckException e) {
         String msg = "Error while checking the status of the GameServer: " + e.getMessage();
+        this.logger.error(msg);
+        return ResponseEntity
+                .internalServerError()
+                .body(msg);
+    }
+
+    @ExceptionHandler(MatchmakerCommunicationException.class)
+    public ResponseEntity<String> handleMatchmakerCommunicationException(MatchmakerCommunicationException e) {
+        String msg = "Error during communication with the Matchmaker: " + e.getMessage();
         this.logger.error(msg);
         return ResponseEntity
                 .internalServerError()

@@ -3,8 +3,19 @@ package it.unibo.gameservermanager;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-// TODO: define the necessary environment variables for the GameServerManager to work
-
+/**
+ * Entrypoint for the GameServerManager service.<br>
+ * The controller used by the GameServerManager requires the following parameters, in the form of environment
+ * variables:
+ * <ul>
+ *     <li>{@code MATCHMAKER_URI} Mandatory. Specifies the absolute base URI of the Matchmaker service (port number
+ *     included).</li>
+ *     <li>{@code MIN_TIME_LEFT} Optional. Specifies the minimum match's time left for the GameServerManager to
+ *     instantiate a recovery GameServer, instead of just letting the match end. A recovery GameServer will thus
+ *     be instantiated only if the match's time left is higher or equal than the value of this parameter.
+ *     Defaults to 5000 milliseconds.</li>
+ * </ul>
+ */
 @SpringBootApplication
 public class GameServerManagerMain {
     static void main(String[] args) {

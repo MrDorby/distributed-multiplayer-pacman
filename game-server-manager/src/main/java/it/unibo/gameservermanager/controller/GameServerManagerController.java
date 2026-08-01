@@ -1,5 +1,6 @@
 package it.unibo.gameservermanager.controller;
 
+import it.unibo.gameservermanager.controller.exceptions.MatchmakerCommunicationException;
 import it.unibo.gameservermanager.dto.CheckGameServerRequest;
 import it.unibo.gameservermanager.dto.GameServerCheckResults;
 import it.unibo.gameservermanager.dto.GameServerInfo;
@@ -33,8 +34,8 @@ public interface GameServerManagerController {
      * Reachable at endpoint: {@code /gameservermanager/gameserver/check}.
      * @param checkRequest the information needed to check the status of a GameServer.
      * @return a {@link GameServerCheckResults} record with the results of the check on the GameServer,
-     * which contain its current status and can contain the
-     * information about the newly instantiated recovery GameServer.
+     * which contain its current status and can contain information about the newly instantiated recovery GameServer.
+     * The recovery GameServer is instantiated only if the match's time left is higher than a minimum value.
      */
     ResponseEntity<String> checkGameServer(@RequestBody CheckGameServerRequest checkRequest);
 
@@ -44,6 +45,7 @@ public interface GameServerManagerController {
      * Reachable at endpoint: {@code /gameservermanager/match/ended}.
      * @param matchID the unique ID of the match.
      * @return the result of the signaling operation.
+     * @throws MatchmakerCommunicationException if there is an error while communicating with the Matchmaker.
      */
     ResponseEntity<String> matchEnded(@RequestBody String matchID);
 }

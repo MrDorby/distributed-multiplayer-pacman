@@ -5,11 +5,14 @@ import it.unibo.gameservermanager.dto.GameServerInitParameters;
 import it.unibo.gameservermanager.dto.GameServerStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.Random;
 
+/**
+ * A dummy Instantiator that does nothing but logging operations, and returns fixed results for each method
+ * (except for {@code getGameServerStatus()}, which returns a random result).
+ */
 @Component("dummyInstantiator")
 public class DummyGameServerInstantiator implements GameServerInstantiator {
     private final Logger logger = LoggerFactory.getLogger(DummyGameServerInstantiator.class);
@@ -27,9 +30,6 @@ public class DummyGameServerInstantiator implements GameServerInstantiator {
     }
 
     private GameServerInfo instantiateGameServer() {
-//        Random random = new Random();
-//        int result = random.nextInt(2);
-//        if (result > 0) throw new GameServerInstantiationException("Could not instantiate GameServer");
         return new GameServerInfo("pacman-server", "127.0.0.1", 7777, 7777);
     }
 
