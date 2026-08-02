@@ -1,0 +1,15 @@
+# Headless service for MongoDB pods.
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-mongo
+  namespace: authdb
+  labels:
+    app: auth-mongo
+spec:
+  ports:
+    - port: 27017         # Incoming traffic at port 27017
+      targetPort: 27017   # Redirect the incoming traffic to port 27017 on pods.
+  clusterIP: None         # Headleass service.
+  selector:
+    app: auth-mongo

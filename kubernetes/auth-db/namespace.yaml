@@ -1,0 +1,5 @@
+# Defines the namespace for the authdb
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: authdb
