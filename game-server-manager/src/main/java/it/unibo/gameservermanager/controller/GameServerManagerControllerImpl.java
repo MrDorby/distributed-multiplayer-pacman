@@ -44,13 +44,6 @@ public class GameServerManagerControllerImpl implements GameServerManagerControl
         } catch (URISyntaxException e) {
             throw new IllegalStateException("Syntax error in the specified MATCHMAKER_URI: " + e);
         }
-        // TODO: implement proper Kubernetes instantiator (and mark it as @Primary).
-//        try {
-//            ApiClient kubeClient = ClientBuilder.cluster().build();
-//            Configuration.setDefaultApiClient(kubeClient);
-//        } catch (IOException e) {
-//            logger.error("Error during instantiation of the Kubernetes client: {}", e.getMessage());
-//        }
         this.instantiator = instantiator;
         this.objectMapper = new ObjectMapper();
         long minTimeLeft;
