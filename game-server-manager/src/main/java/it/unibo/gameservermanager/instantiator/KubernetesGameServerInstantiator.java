@@ -2,6 +2,7 @@ package it.unibo.gameservermanager.instantiator;
 
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.Configuration;
+import io.kubernetes.client.openapi.apis.CustomObjectsApi;
 import it.unibo.gameservermanager.dto.GameServerInfo;
 import it.unibo.gameservermanager.dto.GameServerInitParameters;
 import it.unibo.gameservermanager.dto.GameServerStatus;
@@ -26,18 +27,20 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
 
     @Override
     public GameServerInfo instantiateNormalGameServer(GameServerInitParameters initParameters) {
-        Map<String, Object> gameServerConfig = Map.of(
+        Map<String, Object> gameServerConfiguration = Map.of(
             "apiVersion", "agones.dev/v1",
             "kind", "GameServer",
             "metadata", Map.of(
                     "name", "pacman-server"
                 ),
             "spec", Map.of(
-                    "ports", List.of(Map.of(
+                    "ports", List.of(
+                            Map.of(
                             "name", "default",
                             "containerPort", "7777",
                             "protocol", "TCPUDP"
-                        )),
+                            )
+                        ),
                     "template", Map.of(
                             "metadata", Map.of(
                                     "labels", Map.of(
@@ -46,18 +49,30 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
                                         )
                                 ),
                             "spec", Map.of(
-                                    "containers", List.of(Map.of(
+                                    "containers", List.of(
+                                            Map.of(
                                             "name", "pacman-game-server",
                                             "image", "pacman-game-server:latest",
                                             "imagePullPolicy", "IfNotPresent",
-                                            "args", "", // TODO: specify correct args
-                                            "env", ""    // TODO: specify correct environment variables
-                                        ))
+                                            "args", List.of("--orchestrated", "--local", initParameters.matchID(), initParameters.mapID()) // TODO: remove --local during integration.
+                                            //"env", List.of(Map.of(
+                                            //
+                                             //    ))    // TODO: specify correct environment variables (BACKUP_SERVICE_URL and RESULTS_SERVICE_URL) during integration
+                                            )
+                                        )
                                 )
                         )
                 )
         );
-        // TODO: create the GameServer based on the above configuration and obtain its parameters (IP and ports).
+        CustomObjectsApi objectsApi = new CustomObjectsApi(this.kubernetesClient);
+        objectsApi.createNamespacedCustomObject(
+                "", // TODO: ???
+                "", // TODO: ???
+                "default",
+                "gameservers",
+                gameServerConfiguration
+        );
+        // TODO: Obtain the GameServer's parameters (IP and ports) and test.
         return null;
     }
 
