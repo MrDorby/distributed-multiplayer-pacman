@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: game-server-manager
+  labels:
+    app: pacman-game
+spec:
+  selector:
+    matchLabels:
+      app: pacman-game
+      role: game-server-manager
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: pacman-game
+        role: game-server-manager
+    spec:
+      # serviceAccountName: game-server-manager-account
+      containers:
+        - name: game-server-manager
+          image: game-server-manager:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MATCHMAKER_URI
+              value: "https://65095699-bfad-4faf-84a2-557996a0f3f3.mock.pstmn.io" # TODO: temporary test URI
+            #- name: MIN_TIME_LEFT
+            #  value: 8000
+            # TODO: add any other necessary environment variables (especially those needed by the GameServer)
