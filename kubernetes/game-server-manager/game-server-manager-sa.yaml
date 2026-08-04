@@ -27,3 +27,25 @@ roleRef:
   kind: Role
   name: gameservermanager
   apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: customresourcesgetter
+rules:
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: customresourcesgetter-binding
+subjects:
+  - kind: ServiceAccount
+    name: game-server-manager-sa
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: customresourcesgetter
+  apiGroup: rbac.authorization.k8s.io

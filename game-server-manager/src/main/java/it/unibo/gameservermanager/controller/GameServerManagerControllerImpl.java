@@ -5,7 +5,6 @@ import it.unibo.gameservermanager.dto.*;
 import it.unibo.gameservermanager.instantiator.GameServerInstantiator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +30,7 @@ public class GameServerManagerControllerImpl implements GameServerManagerControl
     private final URI matchmakerURI;
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
-    public GameServerManagerControllerImpl(@Qualifier("dummyInstantiator") GameServerInstantiator instantiator) {
+    public GameServerManagerControllerImpl(GameServerInstantiator instantiator) {
         String matchmakerURIString = System.getenv("MATCHMAKER_URI");
         if (matchmakerURIString == null) {
             throw new IllegalStateException("Environment variable MATCHMAKER_URI must be set.");

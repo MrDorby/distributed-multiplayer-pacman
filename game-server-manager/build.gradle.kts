@@ -26,7 +26,11 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     // Source: https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     implementation("ch.qos.logback:logback-classic:1.5.32")
+    // Kubernetes client libraries
     implementation("io.kubernetes:client-java:20.0.0")  // TODO: verify API version
+    implementation("io.fabric8:kubernetes-client:7.8.0")
+    // Gson library for JSON parsing.
+    implementation("com.google.code.gson:gson:2.14.0") // TODO: not necessary
 }
 
 tasks.test {
