@@ -1,0 +1,33 @@
+# Defines the configuration for the pods to be done on the startup.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shortdb-config
+  namespace: shortdb
+data:
+  create_user.sh: |
+    #!/bin/bash
+    if [ "$HOSTNAME" == "shortdb-0" ]; then
+      mongosh admin --eval "rs.initiate({_id: 'replicaSet', members: [{ _id: 0, host: 'shortdb-0.short-mongo.shortdb.svc.cluster.local:27017', priority: 2 }]})"
+      sleep 5;
+
+      mongosh admin --eval "db.getSiblingDB('admin').createUser({user: '$MONGO_INITDB_ROOT_USERNAME', pwd: '$MONGO_INITDB_ROOT_PASSWORD', roles: [{ role: 'root', db: 'admin' }]})"
+      
+      mongosh shortdb-0.short-mongo.shortdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.getSiblingDB('shortDB').createCollection('matches');"
+    else
+      sleep 15;
+      mongosh shortdb-0.short-mongo.shortdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "rs.add({ host: '${HOSTNAME}.short-mongo.shortdb.svc.cluster.local:27017', priority: 1 })"
+    fi;
+
+---
+
+# Defines the file containing the replica key.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: replica-key
+  namespace: shortdb
+data:
+  # Created with openssl rand base64 100
+  replica.key: |
+    2rojkFWRrLZsJ5+OdE4tE6zNNOwi4cgNQYBl1Xaq0OtHvRoUNj2QiEcYvpLyw3l8533hydr4Qf/nOmKRBUbJq9Q9+HfxhcnE1Twx+nA6zYF5SWccZs6C1+g9A8Xs9uKTZbk9Ew==

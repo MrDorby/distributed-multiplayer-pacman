@@ -1,0 +1,5 @@
+# Defines the namespace for the long-term db
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: longdb

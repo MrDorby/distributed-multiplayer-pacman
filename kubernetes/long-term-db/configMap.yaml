@@ -1,0 +1,33 @@
+# Defines the configuration for the pods to be done on the startup.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: longdb-config
+  namespace: longdb
+data:
+  create_user.sh: |
+    #!/bin/bash
+    if [ "$HOSTNAME" == "longdb-0" ]; then
+      mongosh admin --eval "rs.initiate({_id: 'replicaSet', members: [{ _id: 0, host: 'longdb-0.long-mongo.longdb.svc.cluster.local:27017', priority: 2 }]})"
+      sleep 5;
+
+      mongosh admin --eval "db.getSiblingDB('admin').createUser({user: '$MONGO_INITDB_ROOT_USERNAME', pwd: '$MONGO_INITDB_ROOT_PASSWORD', roles: [{ role: 'root', db: 'admin' }]})"
+      
+      mongosh longdb-0.long-mongo.longdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.getSiblingDB('statsDB').createCollection('stats');"
+    else
+      sleep 15;
+      mongosh longdb-0.long-mongo.longdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "rs.add({ host: '${HOSTNAME}.long-mongo.longdb.svc.cluster.local:27017', priority: 1 })"
+    fi;
+
+---
+
+# Defines the file containing the replica key.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: replica-key
+  namespace: longdb
+data:
+  # Created with openssl rand base64 100
+  replica.key: |
+    RxewuefQ0bFRFeTwSBXEUdegN1yBuwHCqF3YdTgOjWrqVkvI491ol8kytXUcA8UXPN9AE43wijPE3rCj16yxZhh89pK/nUqK5SVKlLQkdYk4eOih612JL7QX6qWHKOJKcU4rYg==
