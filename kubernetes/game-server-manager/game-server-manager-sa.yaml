@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: game-server-manager-sa
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: gameservermanager
+  namespace: default
+rules:
+  - apiGroups: ["agones.dev"]
+    resources: ["gameservers"]
+    verbs: ["create", "get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gameservermanager-binding
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: game-server-manager-sa
+    namespace: default
+roleRef:
+  kind: Role
+  name: gameservermanager
+  apiGroup: rbac.authorization.k8s.io

@@ -16,7 +16,7 @@ spec:
         app: pacman-game
         role: game-server-manager
     spec:
-      # serviceAccountName: game-server-manager-account
+      serviceAccountName: game-server-manager-sa
       containers:
         - name: game-server-manager
           image: game-server-manager:latest
