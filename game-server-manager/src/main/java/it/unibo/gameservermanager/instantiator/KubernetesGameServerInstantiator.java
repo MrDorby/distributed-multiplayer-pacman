@@ -10,6 +10,7 @@ import io.fabric8.kubernetes.client.dsl.base.ResourceDefinitionContext;
 import it.unibo.gameservermanager.dto.GameServerInfo;
 import it.unibo.gameservermanager.dto.GameServerInitParameters;
 import it.unibo.gameservermanager.dto.GameServerStatus;
+import it.unibo.gameservermanager.instantiator.exceptions.GameServerCheckException;
 import it.unibo.gameservermanager.instantiator.exceptions.GameServerInstantiationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,6 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
     private static final int MAX_ALLOCATION_WAITING_ITERATIONS = 10;
     private static final long ALLOCATION_WAITING_TIME_MILLIS = 1000;
 
-    private final Logger logger = LoggerFactory.getLogger(KubernetesGameServerInstantiator.class);
     private final KubernetesClient kubernetesClient;
     private final ResourceDefinitionContext gameServerDefinitionContext;
 
@@ -50,7 +50,6 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
         return gson.toJson(list);
     }
 
-    // TODO: TEST
     /**
      * Instantiate a GameServer with the specified arguments.
      * @param gameServerArgs the arguments to pass to the GameServer.
@@ -98,7 +97,7 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
         final String gameServerName = gameServer.getMetadata().getName();
         GenericKubernetesResource gameServerUpdated = getGameServerByName(gameServerName);
         int i = 0;
-        // TODO: fix this, it's busy waiting
+        // TODO: fix this, it's busy waiting. Use waitUntilCondition() on the GameServer instead.
         while (gameServerIsNotAllocated(gameServerUpdated) && i < MAX_ALLOCATION_WAITING_ITERATIONS) {
             try {
                 Thread.sleep(ALLOCATION_WAITING_TIME_MILLIS);
@@ -115,7 +114,7 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
         final String firstPortName = gameServerUpdated.get("status", "ports", 0, "name");
         int TCPPortIndex;
         int UDPPortIndex;
-        if (firstPortName.equals("default-tcp")) { // TODO: properly handle the possible NullPointerExceptions, and throw them to the upper method
+        if (firstPortName.equals("default-tcp")) {
             TCPPortIndex = 0;
             UDPPortIndex = 1;
         } else {
@@ -151,73 +150,6 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
         } catch (Exception e) {
             throw new GameServerInstantiationException(e.getMessage());
         }
-
-//        String gameServerJSON = "{" +
-//                    "\"apiVersion\": \"agones.dev/v1\"," +
-//                    "\"kind\": \"GameServer\"," +
-//                    "\"metadata\": {" +
-//                        "\"generateName\": \"pacman-server-\"" +
-//                    "}," +
-//                    "\"spec\": {" +
-//                        "\"ports\": [{" +
-//                            "\"name\": \"default\"," +
-//                            "\"containerPort\": 7777," +
-//                            "\"protocol\": \"TCPUDP\"" +
-//                        "}]," +
-//                        "\"template\": {" +
-//                            "\"metadata\": {" +
-//                                "\"labels\": {" +
-//                                    "\"app\": \"pacman-game\"," +
-//                                    "\"role\": \"game-server\"" +
-//                                "}" +
-//                            "}," +
-//                            "\"spec\": {" +
-//                                "\"containers\": [{" +
-//                                    "\"name\": \"pacman-game-server\"," +
-//                                    "\"image\": \"pacman-game-server:latest\"," +
-//                                    "\"imagePullPolicy\": \"IfNotPresent\"," +
-//                                    "\"args\": [\"--orchestrated\", \"--local\", \"" + initParameters.matchID() + "\", \"" + initParameters.mapID() + "\"]" +
-//                                    // TODO: specify correct environment variables (BACKUP_SERVICE_URL and RESULTS_SERVICE_URL) during integration
-//                                "}]" +
-//                            "}" +
-//                        "}" +
-//                    "}" +
-//                "}";
-//        final GenericKubernetesResource gameServer = this.kubernetesClient
-//                .genericKubernetesResources(this.gameServerDefinitionContext)
-//                .inNamespace("default")
-//                .load(new ByteArrayInputStream(gameServerJSON.getBytes()))
-//                .create();
-//        final String gameServerName = gameServer.getMetadata().getName();
-//        GenericKubernetesResource gameServerUpdated = getGameServerByName(gameServerName);
-//        int i = 0;
-//        // TODO: fix this, it's busy waiting
-//        while (gameServerIsNotAllocated(gameServerUpdated) && i < MAX_ALLOCATION_WAITING_ITERATIONS) {
-//            try {
-//                Thread.sleep(ALLOCATION_WAITING_TIME_MILLIS);
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
-//            }
-//            i++;
-//            gameServerUpdated = getGameServerByName(gameServerName);
-//        }
-//        if (gameServerIsNotAllocated(gameServerUpdated)) {
-//            throw new GameServerInstantiationException("Timeout while waiting for GameServer allocation.");
-//        }
-//        final String IP = gameServerUpdated.get("status", "address");
-//        final String firstPortName = gameServerUpdated.get("status", "ports", 0, "name");
-//        int TCPPortIndex;
-//        int UDPPortIndex;
-//        if (firstPortName.equals("default-tcp")) { // TODO: properly handle the possible NullPointerExceptions, and throw them to the upper method
-//            TCPPortIndex = 0;
-//            UDPPortIndex = 1;
-//        } else {
-//            TCPPortIndex = 1;
-//            UDPPortIndex = 0;
-//        }
-//        final int TCPPort = gameServerUpdated.get("status", "ports", TCPPortIndex, "port");
-//        final int UDPPort = gameServerUpdated.get("status", "ports", UDPPortIndex, "port");
-//        return new GameServerInfo(gameServerName, IP, TCPPort, UDPPort);
     }
 
     @Override
@@ -236,7 +168,15 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
 
     @Override
     public GameServerStatus getGameServerStatus(String serverName) {
-        // TODO: implement
-        return null;
+        GenericKubernetesResource gameServer = getGameServerByName(serverName);
+        if (gameServer != null) {
+            return switch (gameServer.get("status", "state").toString()) {
+                case "Allocated" -> GameServerStatus.HEALTHY;
+                case "Unhealthy" -> GameServerStatus.UNHEALTHY;
+                default -> throw new GameServerCheckException("Invalid GameServer status.");
+            };
+        } else {
+            return GameServerStatus.NOT_FOUND;
+        }
     }
 }
