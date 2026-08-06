@@ -4,4 +4,8 @@ public class InstantiatorException extends RuntimeException {
     public InstantiatorException (String message) {
         super(message);
     }
+
+    public InstantiatorException (Throwable cause) {
+        super(cause);
+    }
 }

@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 @Primary
@@ -28,6 +29,8 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
 
     private final KubernetesClient kubernetesClient;
     private final ResourceDefinitionContext gameServerDefinitionContext;
+    private final String backupServiceUrl;
+    private final String resultsServiceUrl;
 
     public KubernetesGameServerInstantiator() {
         this.kubernetesClient = new KubernetesClientBuilder().build();
@@ -38,6 +41,23 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
                 .withName("gameservers.agones.dev")
                 .get();
         this.gameServerDefinitionContext = CustomResourceDefinitionContext.fromCrd(gameServerDefinition);
+        this.backupServiceUrl = System.getenv("BACKUP_SERVICE_URL");
+        this.resultsServiceUrl = System.getenv("RESULTS_SERVICE_URL");
+        String msg = usesRemotePersistence() ?
+                "Remote persistence variables have been specified. Using GameServers with remote persistence."
+                : "One of both of BACKUP_SERVICE_URL and RESULTS_SERVICE_URL have not been specified. " +
+                "Using GameServers with local persistence.";
+        Logger logger = LoggerFactory.getLogger(KubernetesGameServerInstantiator.class);
+        logger.info(msg);
+    }
+
+    /**
+     * @return whether the created GameServers use remote persistence or not.
+     * Remote persistence is used only if both {@code BACKUP_SERVICE_URL} and {@code RESULTS_SERVICE_URL} are set
+     * as environment variables.
+     */
+    private boolean usesRemotePersistence() {
+        return this.backupServiceUrl != null && this.resultsServiceUrl != null;
     }
 
     /**
@@ -58,6 +78,16 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
      * @throws GameServerInstantiationException in case the GameServer is not allocated correctly.
      */
     private GameServerInfo instantiateGameServer(List<String> gameServerArgs) throws NullPointerException, GameServerInstantiationException {
+        String environmentVariablesJSON = usesRemotePersistence() ?
+                ",\"env\": [{" +
+                        "\"name\": \"BACKUP_SERVICE_URL\"," +
+                        "\"value\": \"" + this.backupServiceUrl + "\"" +
+                    "}," +
+                    "{" +
+                        "\"name\": \"RESULTS_SERVICE_URL\"," +
+                        "\"value\": \"" + this.resultsServiceUrl + "\"" +
+                "}]"
+                : "";
         String gameServerJSON = "{" +
                     "\"apiVersion\": \"agones.dev/v1\"," +
                     "\"kind\": \"GameServer\"," +
@@ -83,7 +113,7 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
                                     "\"image\": \"pacman-game-server:latest\"," +
                                     "\"imagePullPolicy\": \"IfNotPresent\"," +
                                     "\"args\": " + getJSONList(gameServerArgs) +
-                                    // TODO: specify correct environment variables (BACKUP_SERVICE_URL and RESULTS_SERVICE_URL) during integration
+                                    environmentVariablesJSON +
                                 "}]" +
                             "}" +
                         "}" +
@@ -140,29 +170,33 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
 
     @Override
     public GameServerInfo instantiateNormalGameServer(GameServerInitParameters initParameters) {
+        final List<String> argsList = new ArrayList<>();
+        argsList.add("--orchestrated");
+        if (!usesRemotePersistence()) {
+            argsList.add("--local");
+        }
+        argsList.add(initParameters.matchID());
+        argsList.add(initParameters.mapID());
         try {
-            return instantiateGameServer(List.of(
-                    "--orchestrated",
-                    "--local", // TODO: remove during integration
-                    initParameters.matchID(),
-                    initParameters.mapID()
-            ));
+            return instantiateGameServer(argsList);
         } catch (Exception e) {
-            throw new GameServerInstantiationException(e.getMessage());
+            throw new GameServerInstantiationException(e);
         }
     }
 
     @Override
     public GameServerInfo instantiateRecoveryGameServer(String matchID) {
+        final List<String> argsList = new ArrayList<>();
+        argsList.add("--recover");
+        argsList.add("--orchestrated");
+        if (!usesRemotePersistence()) {
+            argsList.add("--local");
+        }
+        argsList.add(matchID);
         try {
-            return instantiateGameServer(List.of(
-                    "--recover",
-                    "--orchestrated",
-                    "--local", // TODO: remove during integration
-                    matchID
-            ));
+            return instantiateGameServer(argsList);
         } catch (Exception e) {
-            throw new GameServerInstantiationException(e.getMessage());
+            throw new GameServerInstantiationException(e);
         }
     }
 
