@@ -26,11 +26,14 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     // Source: https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     implementation("ch.qos.logback:logback-classic:1.5.32")
-    // Kubernetes client libraries
-    implementation("io.kubernetes:client-java:20.0.0")  // TODO: verify API version
+    // Kubernetes Fabric8 client library
     implementation("io.fabric8:kubernetes-client:7.8.0")
     // Gson library for JSON parsing.
-    implementation("com.google.code.gson:gson:2.14.0") // TODO: not necessary
+    implementation("com.google.code.gson:gson:2.14.0")
+    // Source: https://mvnrepository.com/artifact/com.github.spotbugs/spotbugs-annotations
+    implementation("com.github.spotbugs:spotbugs-annotations:4.10.3")
+    // Source: https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    implementation("org.apache.commons:commons-lang3:3.20.0")
 }
 
 tasks.test {
