@@ -20,12 +20,12 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Primary
 @Component("kubernetesInstantiator")
 public class KubernetesGameServerInstantiator implements GameServerInstantiator {
-    private static final int MAX_ALLOCATION_WAITING_ITERATIONS = 10;
-    private static final long ALLOCATION_WAITING_TIME_MILLIS = 1000;
+    private static final long ALLOCATION_WAITING_TIME_SECONDS = 15;
 
     private final KubernetesClient kubernetesClient;
     private final ResourceDefinitionContext gameServerDefinitionContext;
@@ -125,20 +125,9 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
                 .load(new ByteArrayInputStream(gameServerJSON.getBytes()))
                 .create();
         final String gameServerName = gameServer.getMetadata().getName();
-        GenericKubernetesResource gameServerUpdated = getGameServerByName(gameServerName);
-        int i = 0;
-        // TODO: fix this, it's busy waiting. Use waitUntilCondition() on the GameServer instead.
-        while (gameServerIsNotAllocated(gameServerUpdated) && i < MAX_ALLOCATION_WAITING_ITERATIONS) {
-            try {
-                Thread.sleep(ALLOCATION_WAITING_TIME_MILLIS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            i++;
-            gameServerUpdated = getGameServerByName(gameServerName);
-        }
-        if (gameServerIsNotAllocated(gameServerUpdated)) {
-            throw new GameServerInstantiationException("Timeout while waiting for GameServer allocation.");
+        GenericKubernetesResource gameServerUpdated = waitUntilGameServerIsAllocated(gameServerName);
+        if (gameServerUpdated == null) {
+            throw new GameServerInstantiationException("The GameServer was not found or could not be allocated.");
         }
         final String IP = gameServerUpdated.get("status", "address");
         final String firstPortName = gameServerUpdated.get("status", "ports", 0, "name");
@@ -156,6 +145,25 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
         return new GameServerInfo(gameServerName, IP, TCPPort, UDPPort);
     }
 
+    /**
+     * Waits until the specified GameServer's status becomes Allocated and returns its information.
+     * @param name the GameServer's name.
+     * @return the resource containing the information about the GameServer, or {@code null} if the GameServer was not
+     * found, or the waiting time for the allocation has expired.
+     */
+    private GenericKubernetesResource waitUntilGameServerIsAllocated(String name) {
+        return this.kubernetesClient
+                .genericKubernetesResources(this.gameServerDefinitionContext)
+                .inNamespace("default")
+                .withName(name)
+                .waitUntilCondition(this::isGameServerAllocated, ALLOCATION_WAITING_TIME_SECONDS, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Gets the GameServer with the specified name.
+     * @param name the GameServer's name.
+     * @return the resource containing the information about the GameServer.
+     */
     private GenericKubernetesResource getGameServerByName(String name) {
         return this.kubernetesClient
                 .genericKubernetesResources(this.gameServerDefinitionContext)
@@ -164,8 +172,12 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
                 .get();
     }
 
-    private boolean gameServerIsNotAllocated(GenericKubernetesResource gameServer) {
-        return !gameServer.get("status", "state").toString().equals("Allocated");
+    /**
+     * @param gameServer the GameServer to check.
+     * @return true if the GameServer's status is Allocated, false otherwise.
+     */
+    private boolean isGameServerAllocated(GenericKubernetesResource gameServer) {
+        return gameServer.get("status", "state").toString().equals("Allocated");
     }
 
     @Override
