@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: authdb          # Pod name.
+  namespace: authdb
+spec:
+  serviceName: auth-mongo   # Service name.
+  replicas: 3
+  selector:
+    matchLabels:
+      app: auth-mongo
+  template:
+    metadata:
+      labels:
+        app: auth-mongo
+    spec:
+      containers:
+        - name: authdb
+          image: mongo:latest
+          command:
+            - /bin/bash
+            - -c
+            - |
+              /data/mongodbinit/create_user.sh &
+              mongod --replSet=replicaSet --bind_ip_all --auth --keyFile=/key/replica.key;
+          #command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/key/replica.key", "--bind_ip_all"]
+          #command: ["/home/mongodb/permission.sh", "docker-entrypoint.sh", "mongod", "--replSet", "replicaSet", "--keyFile", "/key/replica.key", "--bind_ip_all"]
+          env:
+            - name: REPLICA_KEY_DIR
+              value: /key
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: authdb-secret
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: authdb-secret
+                  key: MONGO_INITDB_ROOT_PASSWORD
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-auth      # PersistantVolumeClaim
+              mountPath: /data/db
+            - name: replicakey
+              mountPath: /key
+              readOnly: true
+            - name: mongodb-init
+              mountPath: /data/mongodbinit
+            # - name: config
+            #   mountPath: /docker-entrypoint-initdb.d
+            # - name: permissions
+            #   mountPath: /home/mongodb
+      volumes:
+        - name: replicakey
+          configMap:
+            name: replica-key
+            defaultMode: 0600
+          # secret:
+          #   secretName: authdb-secret
+          #   defaultMode: 0400
+          #   items:
+          #     - key: replica_key    # Field in secret.yaml
+          #       path: replica.key
+        # - name: permissions
+        #   configMap:
+        #     name: permissions
+        #     defaultMode: 0755
+        # - name: config
+        #   configMap:
+        #     name: authdb-config
+        #     defaultMode: 0755
+        - name: mongodb-init
+          configMap:
+            name: authdb-config
+            defaultMode: 0777
+  volumeClaimTemplates:             # Defines a PersistentVolumeClaim
+    - metadata:
+        name: mongo-auth
+      spec:
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 1Gi

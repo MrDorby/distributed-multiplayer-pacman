@@ -3,6 +3,8 @@ package it.unibo.controller.client.services;
 import it.unibo.controller.client.common.PlayerStats;
 import it.unibo.controller.client.common.ConnectionParameters;
 
+import java.util.Optional;
+
 /**
  * Manager for the services that the client needs to connect with.
  */
@@ -67,11 +69,26 @@ public interface ServiceManager {
     boolean checkQueueStatus() throws Exception;
 
     /**
-     * Retrieves the network parameters required to connect to the game server for a match.
+     * Retrieves network connection parameters using a specific match ID.
      *
      * @return the {@link ConnectionParameters} for the game server connection.
      */
-    ConnectionParameters getGameServerParameters() throws Exception;
+    Optional<ConnectionParameters> getGameServerParametersByMatchId() throws Exception;
+
+    /**
+     * Retrieves network connection parameters using the current user's token.
+     * Useful for state recovery after a client crash.
+     *
+     * @return the {@link ConnectionParameters} for the game server connection.
+     */
+    Optional<ConnectionParameters> getGameServerParametersByToken() throws Exception;
+
+    /**
+     * Quits the current active match and clears state.
+     *
+     * @return true if the match was successfully left, false otherwise.
+     */
+    boolean quitMatch() throws Exception;
 
     /**
      * Gets the unique identifier for the player's queue lobby.

@@ -30,13 +30,17 @@ import it.unibo.controller.shared.network.dto.GameContextDTO;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * MongoDBServerConnection manages the GameServer connections with the MongoDB instances.
  */
 public class MongoDBServerConnection {
 
     /* Internal record for make it easy check the content of the short-term database. */
-    private record Checkpoint(GameContextDTO gameContextDTO, Long timestamp) {
+    private record Checkpoint(
+        @JsonProperty("gamecontext") GameContextDTO gameContextDTO, 
+        @JsonProperty("timestamp") Long timestamp) {
     }
 
     private final MongoClient mongoClient;
@@ -132,7 +136,7 @@ public class MongoDBServerConnection {
                             .append(longTermFields.getBestScoreLabel(), player.getValue());
                      
                 Publisher<InsertOneResult> insertPublisher = this.collection.insertOne(newDoc);
-                futures.add(Mono.from(this.collection.insertOne(newDoc)).then().toFuture());
+                futures.add(Mono.from(insertPublisher).then().toFuture());
             } else {
                 int bestScore = (int) doc.get(longTermFields.getBestScoreLabel());
                 List<Bson> updates = new ArrayList<>();
@@ -176,12 +180,7 @@ public class MongoDBServerConnection {
             }
             Object lastItem = rawCheckpoints.getLast();
             if (lastItem instanceof Checkpoint(GameContextDTO gameContextDTO, Long timestamp)) {
-                MatchSnapshot matchSnapshot = new MatchSnapshot(
-                        matchId,
-                        timestamp,
-                        List.of(),
-                        gameContextDTO
-                );
+                MatchSnapshot matchSnapshot = new MatchSnapshot(matchId, timestamp, gameContextDTO);
                 return Optional.of(matchSnapshot);
             }
             return Optional.empty();
@@ -193,17 +192,20 @@ public class MongoDBServerConnection {
      * @param matchId the identifier of the match.
      * @return a List of Strings containing the users identifiers.
      */
-    public CompletableFuture<List<String>> retrievePlayer(String matchId) {
+    public CompletableFuture<Optional<List<String>>> retrievePlayers(String matchId) {
         return CompletableFuture.supplyAsync(() -> {
             ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
             Bson filter = eq(shortTermFields.getMatchIdLabel(), matchId);
             FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
             Document doc = Mono.from(publisher).block();
             if (doc == null || doc.isEmpty()) {
-                return new ArrayList<>();
+                return Optional.empty();
             }
-            List<String> players = (ArrayList<String>) doc.get(shortTermFields.getUserListLabel());
-            return players;
+            List<String> players = (List<String>) doc.get(shortTermFields.getUserListLabel());
+            if (players == null || players.isEmpty()) {
+                return Optional.empty();
+            }
+            return Optional.of(players);
         });
     }
 }

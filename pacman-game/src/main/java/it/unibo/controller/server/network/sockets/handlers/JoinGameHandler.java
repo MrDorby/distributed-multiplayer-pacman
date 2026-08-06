@@ -22,10 +22,14 @@ public class JoinGameHandler implements TcpHandler {
         JoinServerPacket joinServerPacket = (JoinServerPacket) packet;
         String username = joinServerPacket.username();
         GameSession session = ctx.sessions().onTcpConnect(username, channel);
+        if (session == null) {
+            logger.debug("Join sequence aborted for player: {}", username);
+            return;
+        }
         logger.debug("Player {} successfully connected via TCP.", username);
         String token = session.getUdpToken().value();
         NetworkPacket joinGameAckPacket = new JoinGameAckPacket(token);
         ctx.gateway().sendTcp(username, joinGameAckPacket);
-        logger.debug("Sent {} with token to {}", joinServerPacket.getType(), username);
+        logger.debug("Sent {} with token to {}", joinGameAckPacket.getType(), username);
     }
 }

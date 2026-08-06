@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Abstract base controller managing network client lifecycles and game view transitions.
@@ -27,20 +28,23 @@ public abstract class AbstractGameController implements GameClientListener, Scre
 
     private GameClient client;
 
-    protected void startConnection(ConnectionParameters parameters, String user) {
+    protected void startConnection(ConnectionParameters parameters, String username) {
         disconnect();
         GameView gameView = getGameScreen().getGameView();
-        this.client = GameClientFactory.create(parameters.host(), parameters.tcpPort(), parameters.udpPort(), user, gameView);
+        this.client = GameClientFactory.create(parameters.host(), parameters.tcpPort(), parameters.udpPort(), username, gameView);
         this.client.addListener(this);
-        new Thread(() -> {
+        CompletableFuture.runAsync(() -> {
             try {
                 client.start();
                 Thread.sleep(500);
                 client.joinServer();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             } catch (Exception e) {
+                logger.error("Failed to connect or join game server", e);
                 SwingUtilities.invokeLater(() -> getGameScreen().showFailureView("Network Error: " + e.getMessage()));
             }
-        }).start();
+        });
     }
 
     protected void disconnect() {

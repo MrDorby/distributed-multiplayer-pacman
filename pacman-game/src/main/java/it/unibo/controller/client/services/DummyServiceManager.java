@@ -5,13 +5,13 @@ import it.unibo.controller.client.common.ConnectionParameters;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * In-memory mock implementation of {@link ServiceManager} used for testing and offline development.
  * <p>
- * Simulates authentication, registration, and stats retrieval with artificial network delays
- * and session state tracking without requiring a live backend server.
+ * Simulates authentication, registration, stats retrieval and matchmaking with artificial delays.
  */
 public class DummyServiceManager implements ServiceManager {
     private final Map<String, String> userDatabase = new HashMap<>();
@@ -38,7 +38,7 @@ public class DummyServiceManager implements ServiceManager {
 
     @Override
     public void login(String username, String password) throws Exception {
-        Thread.sleep(300);
+        Thread.sleep(500);
         if (!userDatabase.containsKey(username)) {
             throw new Exception("User does not exist");
         }
@@ -46,12 +46,12 @@ public class DummyServiceManager implements ServiceManager {
             throw new Exception("Invalid credentials");
         }
         this.currentUsername = username;
-        this.currentToken = "dummy_token_" + UUID.randomUUID().toString().substring(0, 8);
+        this.currentToken = "token_" + UUID.randomUUID().toString().substring(0, 8);
     }
 
     @Override
     public String register(String username, String password) throws Exception {
-        Thread.sleep(300);
+        Thread.sleep(500);
         if (userDatabase.containsKey(username)) {
             throw new Exception("Username is already taken");
         }
@@ -61,41 +61,31 @@ public class DummyServiceManager implements ServiceManager {
 
     @Override
     public PlayerStats getPlayerInfo() throws Exception {
-        if (currentUsername == null) {
-            throw new Exception("Not authenticated");
-        }
-        Thread.sleep(1000);
+        Thread.sleep(500);
         return new PlayerStats(currentUsername, 12, 5, 0.1f, 1250);
     }
 
     @Override
     public boolean queue(String mapName) throws Exception {
         clearMatchmakingData();
-        Thread.sleep(1000);
-        if (Math.random() < 0.3) {
-            return false;
+        Thread.sleep(500);
+        if (Math.random() > 0.3) {
+            this.currentLobbyId = "lobby_" + UUID.randomUUID().toString().substring(0, 8);
+            return true;
         }
-        this.currentLobbyId = "lobby_" + UUID.randomUUID().toString().substring(0, 8);
-        return true;
+        return false;
     }
 
     @Override
     public boolean cancelQueue() {
-        if (this.currentLobbyId == null) {
-            return false;
-        }
         clearMatchmakingData();
         return true;
     }
 
     @Override
     public boolean checkQueueStatus() throws Exception {
-        if (this.currentLobbyId == null) {
-            throw new IllegalStateException("Not enqueued");
-        }
         Thread.sleep(2000);
-        boolean matchFound = Math.random() > 0.3;
-        if (matchFound) {
+        if (Math.random() > 0.3) {
             this.currentMatchId = "match_" + UUID.randomUUID().toString().substring(0, 8);
             return true;
         }
@@ -103,8 +93,26 @@ public class DummyServiceManager implements ServiceManager {
     }
 
     @Override
-    public ConnectionParameters getGameServerParameters() {
-        return new ConnectionParameters("127.0.0.1", 7777, 7777);
+    public Optional<ConnectionParameters> getGameServerParametersByMatchId() throws Exception {
+        Thread.sleep(500);
+        return Optional.of(new ConnectionParameters("127.0.0.1", 7777, 7777));
+    }
+
+    @Override
+    public Optional<ConnectionParameters> getGameServerParametersByToken() throws Exception {
+        Thread.sleep(500);
+        if (Math.random() > 0.5) {
+            this.currentMatchId = "match_" + UUID.randomUUID().toString().substring(0, 8);
+            return Optional.of(new ConnectionParameters("127.0.0.1", 7777, 7777));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean quitMatch() throws Exception {
+        Thread.sleep(500);
+        clearMatchmakingData();
+        return true;
     }
 
     @Override

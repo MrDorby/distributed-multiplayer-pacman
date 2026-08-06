@@ -2,12 +2,12 @@ package it.unibo.controller.server.lobby;
 
 import it.unibo.controller.server.network.sockets.session.GameSessionLifecycleListener;
 
-import java.util.Collection;
+import java.util.Set;
 
 /**
  * Manages match flow, lobby transitions, and player session lifecycle events.
  */
-public interface MatchLifecycleManager extends GameSessionLifecycleListener {
+public interface LobbyManager extends GameSessionLifecycleListener {
 
     /**
      * Gets the current state of the match lobby.
@@ -24,11 +24,11 @@ public interface MatchLifecycleManager extends GameSessionLifecycleListener {
     void setState(LobbyState state);
 
     /**
-     * Returns the usernames of the people playing the game.
+     * Returns a set of currently connected players.
      *
-     * @return a {@link Collection} of usernames
+     * @return a {@link Set} containing usernames of connected players
      */
-    Collection<String> getActivePlayers();
+    Set<String> getConnectedPlayers();
 
     /**
      * Triggered when the underlying game server completes its startup sequence.

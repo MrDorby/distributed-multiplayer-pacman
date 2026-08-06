@@ -1,0 +1,15 @@
+# Headless service for MongoDB pods.
+apiVersion: v1
+kind: Service
+metadata:
+  name: short-mongo
+  namespace: shortdb
+  labels:
+    app: short-mongo
+spec:
+  ports:
+    - port: 27017         # Incoming traffic at port 27017
+      targetPort: 27017   # Redirect the incoming traffic to port 27017 on pods.
+  clusterIP: None         # Headleass service.
+  selector:
+    app: short-mongo

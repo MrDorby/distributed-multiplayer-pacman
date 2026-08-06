@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authdb-config
+  namespace: authdb
+data:
+  create_user.sh: |
+    #!/bin/bash
+    if [ "$HOSTNAME" == "authdb-0" ]; then
+      mongosh admin --eval "rs.initiate({_id: 'replicaSet', members: [{ _id: 0, host: 'authdb-0.auth-mongo.authdb.svc.cluster.local:27017', priority: 2 }]})"
+      sleep 5;
+
+      mongosh admin --eval "db.getSiblingDB('admin').createUser({user: '$MONGO_INITDB_ROOT_USERNAME', pwd: '$MONGO_INITDB_ROOT_PASSWORD', roles: [{ role: 'root', db: 'admin' }]})"
+      
+      mongosh authdb-0.auth-mongo.authdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.getSiblingDB('authDB').createCollection('auth');"
+    else
+      sleep 15;
+      mongosh authdb-0.auth-mongo.authdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "rs.add({ host: '${HOSTNAME}.auth-mongo.authdb.svc.cluster.local:27017', priority: 1 })"
+    fi;
+
+---
+
+# Defines the file containing the replica key.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: replica-key
+  namespace: authdb
+data:
+  # Created with openssl rand base64 100
+  replica.key: |
+    EWP6gDQtL7VtkZBoeO9jmL2oYKihGKRvvl+sAZbrsOumv5KCe/VEmmsZ3olHdcFYIrA31VeirjToZw9ZPrx9OO4WHe9aVYw6q7q2X+sA9VyYRXbTcOYHYmi0l9UgO7v7IVDAmQ==
+
+---
+
+# TODO: Remove
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: permissions
+#   namespace: authdb
+# data:
+#   permission.sh: |
+#     chown -R mongodb:mongodb ${MONGO_DATA_DIR}
+#     cp -r /keyTemp /key
+#     chown -R mongodb:mongodb /key
+#     chmod 400 /key/replica.key
+#     chown -R mongodb:mongodb /key/replica.key

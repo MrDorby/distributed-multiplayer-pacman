@@ -1,0 +1,68 @@
+# Defines the StatefulSet containing all the pods that work for the replica set.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: longdb          # Pod name.
+  namespace: longdb
+spec:
+  serviceName: long-mongo   # Service name.
+  replicas: 3
+  selector:
+    matchLabels:
+      app: long-mongo
+  template:
+    metadata:
+      labels:
+        app: long-mongo
+    spec:
+      containers:
+        - name: longdb
+          image: mongo:latest
+          command:
+            - /bin/bash
+            - -c
+            - |
+              /data/mongodbinit/create_user.sh &
+              mongod --replSet=replicaSet --bind_ip_all --auth --keyFile=/key/replica.key;
+          #command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/key/replica.key", "--bind_ip_all"]
+          #command: ["/home/mongodb/permission.sh", "docker-entrypoint.sh", "mongod", "--replSet", "replicaSet", "--keyFile", "/key/replica.key", "--bind_ip_all"]
+          env:
+            - name: REPLICA_KEY_DIR
+              value: /key
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: longdb-secret
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: longdb-secret
+                  key: MONGO_INITDB_ROOT_PASSWORD
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-long      # PersistantVolumeClaim
+              mountPath: /data/db
+            - name: replicakey
+              mountPath: /key
+              readOnly: true
+            - name: mongodb-init
+              mountPath: /data/mongodbinit
+      volumes:
+        - name: replicakey
+          configMap:
+            name: replica-key
+            defaultMode: 0600
+        - name: mongodb-init
+          configMap:
+            name: longdb-config
+            defaultMode: 0777
+  volumeClaimTemplates:             # Defines a PersistentVolumeClaim
+    - metadata:
+        name: mongo-long
+      spec:
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 1Gi

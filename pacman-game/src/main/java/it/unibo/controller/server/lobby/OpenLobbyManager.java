@@ -12,24 +12,21 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
- * Manages the lifecycle of a fresh standard match.
+ * Manages the lobby for an open match.
  * <p>
  * Waits for the lobby to fill to capacity before starting the game.
- * Mid-game disconnections substitute human players with AI bots.
- * Mid-game reconnections give control back to the human players.
  */
-public class StandardMatchLifecycleManager implements MatchLifecycleManager {
-    private static final Logger logger = LoggerFactory.getLogger(StandardMatchLifecycleManager.class);
+public class OpenLobbyManager implements LobbyManager {
+    private static final Logger logger = LoggerFactory.getLogger(OpenLobbyManager.class);
 
     private final int capacity;
     private final ServerGameEngine engine;
     private final GameServerGateway gateway;
 
-    private final Set<String> waitingPlayers = new LinkedHashSet<>();
-    private final Set<String> activePlayers = new HashSet<>();
+    private final Set<String> connectedPlayers = new LinkedHashSet<>();
     private LobbyState state = LobbyState.WAITING;
 
-    public StandardMatchLifecycleManager(
+    public OpenLobbyManager(
             int capacity,
             ServerGameEngine engine,
             GameServerGateway gateway
@@ -50,30 +47,24 @@ public class StandardMatchLifecycleManager implements MatchLifecycleManager {
     }
 
     @Override
-    public Collection<String> getActivePlayers() {
-        return List.copyOf(activePlayers);
+    public synchronized Set<String> getConnectedPlayers() {
+        return Set.copyOf(connectedPlayers);
     }
 
     /**
-     * Standard matches do not require grace periods or pre-game timers, so this is a no-op.
+     * Open matches do not require grace periods or pre-game timers.
      */
     @Override
     public synchronized void onServerStart() {}
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Registers player in pre-game lobby. Automatically triggers {@link #startGame()}
-     * once capacity is reached.
-     */
     @Override
     public synchronized void onPlayerConnected(GameSession session) {
         String username = session.getUsername();
         switch (state) {
             case WAITING -> {
-                waitingPlayers.add(username);
-                logger.info("Player {} joined waiting lobby ({}/{})", username, waitingPlayers.size(), capacity);
-                if (waitingPlayers.size() == capacity) {
+                connectedPlayers.add(username);
+                logger.info("Player {} joined waiting lobby ({}/{})", username, connectedPlayers.size(), capacity);
+                if (connectedPlayers.size() == capacity) {
                     startGame();
                 }
             }
@@ -82,27 +73,18 @@ public class StandardMatchLifecycleManager implements MatchLifecycleManager {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Re-registers player in lobby if waiting, or restores human control if rejoining mid-game.
-     */
     @Override
     public synchronized void onPlayerReconnected(GameSession session) {
         String username = session.getUsername();
         switch (state) {
             case WAITING -> {
-                waitingPlayers.add(username);
-                logger.info("Player {} reconnected to pre-game lobby ({}/{})", username, waitingPlayers.size(), capacity);
-                if (waitingPlayers.size() == capacity) {
+                connectedPlayers.add(username);
+                logger.info("Player {} reconnected to pre-game lobby ({}/{})", username, connectedPlayers.size(), capacity);
+                if (connectedPlayers.size() == capacity) {
                     startGame();
                 }
             }
             case PLAYING -> {
-                if (!activePlayers.contains(username)) {
-                    logger.warn("Unexpected player {} attempted reconnection", username);
-                    return;
-                }
                 logger.info("Player {} reconnected mid-game, restoring human control", username);
                 engine.enqueueCommand(new ChangePacmanBehaviourCommand(username, true));
                 gateway.sendTcp(username, new GameContextPacket(engine.getLatestContext()));
@@ -112,34 +94,29 @@ public class StandardMatchLifecycleManager implements MatchLifecycleManager {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Removes player from the waiting set if waiting, or substitutes them with a bot if mid-game.
-     */
     @Override
     public synchronized void onPlayerDisconnected(GameSession session) {
         String username = session.getUsername();
         switch (state) {
             case WAITING -> {
-                waitingPlayers.remove(username);
-                logger.info("Player {} left pre-game lobby ({}/{})", username, waitingPlayers.size(), capacity);
+                connectedPlayers.remove(username);
+                logger.info("Player {} left pre-game lobby ({}/{})", username, connectedPlayers.size(), capacity);
             }
             case PLAYING -> {
-                if (activePlayers.contains(username)) {
-                    logger.info("Player {} disconnected mid-game, substituting with a bot", username);
-                    engine.enqueueCommand(new ChangePacmanBehaviourCommand(username, false));
-                }
+                logger.info("Player {} disconnected mid-game, substituting with a bot", username);
+                engine.enqueueCommand(new ChangePacmanBehaviourCommand(username, false));
             }
             case FINISHED -> logger.info("Player {} disconnected after the game has ended", username);
         }
     }
 
     private synchronized void startGame() {
+        if (state != LobbyState.WAITING) {
+            return;
+        }
         setState(LobbyState.PLAYING);
-        activePlayers.addAll(waitingPlayers);
-        logger.info("Required player count reached. Starting game with players: {}", activePlayers);
-        engine.initialize(new ArrayList<>(activePlayers));
+        logger.info("Required player count reached. Starting game with players: {}", connectedPlayers);
+        engine.initialize(new ArrayList<>(connectedPlayers));
         engine.start();
         gateway.broadcastTcp(new GameContextPacket(engine.getLatestContext()));
         gateway.broadcastTcp(new GameStartPacket());

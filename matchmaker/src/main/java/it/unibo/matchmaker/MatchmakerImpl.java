@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
+import java.util.Objects;
 import java.net.http.HttpResponse;
 
 import org.springframework.http.MediaType;
@@ -20,11 +21,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.unibo.MatchmakerDetailsService;
 import it.unibo.dto.GameServerRequest;
 import it.unibo.dto.GameServerResponse;
+import it.unibo.dto.GameServerInfo;
 import it.unibo.dto.JoinLobbyRequest;
 import it.unibo.dto.JoinLobbyResponse;
 import it.unibo.dto.QuitLobbyRequest;
-import it.unibo.dto.RemoveRequest;
+import it.unibo.dto.RemoveFromMatchRequest;
 import it.unibo.mongodb.MatchInfoMongoDB;
+import it.unibo.mongodb.ServerParameters;
 
 /**
  * MatchmakerImpl
@@ -100,18 +103,27 @@ public class MatchmakerImpl implements Matchmaker{
     public ResponseEntity<String> getGameServer(@RequestBody GameServerRequest info) {
         try {
             String username = checkTokenPermission(info.token());
-            MatchInfoMongoDB match;
-            if (info.matchId() != null && !info.matchId().isBlank()) {
-                match = this.matchmakerDetailsService.getMatch(info.matchId());
-            } else {
-                match = this.matchmakerDetailsService.getMatchByToken(username);
+            MatchInfoMongoDB match = getMatch(info.matchId(), username);
+            GameServerInfo gameServerInfo = this.matchmakerDetailsService.checkGameServerAvailability(match);
+            ServerParameters serverParameters = match.getServerParameters();
+            if (Objects.nonNull(gameServerInfo)) {
+                serverParameters = new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort());
+                this.matchmakerDetailsService.setNewGameServerInfo(match, gameServerInfo);
             }
-            GameServerResponse response = new GameServerResponse(match.getId(), match.getGameServerSocket());
+            GameServerResponse response = new GameServerResponse(match.getId(), serverParameters);
             String result = this.objectMapper.writeValueAsString(response);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    /* Retrieves the match from the specified matchId or by Token. */
+    private MatchInfoMongoDB getMatch(String matchId, String username) throws Exception {
+        if (matchId != null && !matchId.isBlank()) {
+            return this.matchmakerDetailsService.getMatch(matchId);
+        }
+        return this.matchmakerDetailsService.getMatchByToken(username);
     }
 
     @Override
@@ -122,7 +134,7 @@ public class MatchmakerImpl implements Matchmaker{
 
     @Override
     @PostMapping(value = "/quit_match", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> removePlayerFromMatch(@RequestBody RemoveRequest remove) {
+    public ResponseEntity<Void> removePlayerFromMatch(@RequestBody RemoveFromMatchRequest remove) {
         try {
             String username = checkTokenPermission(remove.token());
             this.matchmakerDetailsService.deleteUserFromMatch(remove.matchId(), username);

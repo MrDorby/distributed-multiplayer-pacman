@@ -1,6 +1,6 @@
 package it.unibo.controller.server.persistence;
 
-import it.unibo.controller.server.persistence.backup.GameSnapshotRepository;
+import it.unibo.controller.server.persistence.snapshot.GameSnapshotRepository;
 import it.unibo.controller.server.persistence.dto.MatchSnapshot;
 import it.unibo.controller.server.persistence.results.GameResultsRepository;
 import org.slf4j.Logger;

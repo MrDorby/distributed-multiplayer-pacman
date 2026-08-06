@@ -7,12 +7,15 @@ import it.unibo.controller.server.persistence.mongodb.MongoDBServerConnection;
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * MongoDB-backed implementation of {@link GameResultsRepository}.
+ */
 public class MongoGameResultsRepository implements GameResultsRepository {
 
     private final MongoDBServerConnection connection;
 
-    public MongoGameResultsRepository(URI resultsRepositoryURI) {
-        this.connection = new MongoDBServerConnection(MongoDBConstants.ConnectToDatabase.LONG_TERM, resultsRepositoryURI);
+    public MongoGameResultsRepository(URI databaseURI) {
+        this.connection = new MongoDBServerConnection(MongoDBConstants.ConnectToDatabase.LONG_TERM, databaseURI);
     }
 
     @Override

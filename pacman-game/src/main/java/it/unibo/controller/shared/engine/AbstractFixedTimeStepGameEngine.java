@@ -36,11 +36,12 @@ public abstract class AbstractFixedTimeStepGameEngine implements GameEngine, Run
     private final Queue<PacmanCommand> commandQueue = new ConcurrentLinkedQueue<>();
 
     private volatile boolean running = false;
-    private long currentTick = 0;
+    private long currentTick;
     private volatile int currentTps = 0;
 
     public AbstractFixedTimeStepGameEngine(Game game) {
         this.game = game;
+        this.currentTick = (game != null && game.getContext() != null) ? game.getContext().getTick() : 0;
     }
 
     @Override
