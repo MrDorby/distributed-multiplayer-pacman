@@ -6,8 +6,7 @@ import java.security.SecureRandom;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -37,6 +36,7 @@ import it.unibo.key.Hash;
 import it.unibo.key.KeyManager;
 import it.unibo.token.TokenService;
 import it.unibo.mongodb.AuthMongoDB;
+import it.unibo.mongodb.ClientKeyMongoDB;
 
 /**
  * AuthenticatorImpl
@@ -47,7 +47,6 @@ import it.unibo.mongodb.AuthMongoDB;
 @RequestMapping(value = "/auth")
 public class AuthenticatorImpl implements Authenticator {
     
-    private final Map<String, PublicKey> users;  // Username and PublicKey
     private final AuthDetailsService authDetailsService;
     private final TokenService tokenService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -55,7 +54,6 @@ public class AuthenticatorImpl implements Authenticator {
     public AuthenticatorImpl(TokenService tokenService, AuthDetailsService authUserDetailsService) {
         this.authDetailsService = authUserDetailsService;
         this.tokenService = tokenService;
-        this.users = new HashMap<>();
         this.bCryptPasswordEncoder = new BCryptPasswordEncoder();
         KeyManager.generateRSAKeys();
     }
@@ -75,7 +73,14 @@ public class AuthenticatorImpl implements Authenticator {
                 
                 /* Storaging the Public Key of the user. */
                 String publicKey = Base64.getEncoder().encodeToString(authPubByte);
-                this.users.put(publicKeyClientDTO.username(), KeyManager.getPublicKeyFromString(publicKeyClientDTO.publicKey()));
+                ClientKeyMongoDB clientKeyMongoDB = this.authDetailsService.findClientKeyByUsername(publicKeyClientDTO.username());
+                if (Objects.isNull(clientKeyMongoDB)) {
+                    this.authDetailsService.registerClientKey(
+                        new ClientKeyMongoDB(publicKeyClientDTO.username(), publicKey));
+                } else {
+                    clientKeyMongoDB.setClientKey(publicKey);
+                    this.authDetailsService.registerClientKey(clientKeyMongoDB);
+                }
                 
                 /* Mapping the Message to a String in JSON format. */
                 ObjectMapper mapper = new ObjectMapper();
@@ -122,12 +127,16 @@ public class AuthenticatorImpl implements Authenticator {
             IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
             String encryptedJsonToken = KeyManager.encryptDecryptDataAES(jsonToken, Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
 
+            /* Extracting the public key of the client from the clientKeyRepository. */
+            String clientPublicKey = this.authDetailsService.findClientKeyByUsername(loginDTO.username()).getClientKey();
+            PublicKey clientKey = KeyManager.getPublicKeyFromString(clientPublicKey);
+            
             /* Encrypting the secret key. */
             String secret = Base64.getEncoder().encodeToString(secretKey.getEncoded());
-            String encryptedKey = KeyManager.encryptDecryptDataRSA(secret, Cipher.ENCRYPT_MODE, this.users.get(loginDTO.username()));
+            String encryptedKey = KeyManager.encryptDecryptDataRSA(secret, Cipher.ENCRYPT_MODE, clientKey);
 
             String ivParameters = Base64.getEncoder().encodeToString(ivParameterSpec.getIV());
-            String encryptedIV = KeyManager.encryptDecryptDataRSA(ivParameters, Cipher.ENCRYPT_MODE, this.users.get(loginDTO.username()));
+            String encryptedIV = KeyManager.encryptDecryptDataRSA(ivParameters, Cipher.ENCRYPT_MODE, clientKey);
             /* Creating the response and converting it to JSON format. */
             EncryptedTokenDTO encryptedTokenDTO = new EncryptedTokenDTO(encryptedKey, encryptedJsonToken, encryptedIV);
             String jsonEncryptedTokenDTO = mapper.writeValueAsString(encryptedTokenDTO);
