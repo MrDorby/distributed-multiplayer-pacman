@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matchmaker
+  labels:
+    app: pacman-game
+spec:
+  selector:
+    matchLabels:
+      app: pacman-game
+      role: matchmaker
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: pacman-game
+        role: matchmaker
+    spec:
+      containers:
+        - name: matchmaker
+          image: matchmaker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SERVER_PORT
+              value: "8080"

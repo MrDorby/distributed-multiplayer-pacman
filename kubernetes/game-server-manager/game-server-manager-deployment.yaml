@@ -25,12 +25,12 @@ spec:
             - containerPort: 8080
           env:
             - name: MATCHMAKER_URI
-              value: "https://65095699-bfad-4faf-84a2-557996a0f3f3.mock.pstmn.io" # TODO: temporary test URI
+              value: "http://matchmaker:8080"
             - name: GAMESERVER_IMAGE_NAME
               value: "pacman-game:latest"
             #- name: MIN_TIME_LEFT
             #  value: 8000
-            #- name: BACKUP_SERVICE_URL # TODO: uncomment during integration
+            #- name: SHORT_TERM_DB_URI # TODO: uncomment during integration
             #  value: "http://test/test" # TODO: put correct value
-            #- name: RESULTS_SERVICE_URL # TODO: uncomment during integration
+            #- name: LONG_TERM_DB_URI # TODO: uncomment during integration
             #  value: "http://test1/test" # TODO: put correct value

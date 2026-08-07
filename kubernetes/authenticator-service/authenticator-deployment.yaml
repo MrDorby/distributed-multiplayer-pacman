@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authenticator-service
+  labels:
+    app: pacman-game
+spec:
+  selector:
+    matchLabels:
+      app: pacman-game
+      role: authenticator-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: pacman-game
+        role: authenticator-service
+    spec:
+      containers:
+        - name: authenticator-service
+          image: authenticator-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SERVER_PORT
+              value: "8080"

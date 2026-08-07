@@ -31,8 +31,8 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
     private final KubernetesClient kubernetesClient;
     private final ResourceDefinitionContext gameServerDefinitionContext;
     private final String gameServerImageName;
-    private final String backupServiceUrl;
-    private final String resultsServiceUrl;
+    private final String shortTermDbUri;
+    private final String longTermDbUri;
 
     public KubernetesGameServerInstantiator() {
         this.kubernetesClient = new KubernetesClientBuilder().build();
@@ -47,22 +47,22 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
         String gameServerImageName = System.getenv("GAMESERVER_IMAGE_NAME");
         this.gameServerImageName = gameServerImageName != null ? gameServerImageName : DEFAULT_GAMESERVER_IMAGE_NAME;
         logger.info("Using GameServer image: {}", this.gameServerImageName);
-        this.backupServiceUrl = System.getenv("BACKUP_SERVICE_URL");
-        this.resultsServiceUrl = System.getenv("RESULTS_SERVICE_URL");
+        this.shortTermDbUri = System.getenv("SHORT_TERM_DB_URI");
+        this.longTermDbUri = System.getenv("LONG_TERM_DB_URI");
         String msg = usesRemotePersistence() ?
                 "Remote persistence variables have been specified. Using GameServers with remote persistence."
-                : "One of both of BACKUP_SERVICE_URL and RESULTS_SERVICE_URL have not been specified. " +
+                : "One of both of SHORT_TERM_DB_URI and LONG_TERM_DB_URI have not been specified. " +
                 "Using GameServers with local persistence.";
         logger.info(msg);
     }
 
     /**
      * @return whether the created GameServers use remote persistence or not.
-     * Remote persistence is used only if both {@code BACKUP_SERVICE_URL} and {@code RESULTS_SERVICE_URL} are set
+     * Remote persistence is used only if both {@code SHORT_TERM_DB_URI} and {@code LONG_TERM_DB_URI} are set
      * as environment variables.
      */
     private boolean usesRemotePersistence() {
-        return this.backupServiceUrl != null && this.resultsServiceUrl != null;
+        return this.shortTermDbUri != null && this.longTermDbUri != null;
     }
 
     /**
@@ -85,12 +85,12 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
     private GameServerInfo instantiateGameServer(List<String> gameServerArgs) throws NullPointerException, GameServerInstantiationException {
         String environmentVariablesJSON = usesRemotePersistence() ?
                 ",\"env\": [{" +
-                        "\"name\": \"BACKUP_SERVICE_URL\"," +
-                        "\"value\": \"" + this.backupServiceUrl + "\"" +
+                        "\"name\": \"SHORT_TERM_DB_URI\"," +
+                        "\"value\": \"" + this.shortTermDbUri + "\"" +
                     "}," +
                     "{" +
-                        "\"name\": \"RESULTS_SERVICE_URL\"," +
-                        "\"value\": \"" + this.resultsServiceUrl + "\"" +
+                        "\"name\": \"LONG_TERM_DB_URI\"," +
+                        "\"value\": \"" + this.longTermDbUri + "\"" +
                 "}]"
                 : "";
         String gameServerJSON = "{" +

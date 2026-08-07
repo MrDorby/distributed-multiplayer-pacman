@@ -16,7 +16,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *     Defaults to 5000 milliseconds.</li>
  *     <li>{@code GAMESERVER_IMAGE_NAME} Optional. The full image tag of the container used to create the GameServers.
  *     If not specified, defaults to {@code pacman-game-server:latest}.</li>
- *     <li>{@code BACKUP_SERVICE_URL} and {@code RESULTS_SERVICE_URL} Optional. Database connection URIs required by
+ *     <li>{@code SHORT_TERM_DB_URI} and {@code LONG_TERM_DB_URI} Optional. Database connection URIs required by
  *     the GameServer. Remote database persistence for GameServers is enabled only if both of these variables are
  *     specified. If one or both variables are not specified, then the created GameServers will use local persistence.</li>
  * </ul>
