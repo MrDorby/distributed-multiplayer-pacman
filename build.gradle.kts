@@ -27,4 +27,19 @@ tasks.register<Exec>("buildImages") {
     }
 }
 
-// TODO: CREATE A TASK THAT DEPLOYS THE WHOLE PROJECT IN THE CLUSTER
+// TODO: TEST THESE TASKS
+tasks.register<Exec>("deployCluster") {
+    if (System.getProperty("os.name").lowercase().contains("windows")) {
+        commandLine("cmd", "/c", "kubectl apply -f ./kubernetes/")
+    } else {
+        commandLine("bash", "-c", "kubectl apply -f ./kubernetes/")
+    }
+}
+
+tasks.register<Exec>("cleanupCluster") {
+    if (System.getProperty("os.name").lowercase().contains("windows")) {
+        commandLine("cmd", "/c", "kubectl delete -f ./kubernetes/")
+    } else {
+        commandLine("bash", "-c", "kubectl delete -f ./kubernetes/")
+    }
+}
