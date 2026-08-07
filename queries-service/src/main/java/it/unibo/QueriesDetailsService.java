@@ -14,6 +14,12 @@ public class QueriesDetailsService {
     @Autowired
     private PlayerInfoRepository playerInfoRepository;
 
+    /**
+     * Finds the infos about a specific player by means of its username.
+     * @param username the identifier of the player.
+     * @return the player's info.
+     * @throws UsernameNotFoundException
+     */
     public PlayerInfoMongoDB loadUserByUsername(String username) throws UsernameNotFoundException {
         return playerInfoRepository.findByUsername(username)
             .orElseThrow(() -> new UsernameNotFoundException("Username not found!"));

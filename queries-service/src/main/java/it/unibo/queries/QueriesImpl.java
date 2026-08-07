@@ -9,8 +9,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 import javax.crypto.Cipher;
@@ -41,9 +39,9 @@ import it.unibo.mongodb.PlayerInfoMongoDB;
 @RequestMapping(value = "/queries")
 public class QueriesImpl implements Queries {
 
-    // TODO: Modify the HTTP REQUEST
-    private static final String AUTHENTICATOR_REQUEST = "http://localhost:8080/auth/token";
-    private final Map<String, PublicKey> users;  // Username and PublicKey
+    private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
+    private static final String AUTHENTICATOR_TOKEN = System.getenv().get(AUTHENTICATOR_ENV) + "/token";
+    private static final String AUTHENTICATOR_KEYCLIENT = System.getenv().get(AUTHENTICATOR_ENV) + "/keyClient";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final QueriesDetailsService queriesDetailsService;
@@ -52,7 +50,6 @@ public class QueriesImpl implements Queries {
         this.queriesDetailsService = queriesDetailsService;
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
-        this.users = new HashMap<>();
         KeyManager.generateRSAKeys();
     }
 
@@ -61,7 +58,7 @@ public class QueriesImpl implements Queries {
     @PostMapping(value = "/token", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> checkTokenPermission(@RequestBody String token) { 
         HttpRequest httpTokenRequest = HttpRequest.newBuilder()
-                                    .uri(URI.create(AUTHENTICATOR_REQUEST))
+                                    .uri(URI.create(AUTHENTICATOR_TOKEN))
                                     .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(token))
                                     .build();
@@ -88,12 +85,32 @@ public class QueriesImpl implements Queries {
             if (Objects.isNull(player)) {
                 return ResponseEntity.notFound().build();
             }
+
+            /* Extracting the public key of the user from the Authenticator. */
+            String publicKeyClient = getPublicKeyOfUser(username);
+            PublicKey keyClient = KeyManager.getPublicKeyFromString(publicKeyClient);
+
             String playerString = this.objectMapper.writeValueAsString(player);
-            String encryptedResponse = KeyManager.encryptDecryptDataRSA(playerString, Cipher.ENCRYPT_MODE, this.users.get(username));
+            String encryptedResponse = KeyManager.encryptDecryptDataRSA(playerString, Cipher.ENCRYPT_MODE, keyClient);
             return ResponseEntity.ok(encryptedResponse);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
+    }
+
+    /* Receives the public key of the specific client by means of its username. */
+    private String getPublicKeyOfUser(String username) throws Exception {
+        HttpRequest httpKeyRequest = HttpRequest.newBuilder()
+                                    .uri(URI.create(AUTHENTICATOR_KEYCLIENT))
+                                    .header("Content-Type", "application/json")
+                                    .POST(BodyPublishers.ofString(username))
+                                    .build();
+        
+        HttpResponse<String> keyResponse = httpClient.send(httpKeyRequest, HttpResponse.BodyHandlers.ofString());
+        if (keyResponse.statusCode() != HttpStatus.OK.value()) {
+            throw new Exception("Username not valid!");
+        }
+        return keyResponse.body();
     }
 
     @Override
@@ -108,12 +125,9 @@ public class QueriesImpl implements Queries {
                 PublicKey authPub = KeyManager.loadAuthenticatorPublicKey();
                 byte[] authPubByte = authPub.getEncoded();
                 String hash = Hash.hashing(authPubByte, publicKeyClientDTO.hashType());
-                
-                /* Storaging the Public Key of the user. */
-                String publicKey = Base64.getEncoder().encodeToString(authPubByte);
-                this.users.put(publicKeyClientDTO.username(), KeyManager.getPublicKeyFromString(publicKeyClientDTO.publicKey()));
-                
+
                 /* Mapping the Message to a String in JSON format. */
+                String publicKey = Base64.getEncoder().encodeToString(authPubByte);
                 ObjectMapper mapper = new ObjectMapper();
                 String json = mapper.writeValueAsString(new PublicKeyResponseDTO(publicKey, hash, publicKeyClientDTO.hashType()));
                 responseEntity = ResponseEntity.ok(json);

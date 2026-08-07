@@ -72,17 +72,17 @@ public class AuthenticatorImpl implements Authenticator {
                 String hash = Hash.hashing(authPubByte, publicKeyClientDTO.hashType());
                 
                 /* Storaging the Public Key of the user. */
-                String publicKey = Base64.getEncoder().encodeToString(authPubByte);
                 ClientKeyMongoDB clientKeyMongoDB = this.authDetailsService.findClientKeyByUsername(publicKeyClientDTO.username());
                 if (Objects.isNull(clientKeyMongoDB)) {
                     this.authDetailsService.registerClientKey(
-                        new ClientKeyMongoDB(publicKeyClientDTO.username(), publicKey));
+                        new ClientKeyMongoDB(publicKeyClientDTO.username(), publicKeyClientDTO.publicKey()));
                 } else {
-                    clientKeyMongoDB.setClientKey(publicKey);
+                    clientKeyMongoDB.setClientKey(publicKeyClientDTO.publicKey());
                     this.authDetailsService.registerClientKey(clientKeyMongoDB);
                 }
                 
                 /* Mapping the Message to a String in JSON format. */
+                String publicKey = Base64.getEncoder().encodeToString(authPubByte);
                 ObjectMapper mapper = new ObjectMapper();
                 String json = mapper.writeValueAsString(new PublicKeyServerDTO(publicKey, hash, publicKeyClientDTO.hashType()));
                 responseEntity = ResponseEntity.ok(json);
@@ -192,5 +192,15 @@ public class AuthenticatorImpl implements Authenticator {
             }
         }
         return ResponseEntity.badRequest().body("Token expired or Issuer not valid!");
+    }
+
+    @Override
+    @PostMapping(value = "/keyClient", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getPublicKeyOfUser(@RequestBody String username) {
+        ClientKeyMongoDB clientKeyMongoDB = this.authDetailsService.findClientKeyByUsername(username);
+        if (Objects.isNull(clientKeyMongoDB)) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(clientKeyMongoDB.getClientKey());
     }
 }
