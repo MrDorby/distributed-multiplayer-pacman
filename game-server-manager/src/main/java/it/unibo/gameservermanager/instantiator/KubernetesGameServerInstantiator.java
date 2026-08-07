@@ -26,9 +26,11 @@ import java.util.concurrent.TimeUnit;
 @Component("kubernetesInstantiator")
 public class KubernetesGameServerInstantiator implements GameServerInstantiator {
     private static final long ALLOCATION_WAITING_TIME_SECONDS = 15;
+    private static final String DEFAULT_GAMESERVER_IMAGE_NAME = "pacman-game-server:latest";
 
     private final KubernetesClient kubernetesClient;
     private final ResourceDefinitionContext gameServerDefinitionContext;
+    private final String gameServerImageName;
     private final String backupServiceUrl;
     private final String resultsServiceUrl;
 
@@ -41,13 +43,16 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
                 .withName("gameservers.agones.dev")
                 .get();
         this.gameServerDefinitionContext = CustomResourceDefinitionContext.fromCrd(gameServerDefinition);
+        Logger logger = LoggerFactory.getLogger(KubernetesGameServerInstantiator.class);
+        String gameServerImageName = System.getenv("GAMESERVER_IMAGE_NAME");
+        this.gameServerImageName = gameServerImageName != null ? gameServerImageName : DEFAULT_GAMESERVER_IMAGE_NAME;
+        logger.info("Using GameServer image: {}", this.gameServerImageName);
         this.backupServiceUrl = System.getenv("BACKUP_SERVICE_URL");
         this.resultsServiceUrl = System.getenv("RESULTS_SERVICE_URL");
         String msg = usesRemotePersistence() ?
                 "Remote persistence variables have been specified. Using GameServers with remote persistence."
                 : "One of both of BACKUP_SERVICE_URL and RESULTS_SERVICE_URL have not been specified. " +
                 "Using GameServers with local persistence.";
-        Logger logger = LoggerFactory.getLogger(KubernetesGameServerInstantiator.class);
         logger.info(msg);
     }
 
@@ -110,7 +115,7 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
                             "\"spec\": {" +
                                 "\"containers\": [{" +
                                     "\"name\": \"pacman-game-server\"," +
-                                    "\"image\": \"pacman-game-server:latest\"," +
+                                    "\"image\": \"" + this.gameServerImageName + "\"," +
                                     "\"imagePullPolicy\": \"IfNotPresent\"," +
                                     "\"args\": " + getJSONList(gameServerArgs) +
                                     environmentVariablesJSON +

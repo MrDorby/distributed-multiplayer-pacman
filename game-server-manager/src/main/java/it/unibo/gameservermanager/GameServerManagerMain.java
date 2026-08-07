@@ -14,6 +14,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *     instantiate a recovery GameServer, instead of just letting the match end. A recovery GameServer will thus
  *     be instantiated only if the match's time left is higher or equal than the value of this parameter.
  *     Defaults to 5000 milliseconds.</li>
+ *     <li>{@code GAMESERVER_IMAGE_NAME} Optional. The full image tag of the container used to create the GameServers.
+ *     If not specified, defaults to {@code pacman-game-server:latest}.</li>
  *     <li>{@code BACKUP_SERVICE_URL} and {@code RESULTS_SERVICE_URL} Optional. Database connection URIs required by
  *     the GameServer. Remote database persistence for GameServers is enabled only if both of these variables are
  *     specified. If one or both variables are not specified, then the created GameServers will use local persistence.</li>
