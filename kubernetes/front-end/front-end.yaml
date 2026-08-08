@@ -1,1 +1,30 @@
-# TODO: write
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: front-end
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: authenticator-service
+                port:
+                  number: 8080
+          - path: /queries
+            pathType: Prefix
+            backend:
+              service:
+                name: queries-service
+                port:
+                  number: 8080
+          - path: /matchmaker
+            pathType: Prefix
+            backend:
+              service:
+                name: matchmaker
+                port:
+                  number: 8080

@@ -40,6 +40,20 @@ To do so, we will run the following command in a terminal on our host:
 It's imperative to make sure that the port range specified in this command corresponds to the one specified during the
 creation of Minikube's profile.
 
+**Setting up an Ingress controller in our cluster**
+
+The following instructions were taken from the following guide: https://v1-32.docs.kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/
+
+The correct functioning of the system requires enabling an Ingress controller inside the Minikube cluster.
+One way to do this is by using the NGINX Ingress controller, which can be enabled by executing the following command
+once the cluster is running:
+
+`minikube -p agones addons enable ingress`
+
+After running this command, we can verify that the NGINX controller is running with the following command:
+
+`kubectl get pods -n ingress-nginx`
+
 ### Deploying the system in the cluster
 
 TODO: WRITE THIS SECTION
