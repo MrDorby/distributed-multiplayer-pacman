@@ -1,5 +1,6 @@
 # Created by codeshack.io
 .gradle
+!gradle/wrapper/gradle-wrapper.jar
 
 ### macOS ###
 .DS_Store
