@@ -5,11 +5,10 @@ package it.unibo.controller.server.persistence.mongodb;
  */
 public class MongoDBConstants {
 
-    // TODO: Is it ok to insert Connection String with password? //TODO: METTERE LONGTERM AL POSTO DI QUERIES
     /* Connection String for a specific MongoDB database. */
-    private static final String LT = "mongodb://admin:password@queriesdb1:27017,queriesdb2:27017,queriesdb3:27017/statsDB?authSource=admin&replicaSet=replicaSet";
-    private static final String ST = "mongodb://admin:password@shortdb1:27017,shortdb2:27017,shortdb3:27017/shortDB?authSource=admin&replicaSet=replicaSet";
-    
+    private static final String LT = "mongodb://admin:password@longdb-0.long-mongo.longdb.svc.cluster.local:27017,longdb-1.long-mongo.longdb.svc.cluster.local:27017,longdb-2.long-mongo.longdb.svc.cluster.local:27017/statsDB?authSource=admin&replicaSet=replicaSet";
+    private static final String ST = "mongodb://admin:password@shortdb-0.short-mongo.shortdb.svc.cluster.local:27017,shortdb-1.short-mongo.shortdb.svc.cluster.local:27017,shortdb-2.short-mongo.shortdb.svc.cluster.local:27017/shortDB?authSource=admin&replicaSet=replicaSet";
+
     /* MongoDB Databases. */
     private static final String LT_DB = "statsDB";
     private static final String ST_DB = "shortDB";
