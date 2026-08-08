@@ -30,7 +30,7 @@ spec:
               value: "pacman-game:latest"
             #- name: MIN_TIME_LEFT
             #  value: 8000
-            #- name: SHORT_TERM_DB_URI # TODO: uncomment during integration
-            #  value: "http://test/test" # TODO: put correct value
-            #- name: LONG_TERM_DB_URI # TODO: uncomment during integration
-            #  value: "http://test1/test" # TODO: put correct value
+            - name: SHORT_TERM_DB_URI
+              value: "mongodb://admin:password@shortdb-0.short-mongo.shortdb.svc.cluster.local:27017,shortdb-1.short-mongo.shortdb.svc.cluster.local:27017,shortdb-2.short-mongo.shortdb.svc.cluster.local:27017/shortDB?authSource=admin&replicaSet=replicaSet"
+            - name: LONG_TERM_DB_URI
+              value: "mongodb://admin:password@longdb-0.long-mongo.longdb.svc.cluster.local:27017,longdb-1.long-mongo.longdb.svc.cluster.local:27017,longdb-2.long-mongo.longdb.svc.cluster.local:27017/statsDB?authSource=admin&replicaSet=replicaSet"

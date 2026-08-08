@@ -33,7 +33,11 @@ After the first creation of Minikube's custom profile, we can simply start it wi
 **Installing Agones on our Minikube cluster:**
 
 Once the Minikube cluster is running, we can install Agones in the cluster by using Helm (installed in our host machine).
-To do so, we will run the following command in a terminal on our host:
+To do so, we will run the following commands in a terminal on our host:
+
+`helm repo add agones https://agones.dev/chart/stable`
+
+`helm repo update`
 
 `helm install my-release --namespace agones-system --create-namespace --set gameservers.minPort=7000,gameservers.maxPort=7050 agones/agones`
 
