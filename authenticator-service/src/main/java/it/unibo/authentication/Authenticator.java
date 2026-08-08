@@ -39,4 +39,11 @@ public interface Authenticator {
      * @return a ResponseEntity containing the response.
      */
     ResponseEntity<String> checkToken(@RequestBody TokenDTO token);
+
+    /**
+     * Defines the procedure to extract the public key of the user.
+     * @param username the identifier for the player.
+     * @return a ResponseEntity containing the response.
+     */
+    ResponseEntity<String> getPublicKeyOfUser(@RequestBody String username);
 }
