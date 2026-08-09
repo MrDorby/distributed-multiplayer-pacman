@@ -38,6 +38,7 @@ import it.unibo.mongodb.ServerParameters;
 @RequestMapping(value = "/matchmaker")
 public class MatchmakerImpl implements Matchmaker{
 
+    // TODO: change value for the string.
     private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
     private static final String AUTHENTICATOR_REQUEST = System.getenv().get(AUTHENTICATOR_ENV) + "/token";
     private final HttpClient httpClient;

@@ -13,7 +13,7 @@ data:
 
       mongosh admin --eval "db.getSiblingDB('admin').createUser({user: '$MONGO_INITDB_ROOT_USERNAME', pwd: '$MONGO_INITDB_ROOT_PASSWORD', roles: [{ role: 'root', db: 'admin' }]})"
       
-      mongosh shortdb-0.short-mongo.shortdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.getSiblingDB('shortDB').createCollection('matches');"
+      mongosh shortdb-0.short-mongo.shortdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.getSiblingDB('shortDB').createCollection('matches'); db.getSiblingDB('shortDB').createCollection('lobby');"
     else
       sleep 15;
       mongosh shortdb-0.short-mongo.shortdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "rs.add({ host: '${HOSTNAME}.short-mongo.shortdb.svc.cluster.local:27017', priority: 1 })"

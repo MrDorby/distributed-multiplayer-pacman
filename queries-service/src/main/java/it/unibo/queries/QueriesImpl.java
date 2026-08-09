@@ -39,6 +39,7 @@ import it.unibo.mongodb.PlayerInfoMongoDB;
 @RequestMapping(value = "/queries")
 public class QueriesImpl implements Queries {
 
+    // TODO: change value for the string.
     private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
     private static final String AUTHENTICATOR_TOKEN = System.getenv().get(AUTHENTICATOR_ENV) + "/token";
     private static final String AUTHENTICATOR_KEYCLIENT = System.getenv().get(AUTHENTICATOR_ENV) + "/keyClient";

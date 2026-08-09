@@ -34,6 +34,7 @@ import it.unibo.mongodb.ShortTermMatchRepository;
 @Service
 public class MatchmakerDetailsService {
 
+    // TODO: change value for the string manager.
     private static final int LOBBY_SIZE = 4;
     private static final String MANAGER = "MANAGER";
     private static final String MANAGER_URI = System.getenv(MANAGER);
