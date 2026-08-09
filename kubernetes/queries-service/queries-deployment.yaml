@@ -25,3 +25,5 @@ spec:
           env:
             - name: SERVER_PORT
               value: "8080"
+            - name: AUTHENTICATOR
+              value: "http://authenticator-service:8080"

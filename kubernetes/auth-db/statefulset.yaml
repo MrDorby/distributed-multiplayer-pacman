@@ -79,7 +79,7 @@ spec:
     - metadata:
         name: mongo-auth
       spec:
-        accessModes: [ "ReadWriteMany" ]
+        accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
             storage: 1Gi

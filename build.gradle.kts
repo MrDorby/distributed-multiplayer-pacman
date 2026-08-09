@@ -21,9 +21,10 @@ tasks.register("build") {
 
 tasks.register<Exec>("buildImages") {
     if (System.getProperty("os.name").lowercase().contains("windows")) {
-        commandLine("git", "bash", "-c", "./build-images.sh authenticator-service game-server-manager matchmaker pacman-game queries-service")
+        // TODO: FIX THE SCRIPT CALL ON WINDOWS
+        commandLine("cmd", "/c", "Powershell -File .\\scripts\\build-images.ps1 authenticator-service game-server-manager matchmaker pacman-game queries-service")
     } else {
-        commandLine("bash", "-c", "./build-images.sh authenticator-service game-server-manager matchmaker pacman-game queries-service")
+        commandLine("bash", "-c", "./scripts/build-images.sh authenticator-service game-server-manager matchmaker pacman-game queries-service")
     }
 }
 

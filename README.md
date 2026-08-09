@@ -13,14 +13,14 @@ For Minikube, this involves the following steps:
 
 Linux and Mac:
 
-`minikube start --kubernetes-version v1.35 -p agones`
+`minikube start --kubernetes-version v1.35 -p agones --memory 6000 --cpus 4`
 
 Windows:
 
 It's necessary to publish the desired Agones port range from Minikube to the host system.
 So, the command becomes:
 
-`minikube start --kubernetes-version v1.35 -p agones --ports 7000-7050:7000-7050/tcp --ports 7000-7050:7000-7050/udp`
+`minikube start --kubernetes-version v1.35 -p agones --ports 7000-7050:7000-7050/tcp --ports 7000-7050:7000-7050/udp --memory 6000 --cpus 4`
 
 We will publish both the TCP and UDP port range, since our GameServer communicates using both protocols.
 

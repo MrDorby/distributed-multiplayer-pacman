@@ -62,7 +62,7 @@ spec:
     - metadata:
         name: mongo-long
       spec:
-        accessModes: [ "ReadWriteMany" ]
+        accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
             storage: 1Gi
