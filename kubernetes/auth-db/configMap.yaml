@@ -12,7 +12,7 @@ data:
 
       mongosh admin --eval "db.getSiblingDB('admin').createUser({user: '$MONGO_INITDB_ROOT_USERNAME', pwd: '$MONGO_INITDB_ROOT_PASSWORD', roles: [{ role: 'root', db: 'admin' }]})"
       
-      mongosh authdb-0.auth-mongo.authdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.getSiblingDB('authDB').createCollection('auth');"
+      mongosh authdb-0.auth-mongo.authdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.getSiblingDB('authDB').createCollection('auth'); db.getSiblingDB('authDB').createCollection('keymap');"
     else
       sleep 15;
       mongosh authdb-0.auth-mongo.authdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "rs.add({ host: '${HOSTNAME}.auth-mongo.authdb.svc.cluster.local:27017', priority: 1 })"
