@@ -40,7 +40,7 @@ public class MatchmakerImpl implements Matchmaker{
 
     // TODO: change value for the string.
     private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
-    private static final String AUTHENTICATOR_REQUEST = System.getenv().get(AUTHENTICATOR_ENV) + "/token";
+    private static final String AUTHENTICATOR_REQUEST = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/token";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final MatchmakerDetailsService matchmakerDetailsService;

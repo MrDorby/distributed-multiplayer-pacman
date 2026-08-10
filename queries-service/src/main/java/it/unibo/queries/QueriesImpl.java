@@ -41,8 +41,8 @@ public class QueriesImpl implements Queries {
 
     // TODO: change value for the string.
     private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
-    private static final String AUTHENTICATOR_TOKEN = System.getenv().get(AUTHENTICATOR_ENV) + "/token";
-    private static final String AUTHENTICATOR_KEYCLIENT = System.getenv().get(AUTHENTICATOR_ENV) + "/keyClient";
+    private static final String AUTHENTICATOR_TOKEN = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/token";
+    private static final String AUTHENTICATOR_KEYCLIENT = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/keyClient";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final QueriesDetailsService queriesDetailsService;
