@@ -38,6 +38,7 @@ public interface ShortTermLobbyRepository extends MongoRepository<LobbyInfoMongo
      * @param username the identifier for the query.
      * @return an Optional of LobbyInfoMongoDB.
      */
+    @Query("{ 'players' : ?0 }")
     Optional<LobbyInfoMongoDB> findByUsername(String username);
 
     /**
