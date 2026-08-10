@@ -44,6 +44,8 @@ creation of Minikube's profile.
 
 **Setting up an Ingress controller in our cluster**
 
+TODO: INGRESS RESOURCE IS DEPRECATED, A GATEWAY IS BETTER
+
 The following instructions were taken from the following guide: https://v1-32.docs.kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/
 
 The correct functioning of the system requires enabling an Ingress controller inside the Minikube cluster.
@@ -55,6 +57,10 @@ once the cluster is running:
 After running this command, we can verify that the NGINX controller is running with the following command:
 
 `kubectl get pods -n ingress-nginx`
+
+**Setting up a Gateway controller in our cluster**
+
+TODO: WRITE AFTER FINDING A CONTROLLER THAT WORKS
 
 ### Deploying the system in the cluster
 
