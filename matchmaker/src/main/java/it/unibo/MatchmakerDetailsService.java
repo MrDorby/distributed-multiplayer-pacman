@@ -165,7 +165,7 @@ public class MatchmakerDetailsService {
      * @throws Exception
      */
     public MatchInfoMongoDB getMatch(String matchId) throws Exception {
-        return matchCollection.findByMatchId(matchId)
+        return matchCollection.findById(matchId)
             .orElseThrow(() -> new Exception("Match does not exist!"));
     }
 

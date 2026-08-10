@@ -23,7 +23,7 @@ public interface ShortTermMatchRepository extends MongoRepository<MatchInfoMongo
      * @param matchId the identifier of the match.
      * @return an Optional for a MatchInfoMongoDB.
      */
-    Optional<MatchInfoMongoDB> findByMatchId(String matchId);
+    Optional<MatchInfoMongoDB> findById(String matchId);
 
     /**
      * Finds all the matches containing the specific username.
