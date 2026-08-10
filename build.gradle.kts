@@ -22,13 +22,13 @@ tasks.register("build") {
 tasks.register<Exec>("buildImages") {
     if (System.getProperty("os.name").lowercase().contains("windows")) {
         // TODO: FIX THE SCRIPT CALL ON WINDOWS
-        commandLine("cmd", "/c", "Powershell -File .\\scripts\\build-images.ps1 authenticator-service game-server-manager matchmaker pacman-game queries-service")
+        commandLine("cmd", "/c", "powershell -command \".\\scripts\\build-images.ps1 authenticator-service game-server-manager matchmaker pacman-game queries-service\"")
     } else {
         commandLine("bash", "-c", "./scripts/build-images.sh authenticator-service game-server-manager matchmaker pacman-game queries-service")
     }
 }
 
-// TODO: TEST THESE TASKS
+// TODO: MODIFY THESE TASKS TO RUN THE RELATIVE SCRIPTS (kubectl apply and delete are not recursive on directories)
 tasks.register<Exec>("deployCluster") {
     if (System.getProperty("os.name").lowercase().contains("windows")) {
         commandLine("cmd", "/c", "kubectl apply -f ./kubernetes/")
