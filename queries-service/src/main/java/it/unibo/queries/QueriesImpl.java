@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.QueriesDetailsService;
@@ -39,7 +40,14 @@ import it.unibo.mongodb.PlayerInfoMongoDB;
 @RequestMapping(value = "/queries")
 public class QueriesImpl implements Queries {
 
-    // TODO: change value for the string.
+    /**
+     * DTO containing a token.
+     * @param token String version of the token.
+    */
+    private record TokenDTO(
+        @JsonProperty("token") String token) {
+    }
+
     private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
     private static final String AUTHENTICATOR_TOKEN = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/token";
     private static final String AUTHENTICATOR_KEYCLIENT = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/keyClient";
@@ -57,14 +65,16 @@ public class QueriesImpl implements Queries {
     // TODO: check https://spring.io/guides/gs/consuming-rest
     @Override
     @PostMapping(value = "/token", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> checkTokenPermission(@RequestBody String token) { 
-        HttpRequest httpTokenRequest = HttpRequest.newBuilder()
+    public ResponseEntity<String> checkTokenPermission(@RequestBody String token) {
+        try {
+            TokenDTO tokenDTO = new TokenDTO(token);
+            String result = this.objectMapper.writeValueAsString(tokenDTO);
+            HttpRequest httpTokenRequest = HttpRequest.newBuilder()
                                     .uri(URI.create(AUTHENTICATOR_TOKEN))
                                     .header("Content-Type", "application/json")
-                                    .POST(BodyPublishers.ofString(token))
+                                    .POST(BodyPublishers.ofString(result))
                                     .build();
-        
-        try {
+
             HttpResponse<String> tokenResponse = httpClient.send(httpTokenRequest, HttpResponse.BodyHandlers.ofString());
             if (tokenResponse.statusCode() == HttpStatus.OK.value()) {
                 return ResponseEntity.ok().build();

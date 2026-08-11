@@ -12,6 +12,8 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -50,6 +52,8 @@ public class AuthenticatorImpl implements Authenticator {
     private final AuthDetailsService authDetailsService;
     private final TokenService tokenService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    private final Logger logger = LoggerFactory.getLogger(AuthenticatorImpl.class);
 
     public AuthenticatorImpl(TokenService tokenService, AuthDetailsService authUserDetailsService) {
         this.authDetailsService = authUserDetailsService;
@@ -185,8 +189,8 @@ public class AuthenticatorImpl implements Authenticator {
             try {
                 /* Verifying the validity of the token and its signature. */
                 PublicKey publicKey = KeyManager.getPublicKeyFromString(stringKey);
-                DecodedJWT jwt = this.tokenService.getTokenVerified(token.token(), (RSAPublicKey) publicKey);
-                return ResponseEntity.ok(jwt.getClaim(claim).asString());
+                this.tokenService.getTokenVerified(token.token(), (RSAPublicKey) publicKey);
+                return ResponseEntity.ok().build();
             } catch (Exception e) {
                 return ResponseEntity.badRequest().body(e.getMessage());
             }

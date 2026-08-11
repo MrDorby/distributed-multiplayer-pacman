@@ -80,15 +80,15 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         if (this.currentMatchId != null) return true;
         var payload = objectMapper.writeValueAsString(new GameServerRequest(userToken, null));
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(gameServerUrl))
+                .uri(URI.create(joinLobbyUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload))
                 .build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() == 200 && response.body() != null && !response.body().isBlank()) {
-            GameServerResponse serverResponse = objectMapper.readValue(response.body(), GameServerResponse.class);
-            if (serverResponse.matchId() != null) {
-                this.currentMatchId = serverResponse.matchId();
+            JoinLobbyResponse joinLobbyResponse = objectMapper.readValue(response.body(), JoinLobbyResponse.class);
+            if (joinLobbyResponse.isMatchFound()) {
+                this.currentMatchId = joinLobbyResponse.id();
                 return true;
             }
         }

@@ -18,12 +18,14 @@ spec:
       containers:
         - name: shortdb
           image: mongo:latest
-          command:
-            - /bin/bash
-            - -c
-            - |
-              /data/mongodbinit/create_user.sh &
-              mongod --replSet=replicaSet --bind_ip_all --auth --keyFile=/key/replica.key;
+          command: ["/bin/bash", "-c", /data/mongodbinit/create_user.sh]
+          #command: ["mongod", "--replSet", "replicaSetShort", "--keyFile", "/key/replica.key", "--bind_ip_all"]
+          # command:
+          #   - /bin/bash
+          #   - -c
+          #   - |
+          #     /data/mongodbinit/create_user.sh &   # <-- && ? o singola?
+          #     mongod --replSet=replicaSet --bind_ip_all --auth --keyFile=/key/replica.key;
           env:
             - name: REPLICA_KEY_DIR
               value: /key
@@ -47,6 +49,8 @@ spec:
               readOnly: true
             - name: mongodb-init
               mountPath: /data/mongodbinit
+            # - name: mongodb-init
+            #   mountPath: /docker-entrypoint-initdb.d
       volumes:
         - name: replicakey
           configMap:

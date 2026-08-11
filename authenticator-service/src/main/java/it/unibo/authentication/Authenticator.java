@@ -35,7 +35,7 @@ public interface Authenticator {
 
     /**
      * Defines the procedure to validate the token of a specific user.
-     * @param token a TokenDTO Object that represent the token sent via JSON format.
+     * @param token a DTO containing the token.
      * @return a ResponseEntity containing the response.
      */
     ResponseEntity<String> checkToken(@RequestBody TokenDTO token);

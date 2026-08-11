@@ -23,7 +23,7 @@ spec:
             - -c
             - |
               /data/mongodbinit/create_user.sh &
-              mongod --replSet=replicaSet --bind_ip_all --auth --keyFile=/key/replica.key;
+              mongod --replSet=replicaSetLong --bind_ip_all --auth --keyFile=/key/replica.key;
           #command: ["mongod", "--replSet", "replicaSet", "--keyFile", "/key/replica.key", "--bind_ip_all"]
           #command: ["/home/mongodb/permission.sh", "docker-entrypoint.sh", "mongod", "--replSet", "replicaSet", "--keyFile", "/key/replica.key", "--bind_ip_all"]
           env:

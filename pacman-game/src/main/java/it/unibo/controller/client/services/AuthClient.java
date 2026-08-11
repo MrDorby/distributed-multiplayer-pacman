@@ -12,6 +12,7 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.controller.client.dto.EncryptedLoginResponseDTO;
@@ -27,6 +28,14 @@ import it.unibo.controller.client.key.KeyManager;
  */
 public class AuthClient {
     
+    /**
+     * DTO containing a token.
+     * @param token String version of the token.
+    */
+    private record TokenDTO(
+        @JsonProperty("token") String token) {
+    }
+
     private static final String SYN = "/syn";
     private static final String LOGIN = "/login";
     private static final String REGISTER = "/register";
@@ -79,8 +88,9 @@ public class AuthClient {
         String secret = keyManager.encryptDecryptDataRSA(encryptedResponse.secretKey(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
         SecretKey secretKey = keyManager.getSecretKeyFromString(secret);
         String ivParameters = keyManager.encryptDecryptDataRSA(encryptedResponse.ivParameter(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
-        String token = keyManager.encryptDecryptDataAES(encryptedResponse.encryptedToken(), Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(Base64.getDecoder().decode(ivParameters)));
-        this.token = token;
+        String tokenDTO = keyManager.encryptDecryptDataAES(encryptedResponse.encryptedToken(), Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(Base64.getDecoder().decode(ivParameters)));
+        TokenDTO dto = this.objectMapper.readValue(tokenDTO, TokenDTO.class);
+        this.token = dto.token();
     }
 
     /* Decrypt the encrypted message from the incoming connetion.*/

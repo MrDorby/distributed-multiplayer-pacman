@@ -5,6 +5,7 @@ import it.unibo.gameservermanager.dto.*;
 import it.unibo.gameservermanager.instantiator.GameServerInstantiator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -56,14 +57,14 @@ public class GameServerManagerControllerImpl implements GameServerManagerControl
     }
 
     @Override
-    @PostMapping("/gameserver/create")
+    @PostMapping(value = "/gameserver/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> createGameServer(@RequestBody GameServerInitParameters initParameters) {
         GameServerInfo gameServerInfo = this.instantiator.instantiateNormalGameServer(initParameters);
         return ResponseEntity.ok(this.objectMapper.writeValueAsString(gameServerInfo));
     }
 
     @Override
-    @PostMapping("/gameserver/check")
+    @PostMapping(value = "/gameserver/check", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> checkGameServer(@RequestBody CheckGameServerRequest checkRequest) {
         GameServerCheckResults checkResults;
         GameServerStatus gameServerStatus = this.instantiator.getGameServerStatus(checkRequest.serverName());

@@ -4,6 +4,7 @@ if [[ -d $1 ]]; then
   for directory in $(ls $1); do
     kubectl delete -f $1/$directory;
   done
+  kubectl delete pvc --all --all-namespaces
 else
   echo "$1 is not a directory. Cannot perform the cleanup operation.";
 fi

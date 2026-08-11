@@ -8,6 +8,8 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.util.Objects;
 import java.net.http.HttpResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +31,8 @@ import it.unibo.dto.RemoveFromMatchRequest;
 import it.unibo.mongodb.MatchInfoMongoDB;
 import it.unibo.mongodb.ServerParameters;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * MatchmakerImpl
  * <p>
@@ -38,12 +42,22 @@ import it.unibo.mongodb.ServerParameters;
 @RequestMapping(value = "/matchmaker")
 public class MatchmakerImpl implements Matchmaker{
 
+    /**
+     * DTO containing a token.
+     * @param token String version of the token.
+    */
+    private record TokenDTO(
+        @JsonProperty("token") String token) {
+    }
+
     // TODO: change value for the string.
     private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
     private static final String AUTHENTICATOR_REQUEST = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/token";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final MatchmakerDetailsService matchmakerDetailsService;
+
+    private final Logger logger = LoggerFactory.getLogger(MatchmakerImpl.class);
 
     public MatchmakerImpl(MatchmakerDetailsService matchmakerDetailsService) {
         this.httpClient = HttpClient.newHttpClient();
@@ -81,11 +95,13 @@ public class MatchmakerImpl implements Matchmaker{
     }
 
     /* Checks if the user is permitted to do the differents requests by controlling the token received. */
-    private String checkTokenPermission(String token) throws Exception { 
+    private String checkTokenPermission(String token) throws Exception {
+        TokenDTO tokenDTO = new TokenDTO(token);
+        String request = this.objectMapper.writeValueAsString(tokenDTO);
         HttpRequest httpTokenRequest = HttpRequest.newBuilder()
                                     .uri(URI.create(AUTHENTICATOR_REQUEST))
                                     .header("Content-Type", "application/json")
-                                    .POST(BodyPublishers.ofString(token))
+                                    .POST(BodyPublishers.ofString(request))
                                     .build();
         
         try {

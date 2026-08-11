@@ -87,7 +87,7 @@ public class QueriesClient {
         //String jsonFormat = objectMapper.writeValueAsString(token);
         HttpRequest httpTokenRequest = HttpRequest.newBuilder()
                                     .uri(URI.create(token_request))
-                                    .header("Content-Type", "application/json")
+                                    //.header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(token))
                                     .build();
 
