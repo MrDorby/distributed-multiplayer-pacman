@@ -1,5 +1,11 @@
 {
+<<<<<<< HEAD
     "authenticator": "http://127.0.0.1:61097/auth",
     "queries": "http://localhost:64081/queries",
     "matchmaker": "http://localhost:60425/matchmaker"
+=======
+    "authenticator": "http://127.0.0.1/auth",
+    "queries": "http://127.0.0.1/queries",
+    "matchmaker": "http://127.0.0.1/matchmaker"
+>>>>>>> bc1a0686992384b325659eb71bf196ef7050f992
 }
