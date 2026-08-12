@@ -1,7 +1,3 @@
-# TODO: SE FUNZIONA METTERE IL CREATE_USER.SH ANCHE PER GLI ALTRI DB!!!!!!!
-###########################################################################
-
-
 # Defines the configuration for the pods to be done on the startup.
 apiVersion: v1
 kind: ConfigMap
@@ -11,23 +7,44 @@ metadata:
 data:
   create_user.sh: |
     #!/bin/bash
-    (
-      if [ "$HOSTNAME" == "shortdb-0" ]; then
-        mongosh admin --eval "rs.initiate({_id: 'replicaSetShort', members: [{ _id: 0, host: 'shortdb-0.short-mongo.shortdb.svc.cluster.local:27017', priority: 2 }]})"
-        
-        until mongosh admin --quiet --eval "db.hello().isWritablePrimary" 2>/dev/null | grep -q "true"; 
-          do sleep 2; 
-        done
+    if [ "$HOSTNAME" == "shortdb-0" ]; then
+      until mongosh --host 127.0.0.1 --port 27017 --eval "db.adminCommand('ping')" --quiet 2>/dev/null; do
+        sleep 2
+      done
+      
+      mongosh admin --eval "rs.initiate({_id: 'replicaSetShort', members: [{ _id: 0, host: 'shortdb-0.short-mongo.shortdb.svc.cluster.local:27017', priority: 2 }]})"
+      
+      until mongosh admin --quiet --eval "db.hello().isWritablePrimary" 2>/dev/null | grep -q "true"; 
+        do sleep 1; 
+      done
 
-        mongosh admin --eval "db.getSiblingDB('admin').createUser({user: '$MONGO_INITDB_ROOT_USERNAME', pwd: '$MONGO_INITDB_ROOT_PASSWORD', roles: [{ role: 'root', db: 'admin' }]})"
+      mongosh admin --eval "db.getSiblingDB('admin').createUser({user: '$MONGO_INITDB_ROOT_USERNAME', pwd: '$MONGO_INITDB_ROOT_PASSWORD', roles: [{ role: 'root', db: 'admin' }]})"
+      
+      mongosh shortdb-0.short-mongo.shortdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.getSiblingDB('shortDB').createCollection('matches'); db.getSiblingDB('shortDB').createCollection('lobby');"
+    else
+      
+      sleep 20;
+      mongosh shortdb-0.short-mongo.shortdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "rs.add({ host: '${HOSTNAME}.short-mongo.shortdb.svc.cluster.local:27017', priority: 1 })"
+    fi;
+  # create_user.sh: |
+  #   #!/bin/bash
+  #   (
+  #     if [ "$HOSTNAME" == "shortdb-0" ]; then
+  #       mongosh admin --eval "rs.initiate({_id: 'replicaSetShort', members: [{ _id: 0, host: 'shortdb-0.short-mongo.shortdb.svc.cluster.local:27017', priority: 2 }]})"
         
-        mongosh shortdb-0.short-mongo.shortdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.getSiblingDB('shortDB').createCollection('matches'); db.getSiblingDB('shortDB').createCollection('lobby');"
-      else
-        sleep 20;
-        mongosh shortdb-0.short-mongo.shortdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "rs.add({ host: '${HOSTNAME}.short-mongo.shortdb.svc.cluster.local:27017', priority: 1 })"
-      fi;
-    ) &
-    exec mongod --replSet replicaSetShort --keyFile /key/replica.key --bind_ip_all
+  #       until mongosh admin --quiet --eval "db.hello().isWritablePrimary" 2>/dev/null | grep -q "true"; 
+  #         do sleep 2; 
+  #       done
+
+  #       mongosh admin --eval "db.getSiblingDB('admin').createUser({user: '$MONGO_INITDB_ROOT_USERNAME', pwd: '$MONGO_INITDB_ROOT_PASSWORD', roles: [{ role: 'root', db: 'admin' }]})"
+        
+  #       mongosh shortdb-0.short-mongo.shortdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.getSiblingDB('shortDB').createCollection('matches'); db.getSiblingDB('shortDB').createCollection('lobby');"
+  #     else
+  #       sleep 20;
+  #       mongosh shortdb-0.short-mongo.shortdb.svc.cluster.local:27017 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "rs.add({ host: '${HOSTNAME}.short-mongo.shortdb.svc.cluster.local:27017', priority: 1 })"
+  #     fi;
+  #   ) &
+  #   exec mongod --replSet replicaSetShort --keyFile /key/replica.key --bind_ip_all
 
 ---
 

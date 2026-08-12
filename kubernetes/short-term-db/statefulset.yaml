@@ -6,7 +6,7 @@ metadata:
   namespace: shortdb
 spec:
   serviceName: short-mongo   # Service name.
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: short-mongo
@@ -18,14 +18,15 @@ spec:
       containers:
         - name: shortdb
           image: mongo:latest
-          command: ["/bin/bash", "-c", /data/mongodbinit/create_user.sh]
+          #command: ["/bin/bash", "-c", /data/mongodbinit/create_user.sh]
           #command: ["mongod", "--replSet", "replicaSetShort", "--keyFile", "/key/replica.key", "--bind_ip_all"]
-          # command:
-          #   - /bin/bash
-          #   - -c
-          #   - |
-          #     /data/mongodbinit/create_user.sh &   # <-- && ? o singola?
-          #     mongod --replSet=replicaSet --bind_ip_all --auth --keyFile=/key/replica.key;
+          # && ? o singola?
+          command:
+            - /bin/bash
+            - -c
+            - |
+              /data/mongodbinit/create_user.sh &
+              mongod --replSet=replicaSetShort --bind_ip_all --auth --keyFile=/key/replica.key;
           env:
             - name: REPLICA_KEY_DIR
               value: /key

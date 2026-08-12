@@ -6,7 +6,7 @@ metadata:
   namespace: longdb
 spec:
   serviceName: long-mongo   # Service name.
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: long-mongo

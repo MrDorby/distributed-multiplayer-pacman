@@ -38,7 +38,7 @@ public class MatchmakerDetailsService {
 
     private static final int LOBBY_SIZE = 4;
     private static final String MANAGER = "MANAGER";
-    private static final String MANAGER_URI = System.getenv(MANAGER);
+    private static final String MANAGER_URI = System.getenv(MANAGER) + "/gameservermanager";
     private static final String GAMESERVER_DIR = MANAGER_URI + "/gameserver";
     private static final String CREATE_GAMESERVER_URI =  "/create";
     private static final String CHECK_GAMESERVER_URI = "/check";
@@ -84,7 +84,7 @@ public class MatchmakerDetailsService {
     public JoinLobbyResponse checkForLobby(String username, String map) throws Exception {
         Optional<LobbyInfoMongoDB> lobby = lobbyCollection.findByUsername(username);
         if (lobby.isPresent()) {
-            this.logger.debug("The lobby exists!");
+            this.logger.debug("The lobby exists! " + lobby.get());
             int size = lobby.get().getPlayers().size();
             return size < LOBBY_SIZE ? 
                 new JoinLobbyResponse(LobbyTypeResponse.WAITING, lobby.get().getId()) : 
@@ -109,6 +109,7 @@ public class MatchmakerDetailsService {
             
             newLobby.getPlayers().add(username);
             LobbyInfoMongoDB res = this.lobbyCollection.save(newLobby);
+            this.logger.debug("Added to existing lobby -> " + res);
             return res.getPlayers().size() == LOBBY_SIZE ? 
                 foundResponse(res) : 
                 new JoinLobbyResponse(LobbyTypeResponse.WAITING, res.getId());
@@ -117,6 +118,7 @@ public class MatchmakerDetailsService {
 
     /* Deals with the management of the FOUND type response. */
     private JoinLobbyResponse foundResponse(LobbyInfoMongoDB lobby) throws Exception {
+        JoinLobbyResponse response = new JoinLobbyResponse(LobbyTypeResponse.FOUND, lobby.getMatchId());
         if (lobby.getMatchId().isEmpty() || lobby.getMatchId() == null) {
             
             MatchInfoMongoDB match = matchCollection.save(
@@ -126,15 +128,13 @@ public class MatchmakerDetailsService {
                     System.currentTimeMillis()));
 
             lobby.setMatchId(match.getId());
-            lobby.setCounter(lobby.getCounter() + 1);
-            lobbyCollection.save(lobby);
 
             String createGameServer = mapper.writeValueAsString(new ManagerCreateServer(match.getId(), lobby.getMap()));
             /* SYNC */
             ResponseEntity<String> result = RestClient
-                .create(GAMESERVER_DIR)
+                .create()
                 .post()
-                .uri(new URI(CREATE_GAMESERVER_URI))
+                .uri(new URI(GAMESERVER_DIR + CREATE_GAMESERVER_URI))
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(createGameServer)
@@ -156,7 +156,6 @@ public class MatchmakerDetailsService {
             GameServerInfo gameServerInfo = mapper.readValue(result.getBody(), GameServerInfo.class);
             this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
         }
-        JoinLobbyResponse response = new JoinLobbyResponse(LobbyTypeResponse.FOUND, lobby.getMatchId());
         lobby.setCounter(lobby.getCounter() + 1);
         lobbyCollection.save(lobby);
         this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
@@ -221,9 +220,9 @@ public class MatchmakerDetailsService {
         String request = mapper.writeValueAsString(gameServerRequest);
 
         ResponseEntity<String> result = RestClient
-            .create(GAMESERVER_DIR)
+            .create()
             .post()
-            .uri(new URI(CHECK_GAMESERVER_URI))
+            .uri(new URI(GAMESERVER_DIR + CHECK_GAMESERVER_URI))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON)
             .body(request)
