@@ -1,11 +1,11 @@
-apiVersion: gateway.networking.k8s.io/v1 # TODO: FIND A CONTROLLER THAT WORKS OR USE SOME OTHER SOLUTION
-kind: Gateway
-metadata:
-  name: front-end-gateway
-spec:
-  gatewayClassName: nginx
-  listeners:
-    - name: http
-      port: 80
-      protocol: HTTP
-      hostname: "multiplayer-pacman.unibo.it"
+#apiVersion: gateway.networking.k8s.io/v1 # TODO: FIND A CONTROLLER THAT WORKS OR USE SOME OTHER SOLUTION
+#kind: Gateway
+#metadata:
+#  name: front-end-gateway
+#spec:
+#  gatewayClassName: nginx
+#  listeners:
+#    - name: http
+#      port: 80
+#      protocol: HTTP
+#      hostname: "multiplayer-pacman.unibo.it"

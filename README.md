@@ -37,7 +37,7 @@ To do so, we will run the following commands in a terminal on our host:
 
 `helm repo update`
 
-`helm install my-release --namespace agones-system --create-namespace --set gameservers.minPort=7000,gameservers.maxPort=7050 agones/agones`
+`helm install my-release --version 1.59.0 --namespace agones-system --create-namespace --set gameservers.minPort=7000,gameservers.maxPort=7050 agones/agones`
 
 It's imperative to make sure that the port range specified in this command corresponds to the one specified during the
 creation of Minikube's profile.
@@ -64,4 +64,32 @@ TODO: WRITE AFTER FINDING A CONTROLLER THAT WORKS
 
 ### Deploying the system in the cluster
 
-TODO: WRITE THIS SECTION
+**Building the projects**
+
+In the root directory of the project, execute Gradle's `build` task. This will build the jar files for every subproject.
+
+**Building the docker images**
+
+After building the jars, we will need to add the corresponding Docker images to Minikube's docker registry.
+This can be done by running the provided script for the specific platform from the root directory of the project.
+The command line arguments to execute the script are as follows:
+- Linux: `./scripts/build-images.sh authenticator-service game-server-manager matchmaker pacman-game queries-service`
+- Windows (PowerShell): `.\scripts\build-images.ps1 authenticator-service game-server-manager matchmaker pacman-game queries-service`
+
+**Deploying the cluster**
+
+The deployment of the cluster can be performed by running the provided script for the specific platform from the root
+directory of the project.
+The command line arguments to execute the script are as follows:
+- Linux: `./scripts/deploy-cluster.sh kubernetes/`
+- Windows (PowerShell): `.\scripts\deploy-cluster.ps1 .\kubernetes\`
+
+**Exposing the front end service**
+
+TODO: WRITE
+
+**Cluster cleanup**
+
+This can be done in a similar way as the deployment operation:
+- Linux: `./scripts/cleanup-cluster.sh kubernetes/`
+- Windows (PowerShell): `.\scripts\cleanup-cluster.ps1 .\kubernetes\`
