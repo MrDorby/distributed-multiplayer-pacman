@@ -156,9 +156,9 @@ public class MatchmakerDetailsService {
             GameServerInfo gameServerInfo = mapper.readValue(result.getBody(), GameServerInfo.class);
             this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
         }
-        lobby.setCounter(lobby.getCounter() + 1);
+        // lobby.setCounter(lobby.getCounter() + 1);
         lobbyCollection.save(lobby);
-        this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
+        // this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
         return response;
     }
 
@@ -169,8 +169,14 @@ public class MatchmakerDetailsService {
      * @throws Exception
      */
     public MatchInfoMongoDB getMatch(String matchId) throws Exception {
-        return matchCollection.findById(matchId)
-            .orElseThrow(() -> new Exception("Match does not exist!"));
+        Optional<MatchInfoMongoDB> match = this.matchCollection.findById(matchId);
+        if (match.isPresent()) {
+            LobbyInfoMongoDB lobby = this.lobbyCollection.findByMatchId(matchId)
+                .orElseThrow(() -> new Exception("Match does not exist!"));
+            this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
+            return match.get();
+        }
+        throw new Exception("Match does not exist!");
     }
 
     /**
@@ -185,10 +191,13 @@ public class MatchmakerDetailsService {
             .stream()
             .sorted((x, y) -> Long.compare(x.getTimeOfCreation(), x.getTimeOfCreation()))
             .findFirst();
-        if (match.isEmpty()) {
-            throw new Exception("No active match found!");
+        if (match.isPresent()) {
+            LobbyInfoMongoDB lobby = this.lobbyCollection.findByMatchId(match.get().getId())
+                .orElseThrow(() -> new Exception("No active match found!"));
+            this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
+            return match.get();
         }
-        return match.get();
+        throw new Exception("No active match found!");
     }
 
     /**

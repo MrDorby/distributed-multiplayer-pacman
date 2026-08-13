@@ -47,5 +47,12 @@ public interface ShortTermLobbyRepository extends MongoRepository<LobbyInfoMongo
      * @return a List of all the LobbyInfoMongoDB objects.
      */
     List<LobbyInfoMongoDB> findByMap(String map);
+
+    /**
+     * Checks if exists a lobby with the desired matchId.
+     * @param matchId the identifier of the match.
+     * @return an Optional of LobbyInfoMongoDB.
+     */
+    Optional<LobbyInfoMongoDB> findByMatchId(String matchId);
     
 }

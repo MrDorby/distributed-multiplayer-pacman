@@ -41,6 +41,8 @@ public class MongoBackground {
         LobbyInfoMongoDB lobby, 
         ShortTermLobbyRepository lobbyCollection,
         int lobbySize) {
+        lobby.setCounter(lobby.getCounter() + 1);
+        lobbyCollection.save(lobby);
         if (lobby.getCounter() == lobbySize) {
             lobbyCollection.deleteById(lobby.getId());
         }
