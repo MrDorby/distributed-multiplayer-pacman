@@ -1,32 +1,32 @@
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: front-end-route
-spec:
-  parentRefs:
-    - name: front-end-gateway
-      sectionName: http
-  hostnames:
-    - multiplayer-pacman.unibo.it
-  rules:
-    - matches:
-      - path:
-          type: PathPrefix
-          value: /auth
-      backendRefs:
-        - name: authenticator-service
-          port: 8080
-    - matches:
-      - path:
-          type: PathPrefix
-          value: /queries
-      backendRefs:
-        - name: queries-service
-          port: 8080
-    - matches:
-      - path:
-          type: PathPrefix
-          value: /matchmaker
-      backendRefs:
-        - name: matchmaker
-          port: 8080
+#apiVersion: gateway.networking.k8s.io/v1
+#kind: HTTPRoute
+#metadata:
+#  name: front-end-route
+#spec:
+#  parentRefs:
+#    - name: front-end-gateway
+#      sectionName: http
+#  hostnames:
+#    - multiplayer-pacman.unibo.it
+#  rules:
+#    - matches:
+#      - path:
+#          type: PathPrefix
+#          value: /auth
+#      backendRefs:
+#        - name: authenticator-service
+#          port: 8080
+#    - matches:
+#      - path:
+#          type: PathPrefix
+#          value: /queries
+#      backendRefs:
+#        - name: queries-service
+#          port: 8080
+#    - matches:
+#      - path:
+#          type: PathPrefix
+#          value: /matchmaker
+#      backendRefs:
+#        - name: matchmaker
+#          port: 8080

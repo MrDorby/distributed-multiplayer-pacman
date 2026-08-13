@@ -1,34 +1,34 @@
-apiVersion: networking.k8s.io/v1 # TODO: DELETE AFTER MIGRATION TO GATEWAY
-kind: Ingress
-metadata:
-  name: front-end
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: multiplayer-pacman.unibo.it
-      http:
-        paths:
-          - path: /auth
-            pathType: Prefix
-            backend:
-              service:
-                name: authenticator-service
-                port:
-                  number: 8080
-          - path: /queries
-            pathType: Prefix
-            backend:
-              service:
-                name: queries-service
-                port:
-                  number: 8080
-          - path: /matchmaker
-            pathType: Prefix
-            backend:
-              service:
-                name: matchmaker
-                port:
-                  number: 8080
+#apiVersion: networking.k8s.io/v1 # TODO: DELETE AFTER MIGRATION TO GATEWAY
+#kind: Ingress
+#metadata:
+#  name: front-end
+#  annotations:
+#    kubernetes.io/ingress.class: nginx
+#    nginx.ingress.kubernetes.io/rewrite-target: /$1
+#spec:
+#  ingressClassName: nginx
+#  rules:
+#    - host: multiplayer-pacman.unibo.it
+#      http:
+#        paths:
+#          - path: /auth
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: authenticator-service
+#                port:
+#                  number: 8080
+#          - path: /queries
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: queries-service
+#                port:
+#                  number: 8080
+#          - path: /matchmaker
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: matchmaker
+#                port:
+#                  number: 8080
