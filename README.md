@@ -80,8 +80,24 @@ If we are testing the client in the same host as the cluster, the line will be:
 
 `127.0.0.1 multiplayer-pacman.unibo.it`
 
+**Playing the game**
+
+Finally, we can play the game by executing the `pacman-game-1.0-full-client.jar` application.
+
 **Cluster cleanup**
 
+To stop the cluster, we will first have to stop Minikube's tunnel, by stopping the corresponding process
+in the active terminal.
+
+After that, we can remove all resources from our Minikube cluster.
 This can be done in a similar way as the deployment operation:
 - Linux: `./scripts/cleanup-cluster.sh kubernetes/`
 - Windows (PowerShell): `.\scripts\cleanup-cluster.ps1 .\kubernetes\`
+
+Finally, we can stop the cluster with the following command:
+
+`minikube stop -p agones`
+
+We can also remove every trace of the cluster's container with the following command:
+
+`minikube delete -p agones`
