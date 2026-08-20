@@ -73,8 +73,8 @@ In the root directory of the project, execute Gradle's `build` task. This will b
 After building the jars, we will need to add the corresponding Docker images to Minikube's docker registry.
 This can be done by running the provided script for the specific platform from the root directory of the project.
 The command line arguments to execute the script are as follows:
-- Linux: `./scripts/build-images.sh authenticator-service game-server-manager matchmaker pacman-game queries-service`
-- Windows (PowerShell): `.\scripts\build-images.ps1 authenticator-service game-server-manager matchmaker pacman-game queries-service`
+- Linux: `./scripts/build-images.sh authenticator-service game-server-manager matchmaker pacman-game queries-service front-end`
+- Windows (PowerShell): `.\scripts\build-images.ps1 authenticator-service game-server-manager matchmaker pacman-game queries-service front-end`
 
 **Deploying the cluster**
 

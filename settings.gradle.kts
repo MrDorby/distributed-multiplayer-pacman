@@ -1,3 +1,9 @@
 rootProject.name = "distributed-multiplayer-pacman"
 
-include ("pacman-game", "authenticator-service", "game-server-manager", "matchmaker", "queries-service")
+include (
+    "pacman-game",
+    "authenticator-service",
+    "game-server-manager",
+    "matchmaker",
+    "queries-service",
+    "front-end")
