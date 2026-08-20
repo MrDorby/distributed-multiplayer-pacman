@@ -24,11 +24,8 @@ spec:
             - containerPort: 8080
           env:
             - name: MATCHMAKER_URI
-              value: https://65095699-bfad-4faf-84a2-557996a0f3f3.mock.pstmn.io
-              #value: "http://matchmaker:8080" TODO: UNCOMMENT AFTER TEST
+              value: "http://matchmaker:8080"
             - name: AUTHENTICATOR_URI
-              value: https://d6cb25a1-cac4-41b5-8136-14902491cb37.mock.pstmn.io
-              #value: "http://authenticator-service:8080" TODO: UNCOMMENT AFTER TEST
+              value: "http://authenticator-service:8080"
             - name: QUERIES_URI
-              value: https://8b3f4688-e340-4c35-a04a-332dd5ecaabc.mock.pstmn.io
-              #value: "http://queries-service:8080" TODO: UNCOMMENT AFTER TEST
+              value: "http://queries-service:8080"

@@ -5,7 +5,7 @@ metadata:
   labels:
     app: pacman-game
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
     - port: 8080
   selector:
