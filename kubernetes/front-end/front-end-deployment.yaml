@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front-end
+  labels:
+    app: pacman-game
+spec:
+  selector:
+    matchLabels:
+      app: pacman-game
+      role: front-end-gateway
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: pacman-game
+        role: front-end-gateway
+    spec:
+      containers:
+        - name: front-end
+          image: front-end:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MATCHMAKER_URI
+              value: "http://matchmaker:8080"
+            - name: AUTHENTICATOR_URI
+              value: "http://authenticator-service:8080"
+            - name: QUERIES_URI
+              value: "http://queries-service:8080"

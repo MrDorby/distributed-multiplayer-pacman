@@ -47,30 +47,10 @@ To do so, we will run the following commands in a terminal on our host:
 
 `helm install mongodb-operator mongodb/mongodb-kubernetes --namespace mongo-operator --create-namespace --set operator.watchNamespace="authdb\,longdb\,shortdb"`
 
-`helm install my-release --version 1.59.0 --namespace agones-system --create-namespace --set gameservers.minPort=7000,gameservers.maxPort=7050 agones/agones`
+`helm install agones-release --version 1.59.0 --namespace agones-system --create-namespace --set gameservers.minPort=7000,gameservers.maxPort=7050 agones/agones`
 
 It's imperative to make sure that the port range specified in this command corresponds to the one specified during the
 creation of Minikube's profile.
-
-**Setting up an Ingress controller in our cluster**
-
-TODO: INGRESS RESOURCE IS DEPRECATED, A GATEWAY IS BETTER
-
-The following instructions were taken from the following guide: https://v1-32.docs.kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/
-
-The correct functioning of the system requires enabling an Ingress controller inside the Minikube cluster.
-One way to do this is by using the NGINX Ingress controller, which can be enabled by executing the following command
-once the cluster is running:
-
-`minikube -p agones addons enable ingress`
-
-After running this command, we can verify that the NGINX controller is running with the following command:
-
-`kubectl get pods -n ingress-nginx`
-
-**Setting up a Gateway controller in our cluster**
-
-TODO: WRITE AFTER FINDING A CONTROLLER THAT WORKS
 
 ### Deploying the system in the cluster
 
@@ -83,8 +63,8 @@ In the root directory of the project, execute Gradle's `build` task. This will b
 After building the jars, we will need to add the corresponding Docker images to Minikube's docker registry.
 This can be done by running the provided script for the specific platform from the root directory of the project.
 The command line arguments to execute the script are as follows:
-- Linux: `./scripts/build-images.sh authenticator-service game-server-manager matchmaker pacman-game queries-service`
-- Windows (PowerShell): `.\scripts\build-images.ps1 authenticator-service game-server-manager matchmaker pacman-game queries-service`
+- Linux: `./scripts/build-images.sh authenticator-service game-server-manager matchmaker pacman-game queries-service front-end`
+- Windows (PowerShell): `.\scripts\build-images.ps1 authenticator-service game-server-manager matchmaker pacman-game queries-service front-end`
 
 **Deploying the cluster**
 
@@ -96,7 +76,19 @@ The command line arguments to execute the script are as follows:
 
 **Exposing the front end service**
 
-TODO: WRITE
+Once the cluster is running, we can expose the front end service via the following command:
+
+`minikube tunnel -p agones`
+
+The terminal in which we run this command must be kept open, so that the tunnel stays active.
+Also, to make sure that the client is able to access the front end service, we will need to add the following line to
+our system's /etc/hosts file:
+
+`<cluster ip> multiplayer-pacman.unibo.it`
+
+If we are testing the client in the same host as the cluster, the line will be:
+
+`127.0.0.1 multiplayer-pacman.unibo.it`
 
 **Cluster cleanup**
 
