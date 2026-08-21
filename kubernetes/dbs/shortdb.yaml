@@ -1,3 +1,6 @@
+### https://github.com/mongodb/mongodb-kubernetes-operator/issues/720
+### https://github.com/mongodb/mongodb-kubernetes-operator/issues/145
+
 apiVersion: mongodbcommunity.mongodb.com/v1
 kind: MongoDBCommunity
 metadata:
@@ -5,7 +8,7 @@ metadata:
   namespace: shortdb
 spec:
   type: ReplicaSet
-  members: 3
+  members: 2
   arbiters: 1
   version: "8.0.0"
   security:
@@ -30,10 +33,11 @@ spec:
     storage.wiredTiger.engineConfig.journalCompressor: zlib
   statefulSet:
     spec:
-      template:
-        spec:
-          containers:
-            - name: shortdb
+      # template:
+      #   spec:
+      #     containers:
+      #       - name: mongod
+              # image: mongo:latest
               # resources:
               #   requests:
               #     cpu: 250m
@@ -41,24 +45,23 @@ spec:
               #   limits:
               #     cpu: 1
               #     memory: 2Gi
-              ports:
-                    - containerPort: 27017
-              volumeMounts:
-                - name: mongo-short      # PersistantVolumeClaim
-                  mountPath: /data/db
-  volumeClaimTemplates:             # Defines a PersistentVolumeClaim
-    - metadata:
-        name: mongo-short
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        resources:
-          requests:
-            storage: 1Gi
+              # ports:
+              #       - containerPort: 27017
+              # volumeMounts:
+              #   - name: mongo-short      # PersistantVolumeClaim
+              #     mountPath: /data/db
+      volumeClaimTemplates:             # Defines a PersistentVolumeClaim
+        - metadata:
+            name: data-volume
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 1Gi
 
 
 ---
 # Defines the username and password of root user.
----
 apiVersion: v1
 kind: Secret
 type: Opaque
