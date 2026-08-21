@@ -33,9 +33,19 @@ After the first creation of Minikube's custom profile, we can simply start it wi
 Once the Minikube cluster is running, we can install Agones in the cluster by using Helm (installed in our host machine).
 To do so, we will run the following commands in a terminal on our host:
 
+`helm repo add mongodb https://mongodb.github.io/helm-charts`
+
 `helm repo add agones https://agones.dev/chart/stable`
 
 `helm repo update`
+
+`kubectl create namespace authdb`
+
+`kubectl create namespace longdb`
+
+`kubectl create namespace shortdb`
+
+`helm install mongodb-operator mongodb/mongodb-kubernetes --namespace mongo-operator --create-namespace --set operator.watchNamespace="authdb\,longdb\,shortdb"`
 
 `helm install my-release --version 1.59.0 --namespace agones-system --create-namespace --set gameservers.minPort=7000,gameservers.maxPort=7050 agones/agones`
 
