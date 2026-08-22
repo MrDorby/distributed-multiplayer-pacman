@@ -8,8 +8,6 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.util.Objects;
 import java.net.http.HttpResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,8 +53,6 @@ public class MatchmakerImpl implements Matchmaker{
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final MatchmakerDetailsService matchmakerDetailsService;
-
-    private final Logger logger = LoggerFactory.getLogger(MatchmakerImpl.class);
 
     public MatchmakerImpl(MatchmakerDetailsService matchmakerDetailsService) {
         this.httpClient = HttpClient.newHttpClient();
