@@ -12,8 +12,6 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.AuthDetailsService;
@@ -52,8 +49,6 @@ public class AuthenticatorImpl implements Authenticator {
     private final AuthDetailsService authDetailsService;
     private final TokenService tokenService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-
-    private final Logger logger = LoggerFactory.getLogger(AuthenticatorImpl.class);
 
     public AuthenticatorImpl(TokenService tokenService, AuthDetailsService authUserDetailsService) {
         this.authDetailsService = authUserDetailsService;

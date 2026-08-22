@@ -71,6 +71,9 @@ public class QueriesClient {
 
         HttpResponse<String> infoResponse = httpClient.send(httpInfoRequest, HttpResponse.BodyHandlers.ofString());
         if (infoResponse.statusCode() != 200) {
+            if (infoResponse.statusCode() == 404) {
+                return new PlayerStats(username, 0, 0, 0, 0);
+            }
             throw new Exception(infoResponse.body());
         }
         PlayerInfoMongoDB playerInfo = objectMapper.readValue(infoResponse.body(), PlayerInfoMongoDB.class);

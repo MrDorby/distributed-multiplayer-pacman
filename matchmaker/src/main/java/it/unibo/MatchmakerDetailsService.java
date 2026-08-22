@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +23,7 @@ import it.unibo.dto.ManagerCreateServer;
 import it.unibo.mongodb.LobbyInfoMongoDB;
 import it.unibo.mongodb.MatchInfoMongoDB;
 import it.unibo.mongodb.MongoBackground;
+import it.unibo.mongodb.ServerParameters;
 import it.unibo.mongodb.ShortTermLobbyRepository;
 import it.unibo.mongodb.ShortTermMatchRepository;
 
@@ -43,7 +42,6 @@ public class MatchmakerDetailsService {
     private static final String CREATE_GAMESERVER_URI =  "/create";
     private static final String CHECK_GAMESERVER_URI = "/check";
 
-    private final Logger logger = LoggerFactory.getLogger(MatchmakerDetailsService.class);
     private final ObjectMapper mapper = new ObjectMapper();
     
     @Autowired
@@ -84,7 +82,6 @@ public class MatchmakerDetailsService {
     public JoinLobbyResponse checkForLobby(String username, String map) throws Exception {
         Optional<LobbyInfoMongoDB> lobby = lobbyCollection.findByUsername(username);
         if (lobby.isPresent()) {
-            this.logger.debug("The lobby exists! " + lobby.get());
             int size = lobby.get().getPlayers().size();
             return size < LOBBY_SIZE ? 
                 new JoinLobbyResponse(LobbyTypeResponse.WAITING, lobby.get().getId()) : 
@@ -92,14 +89,12 @@ public class MatchmakerDetailsService {
         }
         List<LobbyInfoMongoDB> lobbies = lobbyCollection.findByMap(map);
         if (lobbies.isEmpty()) {
-            this.logger.debug("The lobby list is empty!");
             List<String> players = new ArrayList<>();
             players.add(username);
             LobbyInfoMongoDB newLobby = new LobbyInfoMongoDB("", map, players, 0);
             lobbyCollection.save(newLobby);
             return new JoinLobbyResponse(LobbyTypeResponse.WAITING, newLobby.getId());
         } else {
-            this.logger.debug("The lobby list has some entries!");
             //lobbies.sort(Comparator.comparingInt(l -> l.getPlayers().size()));
             LobbyInfoMongoDB newLobby = lobbies
                                     .stream()
@@ -109,7 +104,6 @@ public class MatchmakerDetailsService {
             
             newLobby.getPlayers().add(username);
             LobbyInfoMongoDB res = this.lobbyCollection.save(newLobby);
-            this.logger.debug("Added to existing lobby -> " + res);
             return res.getPlayers().size() == LOBBY_SIZE ? 
                 foundResponse(res) : 
                 new JoinLobbyResponse(LobbyTypeResponse.WAITING, res.getId());
@@ -118,48 +112,81 @@ public class MatchmakerDetailsService {
 
     /* Deals with the management of the FOUND type response. */
     private JoinLobbyResponse foundResponse(LobbyInfoMongoDB lobby) throws Exception {
-        JoinLobbyResponse response = new JoinLobbyResponse(LobbyTypeResponse.FOUND, lobby.getMatchId());
-        if (lobby.getMatchId().isEmpty() || lobby.getMatchId() == null) {
+        if (lobby.getMatchId() == null || lobby.getMatchId().isBlank()) {
             
-            MatchInfoMongoDB match = matchCollection.save(
-                new MatchInfoMongoDB("", 
-                    lobby.getPlayers(), 
-                    null, 
-                    System.currentTimeMillis()));
+            try {
+                MatchInfoMongoDB match = matchCollection.save(
+                    new MatchInfoMongoDB(
+                        lobby.getId(),
+                        "", 
+                        lobby.getPlayers(), 
+                        null, 
+                        System.currentTimeMillis()));
 
-            lobby.setMatchId(match.getId());
+                lobby.setMatchId(match.getId());
+                lobbyCollection.save(lobby);
 
-            String createGameServer = mapper.writeValueAsString(new ManagerCreateServer(match.getId(), lobby.getMap()));
-            /* SYNC */
-            ResponseEntity<String> result = RestClient
-                .create()
-                .post()
-                .uri(new URI(GAMESERVER_DIR + CREATE_GAMESERVER_URI))
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .body(createGameServer)
-                .retrieve()
-                .toEntity(String.class);
+                String createGameServer = mapper.writeValueAsString(new ManagerCreateServer(match.getId(), lobby.getMap()));
+                /* SYNC */
+                ResponseEntity<String> result = RestClient
+                    .create()
+                    .post()
+                    .uri(new URI(GAMESERVER_DIR + CREATE_GAMESERVER_URI))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(createGameServer)
+                    .retrieve()
+                    .toEntity(String.class);
 
+                GameServerInfo gameServerInfo = mapper.readValue(result.getBody(), GameServerInfo.class);
+                //this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
 
-            // TODO: check https://docs.spring.io/spring-framework/reference/web/webflux-webclient/client-retrieve.html
-            /*
-            CompletableFuture<?> result = WebClient
-                .create(GAMESERVER_DIR)
-                .post()
-                .uri(new URI(CREATE_GAMESERVER_URI))
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(createGameServer)
-                .retrieve()
-                .bodyToMono(Object.class).toFuture();
-            */
-            GameServerInfo gameServerInfo = mapper.readValue(result.getBody(), GameServerInfo.class);
-            this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
+                match.setGameServerName(gameServerInfo.name());
+                match.setServerParameters(
+                    new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
+                matchCollection.save(match);
+                return new JoinLobbyResponse(LobbyTypeResponse.FOUND, match.getId());
+            } catch (Exception e) {
+                return new JoinLobbyResponse(LobbyTypeResponse.FOUND, this.matchCollection.findByLobbyId(lobby.getId()).get().getId());
+            }
+
+            // List<MatchInfoMongoDB> activeMatches = this.matchCollection.findByUsers(lobby.getPlayers());
+            // if (activeMatches.isEmpty()) {
+            //     MatchInfoMongoDB match = matchCollection.save(
+            //         new MatchInfoMongoDB("", 
+            //             lobby.getPlayers(), 
+            //             null, 
+            //             System.currentTimeMillis()));
+
+            //     lobby.setMatchId(match.getId());
+            //     lobbyCollection.save(lobby);
+
+            //     String createGameServer = mapper.writeValueAsString(new ManagerCreateServer(match.getId(), lobby.getMap()));
+            //     /* SYNC */
+            //     ResponseEntity<String> result = RestClient
+            //         .create()
+            //         .post()
+            //         .uri(new URI(GAMESERVER_DIR + CREATE_GAMESERVER_URI))
+            //         .contentType(MediaType.APPLICATION_JSON)
+            //         .accept(MediaType.APPLICATION_JSON)
+            //         .body(createGameServer)
+            //         .retrieve()
+            //         .toEntity(String.class);
+
+            //     GameServerInfo gameServerInfo = mapper.readValue(result.getBody(), GameServerInfo.class);
+            //     //this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
+
+            //     match.setGameServerName(gameServerInfo.name());
+            //     match.setServerParameters(
+            //         new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
+            //     matchCollection.save(match);
+            //     return new JoinLobbyResponse(LobbyTypeResponse.FOUND, match.getId());
+            // }
+            // MatchInfoMongoDB active = activeMatches.stream().sorted((x, y) -> Long.compare(x.getTimeOfCreation(), y.getTimeOfCreation())).toList().getLast();
+            // return new JoinLobbyResponse(LobbyTypeResponse.FOUND, active.getId());
         }
-        // lobby.setCounter(lobby.getCounter() + 1);
-        lobbyCollection.save(lobby);
         // this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
-        return response;
+        return new JoinLobbyResponse(LobbyTypeResponse.FOUND, lobby.getMatchId());
     }
 
     /**

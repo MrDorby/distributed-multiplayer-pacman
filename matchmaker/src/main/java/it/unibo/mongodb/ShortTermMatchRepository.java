@@ -34,6 +34,21 @@ public interface ShortTermMatchRepository extends MongoRepository<MatchInfoMongo
     List<MatchInfoMongoDB> findByUsername(String username);
 
     /**
+     * Finds the match with the current lobby identifier (specific for the lobby of players).
+     * @param lobbyId the identifier of the lobby.
+     * @return the match info.
+     */
+    Optional<MatchInfoMongoDB> findByLobbyId(String lobbyId);
+
+    /**
+     * Checks if there are other matches with the same players.
+     * @param users the list of players.
+     * @return the list containing all the matches found.
+     */
+    @Query("{ $expr: { $setEquals: [ '$users', ?0 ] } }")
+    List<MatchInfoMongoDB> findByUsers(List<String> users);
+
+    /**
      * Removes a user from the specific match when the user identified 
      * by the username decides to exit the game.
      * @param matchId is the identifier of the match.

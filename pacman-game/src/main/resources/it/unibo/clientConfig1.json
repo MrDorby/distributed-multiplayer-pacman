@@ -1,0 +1,5 @@
+{
+    "authenticator": "http://multiplayer-pacman.unibo.it:8080/auth",
+    "queries": "http://multiplayer-pacman.unibo.it:8080/queries",
+    "matchmaker": "http://multiplayer-pacman.unibo.it:8080/matchmaker"
+}

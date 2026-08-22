@@ -3,6 +3,8 @@ package it.unibo.mongodb;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
@@ -14,17 +16,24 @@ public class MatchInfoMongoDB {
     
     @Id
     private String id;
+
+    @Indexed(unique = true)
+    private String lobbyId;
     private String gameServerName;
     private List<String> users;
     private ServerParameters serverParameters;
     private Long timeOfCreation;
     private List<Checkpoint> checkpoints;
 
+    @Version
+    private Long version;
+
     public MatchInfoMongoDB() {
     
     }
 
     public MatchInfoMongoDB(
+        String lobbyId,
         String gameServerName,
         List<String> users, 
         ServerParameters serverParameters,
@@ -48,6 +57,13 @@ public class MatchInfoMongoDB {
      */
     public void setId(String id) {
         this.id = id;
+    }
+
+    /**
+     * @return lobby id of the document.
+     */
+    public String getLobbyId() {
+        return this.lobbyId;
     }
 
     /**

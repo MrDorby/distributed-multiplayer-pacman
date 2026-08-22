@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import it.unibo.controller.shared.network.dto.PacmanDTO;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 import org.reactivestreams.Publisher;
 
 import com.mongodb.client.result.InsertOneResult;
@@ -90,8 +91,8 @@ public class MongoDBServerConnection {
             //String jsonCheckpoint = objectMapper.writeValueAsString(checkpoint);
             // TODO: Check if it is necessary to perform the mapping to JSON for storing data.
             Bson filter = eq(shortTermFields.getMatchIdLabel(), snapshot.matchId());
-            FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
-            Document doc = Flux.from(publisher).blockLast();
+            Publisher<Document> publisher = this.collection.find(filter).first();
+            Document doc = Mono.from(publisher).block();
             if (doc == null || doc.isEmpty()) {
                 //Document newDoc = Document.parse(jsonSnap);//TODO: Check when short term db is correctly defined bc of the matchid.
                 Document newDoc = new Document(shortTermFields.getMatchIdLabel(), snapshot.matchId())
@@ -125,8 +126,8 @@ public class MongoDBServerConnection {
         List<CompletableFuture<Void>> futures = new ArrayList<>(leaderboard.size());
         for (var player: leaderboard.entrySet()) {
             Bson filter = eq(longTermFields.getUsernameLabel(), player.getKey());
-            FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
-            Document doc = Flux.from(publisher).blockLast();
+            Publisher<Document> publisher = this.collection.find(filter).first();
+            Document doc = Mono.from(publisher).block();
             
             /* Creates a new document if the player does not exist. Otherwise it updates datas. */
             if (doc == null || doc.isEmpty()) {
@@ -195,8 +196,8 @@ public class MongoDBServerConnection {
     public CompletableFuture<Optional<List<String>>> retrievePlayers(String matchId) {
         return CompletableFuture.supplyAsync(() -> {
             ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
-            Bson filter = eq(shortTermFields.getMatchIdLabel(), matchId);
-            FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
+            Bson filter = eq(shortTermFields.getMatchIdLabel(), new ObjectId(matchId));
+            Publisher<Document> publisher = this.collection.find(filter).first();
             Document doc = Mono.from(publisher).block();
             if (doc == null || doc.isEmpty()) {
                 return Optional.empty();

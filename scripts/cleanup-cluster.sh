@@ -5,6 +5,7 @@ if [[ -d $1 ]]; then
     kubectl delete -f $1/$directory;
   done
   kubectl delete pvc --all --all-namespaces
+  kubectl get pods -o name | grep -E "pacman-server*" | xargs kubectl delete
 else
   echo "$1 is not a directory. Cannot perform the cleanup operation.";
 fi
