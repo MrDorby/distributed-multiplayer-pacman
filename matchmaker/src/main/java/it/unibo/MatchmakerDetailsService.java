@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mapping.MappingException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -171,7 +172,7 @@ public class MatchmakerDetailsService {
         int counter = 0;
         while (counter++ < FAILURE_RETRY) {
             String matchId = this.lobbyCollection.findById(lobbyId).get().getMatchId();
-            if (Objects.nonNull(matchId) && matchId.isBlank()) {
+            if (Objects.nonNull(matchId) && !matchId.isBlank()) {
                 return new JoinLobbyResponse(LobbyTypeResponse.FOUND, matchId);
             }
             Thread.sleep(500);
@@ -190,7 +191,6 @@ public class MatchmakerDetailsService {
             .findById(matchId)
             .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
         Optional<LobbyInfoMongoDB> lobby = this.lobbyCollection.findByMatchId(match.getId());
-        LOGGER.trace("\n\n\nLobby is empty? " + lobby.isEmpty());
         return lobby.isEmpty() ? getMatchInfo(match) : match;
     }
 
@@ -249,8 +249,13 @@ public class MatchmakerDetailsService {
      * @throws Exception
      */
     public GameServerInfo checkGameServerAvailability(MatchInfoMongoDB match) throws Exception {
-        Long timeLeft = this.matchCollection.getTimeLeft(match.getId()).orElse(Long.MAX_VALUE);
-        GameServerCheckRequest gameServerRequest = new GameServerCheckRequest(match.getGameServerName(), timeLeft);
+        Long timeLeft;
+        try {
+            timeLeft = this.matchCollection.getTimeLeft(match.getId()).orElse(Long.MAX_VALUE);   
+        } catch (MappingException e) {
+            timeLeft = Long.MAX_VALUE;
+        }
+        GameServerCheckRequest gameServerRequest = new GameServerCheckRequest(match.getId(), match.getGameServerName(), timeLeft);
         String request = mapper.writeValueAsString(gameServerRequest);
 
         ResponseEntity<String> result = RestClient

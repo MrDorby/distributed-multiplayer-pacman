@@ -121,7 +121,6 @@ public class MatchmakerImpl implements Matchmaker{
         try {
             String username = checkTokenPermission(info.token());
             MatchInfoMongoDB match = getMatch(info.matchId(), username);
-            LOGGER.trace("SAME MATCHID -> " + String.valueOf(match.getId() == info.matchId()));
             GameServerInfo gameServerInfo = this.matchmakerDetailsService.checkGameServerAvailability(match);
             ServerParameters serverParameters = match.getServerParameters();
             if (Objects.nonNull(gameServerInfo)) {
@@ -139,7 +138,6 @@ public class MatchmakerImpl implements Matchmaker{
     /* Retrieves the match from the specified matchId or by Token. */
     private MatchInfoMongoDB getMatch(String matchId, String username) throws Exception {
         if (matchId != null && !matchId.isBlank()) {
-            LOGGER.trace("\n\n\nGET MATCH BY ID!");
             return this.matchmakerDetailsService.getMatchById(matchId);
         }
         return this.matchmakerDetailsService.getMatchByToken(username);
