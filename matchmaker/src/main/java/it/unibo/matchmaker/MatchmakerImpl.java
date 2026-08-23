@@ -8,6 +8,7 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.util.Objects;
 import java.net.http.HttpResponse;
 
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -126,14 +127,14 @@ public class MatchmakerImpl implements Matchmaker{
             String result = this.objectMapper.writeValueAsString(response);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatusCode.valueOf(500)).body(e.getMessage());
         }
     }
 
     /* Retrieves the match from the specified matchId or by Token. */
     private MatchInfoMongoDB getMatch(String matchId, String username) throws Exception {
         if (matchId != null && !matchId.isBlank()) {
-            return this.matchmakerDetailsService.getMatch(matchId);
+            return this.matchmakerDetailsService.getMatchById(matchId);
         }
         return this.matchmakerDetailsService.getMatchByToken(username);
     }

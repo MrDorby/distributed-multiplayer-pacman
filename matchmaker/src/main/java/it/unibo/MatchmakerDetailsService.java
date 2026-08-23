@@ -3,6 +3,8 @@ package it.unibo;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.DuplicateKeyException;
 
 import it.unibo.dto.GameServerCheckRequest;
 import it.unibo.dto.GameServerCheckResponse;
@@ -23,7 +26,6 @@ import it.unibo.dto.ManagerCreateServer;
 import it.unibo.mongodb.LobbyInfoMongoDB;
 import it.unibo.mongodb.MatchInfoMongoDB;
 import it.unibo.mongodb.MongoBackground;
-import it.unibo.mongodb.ServerParameters;
 import it.unibo.mongodb.ShortTermLobbyRepository;
 import it.unibo.mongodb.ShortTermMatchRepository;
 
@@ -35,6 +37,7 @@ import it.unibo.mongodb.ShortTermMatchRepository;
 @Service
 public class MatchmakerDetailsService {
 
+    private static final int FAILURE_RETRY = 5;
     private static final int LOBBY_SIZE = 4;
     private static final String MANAGER = "MANAGER";
     private static final String MANAGER_URI = System.getenv(MANAGER) + "/gameservermanager";
@@ -113,80 +116,64 @@ public class MatchmakerDetailsService {
     /* Deals with the management of the FOUND type response. */
     private JoinLobbyResponse foundResponse(LobbyInfoMongoDB lobby) throws Exception {
         if (lobby.getMatchId() == null || lobby.getMatchId().isBlank()) {
-            
             try {
-                MatchInfoMongoDB match = matchCollection.save(
-                    new MatchInfoMongoDB(
-                        lobby.getId(),
-                        "", 
-                        lobby.getPlayers(), 
-                        null, 
-                        System.currentTimeMillis()));
-
-                lobby.setMatchId(match.getId());
-                lobbyCollection.save(lobby);
-
-                String createGameServer = mapper.writeValueAsString(new ManagerCreateServer(match.getId(), lobby.getMap()));
-                /* SYNC */
-                ResponseEntity<String> result = RestClient
-                    .create()
-                    .post()
-                    .uri(new URI(GAMESERVER_DIR + CREATE_GAMESERVER_URI))
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .body(createGameServer)
-                    .retrieve()
-                    .toEntity(String.class);
-
-                GameServerInfo gameServerInfo = mapper.readValue(result.getBody(), GameServerInfo.class);
-                //this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
-
-                match.setGameServerName(gameServerInfo.name());
-                match.setServerParameters(
-                    new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
-                matchCollection.save(match);
+                MatchInfoMongoDB match = createMatchInfoOnDB(lobby);
+                createGameServerRequest(match, lobby.getMap());
                 return new JoinLobbyResponse(LobbyTypeResponse.FOUND, match.getId());
             } catch (Exception e) {
-                return new JoinLobbyResponse(LobbyTypeResponse.FOUND, this.matchCollection.findByLobbyId(lobby.getId()).get().getId());
+                if (e instanceof DuplicateKeyException) {
+                    return checkDuplicaKeyException(lobby.getId());
+                }
+                throw new Exception(e.getMessage());
             }
-
-            // List<MatchInfoMongoDB> activeMatches = this.matchCollection.findByUsers(lobby.getPlayers());
-            // if (activeMatches.isEmpty()) {
-            //     MatchInfoMongoDB match = matchCollection.save(
-            //         new MatchInfoMongoDB("", 
-            //             lobby.getPlayers(), 
-            //             null, 
-            //             System.currentTimeMillis()));
-
-            //     lobby.setMatchId(match.getId());
-            //     lobbyCollection.save(lobby);
-
-            //     String createGameServer = mapper.writeValueAsString(new ManagerCreateServer(match.getId(), lobby.getMap()));
-            //     /* SYNC */
-            //     ResponseEntity<String> result = RestClient
-            //         .create()
-            //         .post()
-            //         .uri(new URI(GAMESERVER_DIR + CREATE_GAMESERVER_URI))
-            //         .contentType(MediaType.APPLICATION_JSON)
-            //         .accept(MediaType.APPLICATION_JSON)
-            //         .body(createGameServer)
-            //         .retrieve()
-            //         .toEntity(String.class);
-
-            //     GameServerInfo gameServerInfo = mapper.readValue(result.getBody(), GameServerInfo.class);
-            //     //this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
-
-            //     match.setGameServerName(gameServerInfo.name());
-            //     match.setServerParameters(
-            //         new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
-            //     matchCollection.save(match);
-            //     return new JoinLobbyResponse(LobbyTypeResponse.FOUND, match.getId());
-            // }
-            // MatchInfoMongoDB active = activeMatches.stream().sorted((x, y) -> Long.compare(x.getTimeOfCreation(), y.getTimeOfCreation())).toList().getLast();
-            // return new JoinLobbyResponse(LobbyTypeResponse.FOUND, active.getId());
         }
         // this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
         return new JoinLobbyResponse(LobbyTypeResponse.FOUND, lobby.getMatchId());
+    }
+
+    /* Creates the match document on the Matches collection in the short-term db. */
+    private MatchInfoMongoDB createMatchInfoOnDB(LobbyInfoMongoDB lobby) {
+        MatchInfoMongoDB match = this.matchCollection.save(
+            new MatchInfoMongoDB(
+                lobby.getId(),
+                "", 
+                lobby.getPlayers(), 
+                null, 
+                System.currentTimeMillis()));
+
+        lobby.setMatchId(match.getId());
+        lobbyCollection.save(lobby);
+        return match;
+    }
+
+    /* Creates the request for the GameServer Manager to start a new GameServer. */
+    private void createGameServerRequest(MatchInfoMongoDB match, String map) throws Exception {
+        String createGameServer = mapper.writeValueAsString(new ManagerCreateServer(match.getId(), map));    
+        ResponseEntity<String> result = RestClient
+            .create()
+            .post()
+            .uri(new URI(GAMESERVER_DIR + CREATE_GAMESERVER_URI))
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
+            .body(createGameServer)
+            .retrieve()
+            .toEntity(String.class);
+
+        GameServerInfo gameServerInfo = mapper.readValue(result.getBody(), GameServerInfo.class);
+        this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
+    }
+
+    /* Deals with the management of the DuplicateKeyException thrown when a match with the existing lobbyId is inserted. */
+    private JoinLobbyResponse checkDuplicaKeyException(String lobbyId) throws Exception {
+        int counter = 0;
+        while (counter++ < FAILURE_RETRY) {
+            String matchId = this.lobbyCollection.findById(lobbyId).get().getMatchId();
+            if (Objects.nonNull(matchId) && matchId.isBlank()) {
+                return new JoinLobbyResponse(LobbyTypeResponse.FOUND, matchId);
+            }
+            Thread.sleep(500);
+        }
+        throw new NoSuchElementException("MatchId in Lobby is null!");
     }
 
     /**
@@ -195,15 +182,26 @@ public class MatchmakerDetailsService {
      * @return the MatchInfoMongoDB when it exists or throws an Exception because the match is not in the database.  
      * @throws Exception
      */
-    public MatchInfoMongoDB getMatch(String matchId) throws Exception {
-        Optional<MatchInfoMongoDB> match = this.matchCollection.findById(matchId);
-        if (match.isPresent()) {
-            LobbyInfoMongoDB lobby = this.lobbyCollection.findByMatchId(matchId)
-                .orElseThrow(() -> new Exception("Match does not exist!"));
-            this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
-            return match.get();
+    public MatchInfoMongoDB getMatchById(String matchId) throws Exception {
+        MatchInfoMongoDB match = this.matchCollection
+            .findById(matchId)
+            .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
+        Optional<LobbyInfoMongoDB> lobby = this.lobbyCollection.findByMatchId(match.getId());
+        return lobby.isEmpty() ? getMatchInfo(match) : match;
+    }
+
+    /* Returns the match info once requested. */
+    private MatchInfoMongoDB getMatchInfo(MatchInfoMongoDB match) throws InterruptedException {
+        int counter = 0;
+        while (counter++ < FAILURE_RETRY) {
+            Optional<LobbyInfoMongoDB> lobby = this.lobbyCollection.findByMatchId(match.getId());
+            if (lobby.isPresent()) {
+                this.mongoBackground.checkLobbyToDelete(lobby.get(), lobbyCollection, LOBBY_SIZE);
+                return match;
+            }
+            Thread.sleep(500);
         }
-        throw new Exception("Match does not exist!");
+        throw new NoSuchElementException("MatchId not in the Lobby!");
     }
 
     /**
@@ -213,18 +211,14 @@ public class MatchmakerDetailsService {
      * @throws Exception
      */
     public MatchInfoMongoDB getMatchByToken(String username) throws Exception {
-        Optional<MatchInfoMongoDB> match = matchCollection
+        MatchInfoMongoDB match = matchCollection
             .findByUsername(username)
             .stream()
-            .sorted((x, y) -> Long.compare(x.getTimeOfCreation(), x.getTimeOfCreation()))
-            .findFirst();
-        if (match.isPresent()) {
-            LobbyInfoMongoDB lobby = this.lobbyCollection.findByMatchId(match.get().getId())
-                .orElseThrow(() -> new Exception("No active match found!"));
-            this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
-            return match.get();
-        }
-        throw new Exception("No active match found!");
+            .sorted((x, y) -> Long.compare(x.getTimeOfCreation(), y.getTimeOfCreation()))
+            .findFirst()
+            .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
+        Optional<LobbyInfoMongoDB> lobby = this.lobbyCollection.findByMatchId(match.getId());
+        return lobby.isEmpty() ? getMatchInfo(match) : match;
     }
 
     /**

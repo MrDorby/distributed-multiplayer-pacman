@@ -18,7 +18,7 @@ public class MongoBackground {
      * @param gameServerInfo the response of the GameServerManager.
      * @param matchCollection the match repository.
      */
-    //@Async
+    @Async
     public void saveMatchInfo(
         MatchInfoMongoDB match,
         GameServerInfo gameServerInfo,
@@ -36,7 +36,7 @@ public class MongoBackground {
      * @param lobbyCollection the repository with the lobby collection.
      * @param lobbySize the size of the lobby.
      */
-    //@Async
+    @Async
     public void checkLobbyToDelete(
         LobbyInfoMongoDB lobby, 
         ShortTermLobbyRepository lobbyCollection,
@@ -54,7 +54,7 @@ public class MongoBackground {
      * @param info the new information about the GameServer.
      * @param repository the short term repository, matches collection.
      */
-    //@Async
+    @Async
     public void saveNewGameServerInfo(
         MatchInfoMongoDB match, 
         GameServerInfo info,
