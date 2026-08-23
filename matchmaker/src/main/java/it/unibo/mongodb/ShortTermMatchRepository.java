@@ -64,5 +64,5 @@ public interface ShortTermMatchRepository extends MongoRepository<MatchInfoMongo
      * @return a Long representing the timeLeftInMillis.
      */
     @Query(value = "{ '_id' : ?0 }", fields = "{ 'checkpoints.gamecontext.gamestate.timeLeftInMillis' : 1, '_id' : 0 }")
-    Long getTimeLeft(String matchId);
+    Optional<Long> getTimeLeft(String matchId);
 }

@@ -7,6 +7,8 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +46,7 @@ public class MatchmakerDetailsService {
     private static final String GAMESERVER_DIR = MANAGER_URI + "/gameserver";
     private static final String CREATE_GAMESERVER_URI =  "/create";
     private static final String CHECK_GAMESERVER_URI = "/check";
+    private static final Logger LOGGER = LoggerFactory.getLogger(MatchmakerDetailsService.class);
 
     private final ObjectMapper mapper = new ObjectMapper();
     
@@ -187,6 +190,7 @@ public class MatchmakerDetailsService {
             .findById(matchId)
             .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
         Optional<LobbyInfoMongoDB> lobby = this.lobbyCollection.findByMatchId(match.getId());
+        LOGGER.trace("\n\n\nLobby is empty? " + lobby.isEmpty());
         return lobby.isEmpty() ? getMatchInfo(match) : match;
     }
 
@@ -245,7 +249,7 @@ public class MatchmakerDetailsService {
      * @throws Exception
      */
     public GameServerInfo checkGameServerAvailability(MatchInfoMongoDB match) throws Exception {
-        Long timeLeft = this.matchCollection.getTimeLeft(match.getId());
+        Long timeLeft = this.matchCollection.getTimeLeft(match.getId()).orElse(Long.MAX_VALUE);
         GameServerCheckRequest gameServerRequest = new GameServerCheckRequest(match.getGameServerName(), timeLeft);
         String request = mapper.writeValueAsString(gameServerRequest);
 

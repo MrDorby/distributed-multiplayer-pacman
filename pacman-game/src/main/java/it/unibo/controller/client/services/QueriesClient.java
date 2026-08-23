@@ -76,7 +76,8 @@ public class QueriesClient {
             }
             throw new Exception(infoResponse.body());
         }
-        PlayerInfoMongoDB playerInfo = objectMapper.readValue(infoResponse.body(), PlayerInfoMongoDB.class);
+        String decryptedResponse = keyManager.encryptDecryptDataRSA(infoResponse.body(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
+        PlayerInfoMongoDB playerInfo = objectMapper.readValue(decryptedResponse, PlayerInfoMongoDB.class);
         return new PlayerStats(
             playerInfo.username(), 
             playerInfo.nMatch(), 

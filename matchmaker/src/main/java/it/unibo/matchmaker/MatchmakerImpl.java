@@ -8,6 +8,8 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.util.Objects;
 import java.net.http.HttpResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +53,8 @@ public class MatchmakerImpl implements Matchmaker{
 
     private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
     private static final String AUTHENTICATOR_REQUEST = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/token";
+    private static final Logger LOGGER = LoggerFactory.getLogger(MatchmakerImpl.class);
+
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final MatchmakerDetailsService matchmakerDetailsService;
@@ -117,13 +121,14 @@ public class MatchmakerImpl implements Matchmaker{
         try {
             String username = checkTokenPermission(info.token());
             MatchInfoMongoDB match = getMatch(info.matchId(), username);
+            LOGGER.trace("SAME MATCHID -> " + String.valueOf(match.getId() == info.matchId()));
             GameServerInfo gameServerInfo = this.matchmakerDetailsService.checkGameServerAvailability(match);
             ServerParameters serverParameters = match.getServerParameters();
             if (Objects.nonNull(gameServerInfo)) {
                 serverParameters = new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort());
                 this.matchmakerDetailsService.setNewGameServerInfo(match, gameServerInfo);
             }
-            GameServerResponse response = new GameServerResponse(match.getId(), serverParameters);
+            GameServerResponse response = new GameServerResponse(info.matchId(), serverParameters);
             String result = this.objectMapper.writeValueAsString(response);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
@@ -134,6 +139,7 @@ public class MatchmakerImpl implements Matchmaker{
     /* Retrieves the match from the specified matchId or by Token. */
     private MatchInfoMongoDB getMatch(String matchId, String username) throws Exception {
         if (matchId != null && !matchId.isBlank()) {
+            LOGGER.trace("\n\n\nGET MATCH BY ID!");
             return this.matchmakerDetailsService.getMatchById(matchId);
         }
         return this.matchmakerDetailsService.getMatchByToken(username);
