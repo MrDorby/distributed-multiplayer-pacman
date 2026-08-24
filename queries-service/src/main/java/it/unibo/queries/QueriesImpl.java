@@ -13,9 +13,12 @@ import java.util.Objects;
 
 import javax.crypto.Cipher;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.QueriesDetailsService;
+import it.unibo.dto.InfoRequestDTO;
+import it.unibo.dto.InfoResponseDTO;
 import it.unibo.dto.PublicKeyRequestDTO;
 import it.unibo.dto.PublicKeyResponseDTO;
 import it.unibo.key.Hash;
@@ -48,6 +53,7 @@ public class QueriesImpl implements Queries {
         @JsonProperty("token") String token) {
     }
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueriesImpl.class);
     private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
     private static final String AUTHENTICATOR_TOKEN = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/token";
     private static final String AUTHENTICATOR_KEYCLIENT = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/keyClient";
@@ -87,10 +93,10 @@ public class QueriesImpl implements Queries {
 
     @Override
     @PostMapping(value = "/info", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> getPlayerInfo(@RequestBody String encrytpedRequest) {
+    public ResponseEntity<String> getPlayerInfo(@RequestBody InfoRequestDTO encrytpedRequest) {
         try {
             /* Decrypting the incoming message and authenticating the user. */
-            String username = KeyManager.encryptDecryptDataRSA(encrytpedRequest, Cipher.DECRYPT_MODE, KeyManager.loadAuthenticatorPrivateKey());
+            String username = KeyManager.encryptDecryptDataRSA(encrytpedRequest.encryptedInfo(), Cipher.DECRYPT_MODE, KeyManager.loadAuthenticatorPrivateKey());
             
             PlayerInfoMongoDB player = this.queriesDetailsService.loadUserByUsername(username);
             if (Objects.isNull(player)) {
@@ -103,8 +109,13 @@ public class QueriesImpl implements Queries {
 
             String playerString = this.objectMapper.writeValueAsString(player);
             String encryptedResponse = KeyManager.encryptDecryptDataRSA(playerString, Cipher.ENCRYPT_MODE, keyClient);
-            return ResponseEntity.ok(encryptedResponse);
+            InfoResponseDTO responseDTO = new InfoResponseDTO(encryptedResponse);
+            String serializedResponse = this.objectMapper.writeValueAsString(responseDTO);
+            return ResponseEntity.ok(serializedResponse);
         } catch (Exception e) {
+            if (e instanceof UsernameNotFoundException) {
+                return ResponseEntity.notFound().build();
+            }
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }

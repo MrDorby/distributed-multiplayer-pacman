@@ -91,6 +91,7 @@ public class AuthClient {
         String tokenDTO = keyManager.encryptDecryptDataAES(encryptedResponse.encryptedToken(), Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(Base64.getDecoder().decode(ivParameters)));
         TokenDTO dto = this.objectMapper.readValue(tokenDTO, TokenDTO.class);
         this.token = dto.token();
+        this.username = username;
     }
 
     /* Decrypt the encrypted message from the incoming connetion.*/

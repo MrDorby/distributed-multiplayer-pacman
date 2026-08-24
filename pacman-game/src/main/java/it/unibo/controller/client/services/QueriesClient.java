@@ -10,6 +10,7 @@ import java.util.Base64;
 
 import javax.crypto.Cipher;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.unibo.controller.client.common.PlayerStats;
@@ -25,6 +26,14 @@ import it.unibo.controller.client.key.KeyManager;
  * QueriesClient
  */
 public class QueriesClient {
+
+    private record InfoRequest(
+        @JsonProperty("request") String request) {
+    }
+
+    private record InfoResponse(
+        @JsonProperty("response") String response) {
+    }
     
     private static final String SYN = "/syn";
     private static final String TOKEN = "/token";
@@ -62,13 +71,14 @@ public class QueriesClient {
                 username,
                 Cipher.ENCRYPT_MODE, 
                 keyManager.getPublicKeyFromString(publicKeyResponseDTO.publicKey()));
-        
+        InfoRequest request = new InfoRequest(encryptedRequest);
+        String serializedRequest = this.objectMapper.writeValueAsString(request);
         HttpRequest httpInfoRequest = HttpRequest.newBuilder()
                                     .uri(URI.create(info_request))
                                     .header("Content-Type", "application/json")
-                                    .POST(BodyPublishers.ofString(encryptedRequest))
+                                    .POST(BodyPublishers.ofString(serializedRequest))
                                     .build();
-
+        
         HttpResponse<String> infoResponse = httpClient.send(httpInfoRequest, HttpResponse.BodyHandlers.ofString());
         if (infoResponse.statusCode() != 200) {
             if (infoResponse.statusCode() == 404) {
@@ -76,13 +86,14 @@ public class QueriesClient {
             }
             throw new Exception(infoResponse.body());
         }
-        String decryptedResponse = keyManager.encryptDecryptDataRSA(infoResponse.body(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
+        InfoResponse response = this.objectMapper.readValue(infoResponse.body(), InfoResponse.class);
+        String decryptedResponse = keyManager.encryptDecryptDataRSA(response.response(), Cipher.DECRYPT_MODE, keyManager.loadAuthenticatorPrivateKey());
         PlayerInfoMongoDB playerInfo = objectMapper.readValue(decryptedResponse, PlayerInfoMongoDB.class);
         return new PlayerStats(
             playerInfo.username(), 
             playerInfo.nMatch(), 
             playerInfo.nWins(), 
-            (float) playerInfo.nWins() / playerInfo.nMatch(),
+            playerInfo.nMatch() == 0 ? 0 : (float) playerInfo.nWins() / playerInfo.nMatch(),
             playerInfo.bestScore());
     }
 
@@ -91,7 +102,7 @@ public class QueriesClient {
         //String jsonFormat = objectMapper.writeValueAsString(token);
         HttpRequest httpTokenRequest = HttpRequest.newBuilder()
                                     .uri(URI.create(token_request))
-                                    //.header("Content-Type", "application/json")
+                                    .header("Content-Type", "application/json")
                                     .POST(BodyPublishers.ofString(token))
                                     .build();
 

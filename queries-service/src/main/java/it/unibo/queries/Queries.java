@@ -3,6 +3,7 @@ package it.unibo.queries;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import it.unibo.dto.InfoRequestDTO;
 import it.unibo.dto.PublicKeyRequestDTO;
 
 /**
@@ -19,10 +20,10 @@ public interface Queries {
 
     /**
      * Extracts the information stored of the specified player.
-     * @param username the player identifier.
+     * @param encrytpedRequest the player request encrypted.
      * @return a Response containing all the data requested.
      */
-    ResponseEntity<String> getPlayerInfo(@RequestBody String username);
+    ResponseEntity<String> getPlayerInfo(@RequestBody InfoRequestDTO encrytpedRequest);
 
     /**
      * Lets the two parties to exchange their public key to perform confidentiality.

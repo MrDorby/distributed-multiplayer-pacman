@@ -69,7 +69,8 @@ The command line arguments to execute the script are as follows:
 **Deploying the cluster**
 
 The deployment of the cluster can be performed by running the provided script for the specific platform from the root
-directory of the project.
+directory of the project. 
+***Wait at least 3 minutes to guaranteeing the correct setup of the cluster.***
 The command line arguments to execute the script are as follows:
 - Linux: `./scripts/deploy-cluster.sh kubernetes/`
 - Windows (PowerShell): `.\scripts\deploy-cluster.ps1 .\kubernetes\`

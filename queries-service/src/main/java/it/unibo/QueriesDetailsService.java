@@ -1,6 +1,7 @@
 package it.unibo;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mapping.MappingException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +22,12 @@ public class QueriesDetailsService {
      * @throws UsernameNotFoundException
      */
     public PlayerInfoMongoDB loadUserByUsername(String username) throws UsernameNotFoundException {
-        return playerInfoRepository.findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("Username not found!"));
+        try {
+            return playerInfoRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Username not found!"));   
+        } catch (MappingException e) {
+            return null;
+        }
     }
 
 }
