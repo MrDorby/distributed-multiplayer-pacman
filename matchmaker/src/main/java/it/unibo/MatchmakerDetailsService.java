@@ -29,6 +29,7 @@ import it.unibo.dto.ManagerCreateServer;
 import it.unibo.mongodb.LobbyInfoMongoDB;
 import it.unibo.mongodb.MatchInfoMongoDB;
 import it.unibo.mongodb.MongoBackground;
+import it.unibo.mongodb.ServerParameters;
 import it.unibo.mongodb.ShortTermLobbyRepository;
 import it.unibo.mongodb.ShortTermMatchRepository;
 
@@ -164,7 +165,11 @@ public class MatchmakerDetailsService {
             .toEntity(String.class);
 
         GameServerInfo gameServerInfo = mapper.readValue(result.getBody(), GameServerInfo.class);
-        this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
+        //this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
+        match.setGameServerName(gameServerInfo.name());
+        match.setServerParameters(
+            new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
+        matchCollection.save(match);
     }
 
     /* Deals with the management of the DuplicateKeyException thrown when a match with the existing lobbyId is inserted. */

@@ -63,7 +63,6 @@ public class MatchmakerImpl implements Matchmaker{
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
         this.matchmakerDetailsService = matchmakerDetailsService;
-        
     }
 
     @Override
@@ -128,6 +127,7 @@ public class MatchmakerImpl implements Matchmaker{
                 this.matchmakerDetailsService.setNewGameServerInfo(match, gameServerInfo);
             }
             GameServerResponse response = new GameServerResponse(info.matchId(), serverParameters);
+            LOGGER.debug("GAME SERVER INFOS {}", response);
             String result = this.objectMapper.writeValueAsString(response);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
@@ -152,6 +152,7 @@ public class MatchmakerImpl implements Matchmaker{
     @Override
     @PostMapping(value = "/quit_match", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> removePlayerFromMatch(@RequestBody RemoveFromMatchRequest remove) {
+        LOGGER.debug("{} QUIT MATCH MESSAGGE: {}", System.lineSeparator(), remove);
         try {
             String username = checkTokenPermission(remove.token());
             this.matchmakerDetailsService.deleteUserFromMatch(remove.matchId(), username);

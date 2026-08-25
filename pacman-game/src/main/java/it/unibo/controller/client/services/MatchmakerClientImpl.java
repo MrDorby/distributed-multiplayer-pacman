@@ -80,15 +80,15 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         if (this.currentMatchId != null) return true;
         var payload = objectMapper.writeValueAsString(new GameServerRequest(userToken, null));
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(joinLobbyUrl))
+                .uri(URI.create(gameServerUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload))
                 .build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() == 200 && response.body() != null && !response.body().isBlank()) {
-            JoinLobbyResponse joinLobbyResponse = objectMapper.readValue(response.body(), JoinLobbyResponse.class);
-            if (joinLobbyResponse.isMatchFound()) {
-                this.currentMatchId = joinLobbyResponse.id();
+            GameServerResponse serverResponse = objectMapper.readValue(response.body(), GameServerResponse.class);
+            if (serverResponse.matchId() != null) {
+                this.currentMatchId = serverResponse.matchId();
                 return true;
             }
         }
@@ -141,7 +141,7 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         boolean success = response.statusCode() == 200;
         if (success) clearMatchmakingData();
-        return success;
+        return success; // TODO: NON VIENE MAI USATO IL RISULTATO, QUINDI CAMBIARE IN VOID E LANCIARE ECCEZIONE SE != 200.
     }
 
     @Override
