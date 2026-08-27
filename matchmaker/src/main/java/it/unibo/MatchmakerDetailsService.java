@@ -195,17 +195,19 @@ public class MatchmakerDetailsService {
         MatchInfoMongoDB match = this.matchCollection
             .findById(matchId)
             .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
-        Optional<LobbyInfoMongoDB> lobby = this.lobbyCollection.findByMatchId(match.getId());
-        return lobby.isEmpty() ? getMatchInfo(match) : match;
+        return Objects.isNull(match.getGameServerName()) && Objects.isNull(match.getServerParameters()) ? 
+            getMatchInfo(match) : match;
+        //return lobby.isEmpty() ? getMatchInfo(match) : match;
     }
 
-    /* Returns the match info once requested. */
+    /* Returns the match info once the GameServer infos are inserted. */
     private MatchInfoMongoDB getMatchInfo(MatchInfoMongoDB match) throws InterruptedException {
+        LobbyInfoMongoDB lobby = this.lobbyCollection.findByMatchId(match.getId()).orElseThrow(() -> new NoSuchElementException("MatchId not in the Lobby!"));
         int counter = 0;
         while (counter++ < FAILURE_RETRY) {
-            Optional<LobbyInfoMongoDB> lobby = this.lobbyCollection.findByMatchId(match.getId());
-            if (lobby.isPresent()) {
-                this.mongoBackground.checkLobbyToDelete(lobby.get(), lobbyCollection, LOBBY_SIZE);
+            match = this.matchCollection.findById(match.getId()).get();
+            if (!Objects.isNull(match.getGameServerName()) && !Objects.isNull(match.getServerParameters())) {
+                this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
                 return match;
             }
             Thread.sleep(500);
@@ -226,8 +228,9 @@ public class MatchmakerDetailsService {
             .sorted((x, y) -> Long.compare(x.getTimeOfCreation(), y.getTimeOfCreation()))
             .findFirst()
             .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
-        Optional<LobbyInfoMongoDB> lobby = this.lobbyCollection.findByMatchId(match.getId());
-        return lobby.isEmpty() ? getMatchInfo(match) : match;
+        return Objects.isNull(match.getGameServerName()) && Objects.isNull(match.getServerParameters()) ? 
+            getMatchInfo(match) : match;
+        //return lobby.isEmpty() ? getMatchInfo(match) : match;
     }
 
     /**

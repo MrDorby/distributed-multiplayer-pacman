@@ -118,15 +118,18 @@ public class MatchmakerImpl implements Matchmaker{
     @PostMapping(value = "/game_server", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getGameServer(@RequestBody GameServerRequest info) {
         try {
+            LOGGER.debug("GAME SERVER REQUEST {}", info);
             String username = checkTokenPermission(info.token());
             MatchInfoMongoDB match = getMatch(info.matchId(), username);
-            GameServerInfo gameServerInfo = this.matchmakerDetailsService.checkGameServerAvailability(match);
             ServerParameters serverParameters = match.getServerParameters();
-            if (Objects.nonNull(gameServerInfo)) {
-                serverParameters = new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort());
-                this.matchmakerDetailsService.setNewGameServerInfo(match, gameServerInfo);
+            if (info.recover()) {
+                GameServerInfo gameServerInfo = this.matchmakerDetailsService.checkGameServerAvailability(match);
+                if (Objects.nonNull(gameServerInfo)) {
+                    serverParameters = new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort());
+                    this.matchmakerDetailsService.setNewGameServerInfo(match, gameServerInfo);
+                }
             }
-            GameServerResponse response = new GameServerResponse(info.matchId(), serverParameters);
+            GameServerResponse response = new GameServerResponse(Objects.isNull(info.matchId()) ? match.getId() : info.matchId(), serverParameters);
             LOGGER.debug("GAME SERVER INFOS {}", response);
             String result = this.objectMapper.writeValueAsString(response);
             return ResponseEntity.ok(result);
