@@ -75,7 +75,7 @@ public class MatchmakerImpl implements Matchmaker{
             String res = this.objectMapper.writeValueAsString(response);
             return ResponseEntity.ok(res);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
 

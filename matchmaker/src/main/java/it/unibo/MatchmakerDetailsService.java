@@ -1,5 +1,6 @@
 package it.unibo;
 
+import java.lang.classfile.ClassFile.Option;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,10 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mapping.MappingException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DuplicateKeyException;
@@ -29,7 +32,6 @@ import it.unibo.dto.ManagerCreateServer;
 import it.unibo.mongodb.LobbyInfoMongoDB;
 import it.unibo.mongodb.MatchInfoMongoDB;
 import it.unibo.mongodb.MongoBackground;
-import it.unibo.mongodb.ServerParameters;
 import it.unibo.mongodb.ShortTermLobbyRepository;
 import it.unibo.mongodb.ShortTermMatchRepository;
 
@@ -51,6 +53,7 @@ public class MatchmakerDetailsService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MatchmakerDetailsService.class);
 
     private final ObjectMapper mapper = new ObjectMapper();
+    private final RestClient client = RestClient.create();
     
     @Autowired
     private ShortTermLobbyRepository lobbyCollection;
@@ -151,36 +154,60 @@ public class MatchmakerDetailsService {
         return match;
     }
 
-    /* Creates the request for the GameServer Manager to start a new GameServer. */
-    private void createGameServerRequest(MatchInfoMongoDB match, String map) throws Exception {
-        String createGameServer = mapper.writeValueAsString(new ManagerCreateServer(match.getId(), map));    
-        ResponseEntity<String> result = RestClient
-            .create()
+    /* Defines the call and the received response of the manager. */
+    private ResponseEntity<String> managerResponse(RestClient client, String body) throws Exception {
+        return client
             .post()
             .uri(new URI(GAMESERVER_DIR + CREATE_GAMESERVER_URI))
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON)
-            .body(createGameServer)
+            .body(body)
             .retrieve()
             .toEntity(String.class);
+    }
 
-        GameServerInfo gameServerInfo = mapper.readValue(result.getBody(), GameServerInfo.class);
-        //this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
-        match.setGameServerName(gameServerInfo.name());
-        match.setServerParameters(
-            new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
-        matchCollection.save(match);
+    /* Creates the request for the GameServer Manager to start a new GameServer. */
+    private void createGameServerRequest(MatchInfoMongoDB match, String map) throws Exception {
+        String createGameServer = mapper.writeValueAsString(new ManagerCreateServer(match.getId(), map));
+        String result = checkManagerResponse(client, createGameServer);
+
+        GameServerInfo gameServerInfo = mapper.readValue(result, GameServerInfo.class);
+        this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
+        // match.setGameServerName(gameServerInfo.name());
+        // match.setServerParameters(
+        //     new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
+        // matchCollection.save(match);
+    }
+
+    /* Checks the validity of the response from the manager. */
+    private String checkManagerResponse(RestClient client, String body) throws Exception {
+        int counter = 0;
+        while (counter < FAILURE_RETRY) {
+            try {
+                ResponseEntity<String> response = managerResponse(client, body);
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    return response.getBody();
+                } 
+            } catch (RestClientException e) {
+                if (counter < FAILURE_RETRY) {
+                    Thread.sleep(500);
+                }
+            }
+            counter++;
+        }
+        throw new NoSuchElementException("The GameServer does not exist!");
     }
 
     /* Deals with the management of the DuplicateKeyException thrown when a match with the existing lobbyId is inserted. */
     private JoinLobbyResponse checkDuplicaKeyException(String lobbyId) throws Exception {
         int counter = 0;
-        while (counter++ < FAILURE_RETRY) {
+        while (counter < FAILURE_RETRY) {
             String matchId = this.lobbyCollection.findById(lobbyId).get().getMatchId();
             if (Objects.nonNull(matchId) && !matchId.isBlank()) {
                 return new JoinLobbyResponse(LobbyTypeResponse.FOUND, matchId);
             }
             Thread.sleep(500);
+            counter++;
         }
         throw new NoSuchElementException("MatchId in Lobby is null!");
     }
@@ -195,7 +222,7 @@ public class MatchmakerDetailsService {
         MatchInfoMongoDB match = this.matchCollection
             .findById(matchId)
             .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
-        return Objects.isNull(match.getGameServerName()) && Objects.isNull(match.getServerParameters()) ? 
+        return Objects.isNull(match.getGameServerName()) || Objects.isNull(match.getServerParameters()) ? 
             getMatchInfo(match) : match;
         //return lobby.isEmpty() ? getMatchInfo(match) : match;
     }
@@ -204,13 +231,17 @@ public class MatchmakerDetailsService {
     private MatchInfoMongoDB getMatchInfo(MatchInfoMongoDB match) throws InterruptedException {
         LobbyInfoMongoDB lobby = this.lobbyCollection.findByMatchId(match.getId()).orElseThrow(() -> new NoSuchElementException("MatchId not in the Lobby!"));
         int counter = 0;
-        while (counter++ < FAILURE_RETRY) {
-            match = this.matchCollection.findById(match.getId()).get();
-            if (!Objects.isNull(match.getGameServerName()) && !Objects.isNull(match.getServerParameters())) {
-                this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
-                return match;
+        while (counter < FAILURE_RETRY) {
+            Optional<MatchInfoMongoDB> matchOpt = this.matchCollection.findById(match.getId());
+            if (matchOpt.isPresent()) {
+                match = matchOpt.get();
+                if (Objects.nonNull(match.getGameServerName()) && Objects.nonNull(match.getServerParameters())) {
+                    this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
+                    return match;
+                }
             }
             Thread.sleep(500);
+            counter++;
         }
         throw new NoSuchElementException("MatchId not in the Lobby!");
     }
@@ -228,7 +259,7 @@ public class MatchmakerDetailsService {
             .sorted((x, y) -> Long.compare(x.getTimeOfCreation(), y.getTimeOfCreation()))
             .findFirst()
             .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
-        return Objects.isNull(match.getGameServerName()) && Objects.isNull(match.getServerParameters()) ? 
+        return Objects.isNull(match.getGameServerName()) || Objects.isNull(match.getServerParameters()) ? 
             getMatchInfo(match) : match;
         //return lobby.isEmpty() ? getMatchInfo(match) : match;
     }

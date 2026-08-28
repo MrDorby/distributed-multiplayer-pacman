@@ -11,6 +11,7 @@ import it.unibo.controller.shared.network.dto.PacmanDTO;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.reactivestreams.Publisher;
 
 import com.mongodb.client.result.InsertOneResult;
@@ -39,9 +40,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class MongoDBServerConnection {
 
     /* Internal record for make it easy check the content of the short-term database. */
-    private record Checkpoint(
-        @JsonProperty("gamecontext") GameContextDTO gameContextDTO, 
-        @JsonProperty("timestamp") Long timestamp) {
+    public record Checkpoint(
+        @BsonProperty("gamecontext") GameContextDTO gameContextDTO, 
+        @BsonProperty("timestamp") Long timestamp) {
     }
 
     private final MongoClient mongoClient;
