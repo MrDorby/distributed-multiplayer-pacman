@@ -15,5 +15,11 @@ public record GameServerInitParameters(
     public GameServerInitParameters {
         Objects.requireNonNull(matchID);
         Objects.requireNonNull(mapID);
+        if(matchID.isEmpty()) {
+            throw new IllegalArgumentException("Match ID cannot be empty");
+        }
+        if(mapID.isEmpty()) {
+            throw new IllegalArgumentException("Map ID cannot be empty.");
+        }
     }
 }

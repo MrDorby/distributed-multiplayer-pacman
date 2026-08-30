@@ -16,5 +16,12 @@ public record CheckGameServerRequest(
         @JsonProperty("time-left") long timeLeft) {
     public CheckGameServerRequest {
         Objects.requireNonNull(serverName);
+        Objects.requireNonNull(matchID);
+        if(serverName.isEmpty()) {
+            throw new IllegalArgumentException("Server name cannot be empty.");
+        }
+        if (matchID.isEmpty()) {
+            throw new IllegalArgumentException("Match ID cannot be empty.");
+        }
     }
 }

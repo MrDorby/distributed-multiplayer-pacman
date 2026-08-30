@@ -28,16 +28,27 @@ After the first creation of Minikube's custom profile, we can simply start it wi
 
 `minikube start -p agones`
 
-**Installing Agones on our Minikube cluster:**
+**Installing necessary cluster dependencies:**
 
-Once the Minikube cluster is running, we can install Agones in the cluster by using Helm (installed in our host machine).
-To do so, we will run the following commands in a terminal on our host:
+Once the Minikube cluster is running, we can install the necessary cluster extensions by using Helm (installed in our host machine).
+
+First of all, we must add and update the Helm repositories that contain the extensions.
+This can be done by running the following commands in a terminal on our host:
 
 `helm repo add mongodb https://mongodb.github.io/helm-charts`
 
 `helm repo add agones https://agones.dev/chart/stable`
 
 `helm repo update`
+
+The first requirement is Agones. We can install it on our cluster with the following command:
+
+`helm install agones-release --version 1.59.0 --namespace agones-system --create-namespace --set gameservers.minPort=7000,gameservers.maxPort=7050 agones/agones`
+
+It's imperative to make sure that the port range specified in this command corresponds to the one specified during the
+creation of Minikube's profile.
+
+Another requirement is MongoDB. We can install the necessary operators with the following commands:
 
 `kubectl create namespace authdb`
 
@@ -46,11 +57,6 @@ To do so, we will run the following commands in a terminal on our host:
 `kubectl create namespace shortdb`
 
 `helm install mongodb-operator mongodb/mongodb-kubernetes --namespace mongo-operator --create-namespace --set operator.watchNamespace="authdb\,longdb\,shortdb"`
-
-`helm install agones-release --version 1.59.0 --namespace agones-system --create-namespace --set gameservers.minPort=7000,gameservers.maxPort=7050 agones/agones`
-
-It's imperative to make sure that the port range specified in this command corresponds to the one specified during the
-creation of Minikube's profile.
 
 ### Deploying the system in the cluster
 
@@ -69,11 +75,13 @@ The command line arguments to execute the script are as follows:
 **Deploying the cluster**
 
 The deployment of the cluster can be performed by running the provided script for the specific platform from the root
-directory of the project. 
-***Wait at least 3 minutes to guaranteeing the correct setup of the cluster.***
-The command line arguments to execute the script are as follows:
+directory of the project.
+The command lines to execute the script are as follows:
 - Linux: `./scripts/deploy-cluster.sh kubernetes/`
 - Windows (PowerShell): `.\scripts\deploy-cluster.ps1 .\kubernetes\`
+
+*NOTE: After running this script, wait **at least 3 minutes** in order to allow the cluster to correcty complete the setup
+    operations.*
 
 **Exposing the front end service**
 
