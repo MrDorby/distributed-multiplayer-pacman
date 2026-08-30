@@ -54,6 +54,7 @@ public class GameControllerWithDirectConnection extends AbstractGameController {
                     parameters = serviceManager.getGameServerParametersByToken(false);
                 }
                 if (parameters.isPresent()) {
+                    logger.info("Player {} is connected to GameServer with parameters: {}", serviceManager.getUsername(), parameters.get());
                     super.startConnection(parameters.get(), serviceManager.getUsername());
                 } else {
                     logger.warn("No game server parameters were found for match ID: {}", serviceManager.getCurrentMatchId());

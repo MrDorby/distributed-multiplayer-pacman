@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * 
  * PlayerInfoMongoDB
  */
-@Document(collection = "user")
+@Document(collection = "stats")
 public class PlayerInfoMongoDB {
     
     @Id

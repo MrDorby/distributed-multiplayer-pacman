@@ -14,6 +14,8 @@ import org.bson.types.ObjectId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.reactivestreams.Publisher;
 
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.reactivestreams.client.FindPublisher;
@@ -85,74 +87,57 @@ public class MongoDBServerConnection {
     /*  Performs all the operations with the short-term database. */
     private CompletableFuture<Void> shortTermDB(MatchSnapshot snapshot) {
         ShortTermFields shortTermFields = connectToDatabase.getShortTermFields(); 
-        //ObjectMapper objectMapper = new ObjectMapper();
-        CompletableFuture<Void> future = null;
-        //try {
-            Checkpoint checkpoint = new Checkpoint(snapshot.context(), snapshot.timestamp());
-            //String jsonCheckpoint = objectMapper.writeValueAsString(checkpoint);
-            // TODO: Check if it is necessary to perform the mapping to JSON for storing data.
-            Bson filter = eq(shortTermFields.getMatchIdLabel(), snapshot.matchId());
-            Publisher<Document> publisher = this.collection.find(filter).first();
-            Document doc = Mono.from(publisher).block();
-            if (doc == null || doc.isEmpty()) {
-                //Document newDoc = Document.parse(jsonSnap);//TODO: Check when short term db is correctly defined bc of the matchid.
-                Document newDoc = new Document(shortTermFields.getMatchIdLabel(), snapshot.matchId())
-                                .append(shortTermFields.getUserListLabel(), snapshot.context().pacmans().stream().map(PacmanDTO::id).toList())
-                                .append(shortTermFields.getCheckpointsLabel(), List.of(checkpoint));
-                Publisher<InsertOneResult> insertPublisher = this.collection.insertOne(newDoc);
-                future = Mono.from(insertPublisher).then().toFuture();
-            } else {
+        Checkpoint checkpoint = new Checkpoint(snapshot.context(), snapshot.timestamp());
+        if (snapshot.matchId() == null || snapshot.matchId().isBlank()) {
+            return CompletableFuture.completedFuture(null);
+        } 
+        Bson filter = eq(shortTermFields.getMatchIdLabel(), snapshot.matchId());
+        Publisher<Document> publisher = this.collection.find(filter).first();
+        return Mono.from(publisher)
+            .flatMap(doc -> {
                 List<Checkpoint> checkpoints = (ArrayList<Checkpoint>) doc.get(shortTermFields.getCheckpointsLabel());
                 int sizeCheck = 3;
-                if (checkpoints.size() < sizeCheck) {
-                    Bson update = push(shortTermFields.getCheckpointsLabel(), checkpoint);
-                    Publisher<UpdateResult> result = this.collection.updateOne(filter, update);
-                    future = Mono.from(result).then().toFuture();
+                Bson bson;
+                if (checkpoints == null || !doc.containsKey(shortTermFields.getCheckpointsLabel())) {
+                    bson = set(shortTermFields.getCheckpointsLabel(), checkpoint);
+                } else if (checkpoints != null && checkpoints.size() < sizeCheck) {
+                    bson = push(shortTermFields.getCheckpointsLabel(), checkpoint);
                 } else {
-                    Bson pop = popFirst(shortTermFields.getCheckpointsLabel());
-                    Publisher<UpdateResult> result = this.collection.updateOne(filter, pop);
-                    future = Mono.from(result).then().toFuture();
+                    bson = popFirst(shortTermFields.getCheckpointsLabel());
                 }
-            }
-            return future;
-        // } catch (JsonProcessingException e) {
-        //     return null;
-        // }
+                return Mono.from(this.collection.updateOne(filter, bson)).then();
+        }).toFuture();
     }
 
     /* Handles the requests for the long-term database. */
     private CompletableFuture<Void> longTermDB(GameContextDTO gameContextDTO) {
-        LongTermFields longTermFields = connectToDatabase.getLongTermFields();
+        LongTermFields longTermFields = this.connectToDatabase.getLongTermFields();
         Map<String, Integer> leaderboard = gameContextDTO.gameState().leaderboard();
-        List<CompletableFuture<Void>> futures = new ArrayList<>(leaderboard.size());
+        //List<CompletableFuture<Void>> futures = new ArrayList<>(leaderboard.size());
+        List<Mono<Void>> monos = new ArrayList<>(leaderboard.size());
+
         for (var player: leaderboard.entrySet()) {
             Bson filter = eq(longTermFields.getUsernameLabel(), player.getKey());
-            Publisher<Document> publisher = this.collection.find(filter).first();
-            Document doc = Mono.from(publisher).block();
+            List<Bson> updates = new ArrayList<>();
             
-            /* Creates a new document if the player does not exist. Otherwise it updates datas. */
-            if (doc == null || doc.isEmpty()) {
-                Document newDoc = new Document(longTermFields.getUsernameLabel(), player.getKey())
-                            .append(longTermFields.getnMatchLabel(), 1)
-                            .append(longTermFields.getnWinsLabel(), player.getKey().equals(gameContextDTO.gameState().winnerId()) ? 1 : 0)
-                            .append(longTermFields.getBestScoreLabel(), player.getValue());
-                     
-                Publisher<InsertOneResult> insertPublisher = this.collection.insertOne(newDoc);
-                futures.add(Mono.from(insertPublisher).then().toFuture());
-            } else {
-                int bestScore = (int) doc.get(longTermFields.getBestScoreLabel());
-                List<Bson> updates = new ArrayList<>();
-                if (player.getValue() > bestScore) {
-                    updates.add(set(longTermFields.getBestScoreLabel(), player.getValue()));
-                }
-                if (player.getKey().equals(gameContextDTO.gameState().winnerId())) {
-                    updates.add(inc(longTermFields.getnWinsLabel(), 1));
-                }
-                updates.add(inc(longTermFields.getnMatchLabel(), 1));
-                futures.add(Mono.from(this.collection.updateOne(filter, combine(updates))).then().toFuture());
+            updates.add(inc(longTermFields.getnMatchLabel(), 1));
+            updates.add(max(longTermFields.getBestScoreLabel(), player.getValue()));
+            
+            if (player.getKey().equals(gameContextDTO.gameState().winnerId())) {
+                updates.add(inc(longTermFields.getnWinsLabel(), 1));
             }
+            
+            FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions()
+                .upsert(true)
+                .returnDocument(ReturnDocument.AFTER);
+            
+            Publisher<Document> publisher = this.collection
+                .findOneAndUpdate(filter, combine(updates), updateOptions);
+            
+            monos.add(Mono.from(publisher).then());
         }
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        return Mono.when(monos).toFuture();
+        //return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     /*

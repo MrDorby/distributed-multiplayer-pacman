@@ -32,7 +32,7 @@ public class MongoBackground {
 
     /**
      * Checks if it is necessary to delete the lobby on the db.
-     * @param lobbyId the lobby informations.
+     * @param lobby the lobby informations.
      * @param lobbyCollection the repository with the lobby collection.
      * @param lobbySize the size of the lobby.
      */

@@ -30,4 +30,4 @@ spec:
             - name: AUTHENTICATOR
               value: "http://authenticator-service:8080"
             - name: LOCAL_CLUSTER
-              value: true
+              value: "true"
