@@ -29,3 +29,5 @@ spec:
               value: "http://game-server-manager:8080"
             - name: AUTHENTICATOR
               value: "http://authenticator-service:8080"
+            - name: LOCAL_CLUSTER
+              value: true
