@@ -67,8 +67,8 @@ public class ServiceManagerImpl implements ServiceManager {
     }
 
     @Override
-    public Optional<ConnectionParameters> getGameServerParametersByToken() throws Exception {
-        return this.matchmakerClient.getServerParametersByToken(getToken());
+    public Optional<ConnectionParameters> getGameServerParametersByToken(boolean recover) throws Exception {
+        return this.matchmakerClient.getServerParametersByToken(getToken(), recover);
     }
 
     @Override

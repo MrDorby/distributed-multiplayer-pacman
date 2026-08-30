@@ -78,10 +78,11 @@ public interface ServiceManager {
     /**
      * Retrieves network connection parameters using the current user's token.
      * Useful for state recovery after a client crash.
-     *
+     * @param recover true if some crashhas occurred, so the recovery process is requeired,
+     * false otherwise (default behaviour).
      * @return the {@link ConnectionParameters} for the game server connection.
      */
-    Optional<ConnectionParameters> getGameServerParametersByToken() throws Exception;
+    Optional<ConnectionParameters> getGameServerParametersByToken(boolean recover) throws Exception;
 
     /**
      * Quits the current active match and clears state.

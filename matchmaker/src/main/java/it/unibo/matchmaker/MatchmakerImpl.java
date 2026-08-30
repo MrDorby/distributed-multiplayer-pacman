@@ -52,7 +52,9 @@ public class MatchmakerImpl implements Matchmaker{
     }
 
     private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
+    private static final String LOCAL_CLUSTER_ENV = "LOCAL_CLUSTER";
     private static final String AUTHENTICATOR_REQUEST = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/token";
+    private static final boolean IS_CLUSTER_LOCAL = Boolean.valueOf(System.getenv().get(LOCAL_CLUSTER_ENV));
     private static final Logger LOGGER = LoggerFactory.getLogger(MatchmakerImpl.class);
 
     private final HttpClient httpClient;
@@ -75,7 +77,7 @@ public class MatchmakerImpl implements Matchmaker{
             String res = this.objectMapper.writeValueAsString(response);
             return ResponseEntity.ok(res);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
 
@@ -118,15 +120,21 @@ public class MatchmakerImpl implements Matchmaker{
     @PostMapping(value = "/game_server", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getGameServer(@RequestBody GameServerRequest info) {
         try {
+            LOGGER.debug("GAME SERVER REQUEST {}", info);
             String username = checkTokenPermission(info.token());
             MatchInfoMongoDB match = getMatch(info.matchId(), username);
-            GameServerInfo gameServerInfo = this.matchmakerDetailsService.checkGameServerAvailability(match);
             ServerParameters serverParameters = match.getServerParameters();
-            if (Objects.nonNull(gameServerInfo)) {
-                serverParameters = new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort());
-                this.matchmakerDetailsService.setNewGameServerInfo(match, gameServerInfo);
+            if (info.recover()) {
+                GameServerInfo gameServerInfo = this.matchmakerDetailsService.checkGameServerAvailability(match);
+                if (Objects.nonNull(gameServerInfo)) {
+                    serverParameters = new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort());
+                    this.matchmakerDetailsService.setNewGameServerInfo(match, gameServerInfo);
+                }
             }
-            GameServerResponse response = new GameServerResponse(info.matchId(), serverParameters);
+            if (IS_CLUSTER_LOCAL) {
+                serverParameters = new ServerParameters("127.0.0.1", serverParameters.tcpPort(), serverParameters.udpPort());
+            }
+            GameServerResponse response = new GameServerResponse(Objects.isNull(info.matchId()) ? match.getId() : info.matchId(), serverParameters);
             LOGGER.debug("GAME SERVER INFOS {}", response);
             String result = this.objectMapper.writeValueAsString(response);
             return ResponseEntity.ok(result);

@@ -46,7 +46,7 @@ public class MainMenuController implements ScreenController {
         logger.info("Checking for active ongoing matches...");
         CompletableFuture.supplyAsync(() -> {
             try {
-                return serviceManager.getGameServerParametersByToken();
+                return serviceManager.getGameServerParametersByToken(true);
             } catch (Exception e) {
                 logger.warn("Failed to query ongoing match status: {}", e.getMessage(), e);
                 return Optional.empty();

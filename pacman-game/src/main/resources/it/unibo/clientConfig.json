@@ -1,5 +1,5 @@
 {
-    "authenticator": "http://localhost:60427/auth",
-    "queries": "http://localhost:49650/queries",
-    "matchmaker": "http://localhost:50748/matchmaker"
+    "authenticator": "http://localhost:56838/auth",
+    "queries": "http://localhost:64822/queries",
+    "matchmaker": "http://localhost:57270/matchmaker"
 }
