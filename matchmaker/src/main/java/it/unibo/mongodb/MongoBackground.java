@@ -69,7 +69,7 @@ public class MongoBackground {
                 LobbyInfoMongoDB.class
         );
 
-        if (updatedLobby != null && updatedLobby.getCounter() >= lobbySize) {
+        if (updatedLobby != null && (updatedLobby.getCounter() >= lobbySize || updatedLobby.getPlayers().isEmpty())) {
             lobbyCollection.deleteById(lobby.getId());
         }
         // lobby.setCounter(lobby.getCounter() + 1);

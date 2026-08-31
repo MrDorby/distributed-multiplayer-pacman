@@ -1,6 +1,5 @@
 package it.unibo;
 
-import java.lang.classfile.ClassFile.Option;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,10 +9,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-import javax.management.RuntimeErrorException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -41,7 +36,6 @@ import it.unibo.mongodb.MongoBackground;
 import it.unibo.mongodb.ShortTermLobbyRepository;
 import it.unibo.mongodb.ShortTermMatchRepository;
 
-//TODO: Check: https://dev.to/adamthedeveloper/spring-webflux-when-to-use-it-and-how-to-build-with-it-5a6e
 /**
  * 
  * Manages all the actions required by the Matchmaker.
@@ -57,7 +51,6 @@ public class MatchmakerDetailsService {
     private static final String GAMESERVER_DIR = MANAGER_URI + "/gameserver";
     private static final String CREATE_GAMESERVER_URI =  "/create";
     private static final String CHECK_GAMESERVER_URI = "/check";
-    private static final Logger LOGGER = LoggerFactory.getLogger(MatchmakerDetailsService.class);
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final RestClient client = RestClient.create();
@@ -122,7 +115,7 @@ public class MatchmakerDetailsService {
                 //lobbies.sort(Comparator.comparingInt(l -> l.getPlayers().size()));
                 Optional<LobbyInfoMongoDB> suppLobby = lobbies
                                         .stream()
-                                        .filter(l -> l.getPlayers().size() < LOBBY_SIZE)
+                                        .filter(l -> l.getPlayers().size() < LOBBY_SIZE && l.getCounter() == 0)
                                         .findFirst();
                 
                 if (suppLobby.isEmpty()) {
@@ -199,10 +192,6 @@ public class MatchmakerDetailsService {
 
         GameServerInfo gameServerInfo = mapper.readValue(result, GameServerInfo.class);
         this.mongoBackground.saveMatchInfo(match, gameServerInfo, matchCollection);
-        // match.setGameServerName(gameServerInfo.name());
-        // match.setServerParameters(
-        //     new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
-        // matchCollection.save(match);
     }
 
     /* Checks the validity of the response from the manager. */
