@@ -18,6 +18,8 @@ public class MainMenuController implements ScreenController {
     private final AppNavigator navigator;
     private final ServiceManager serviceManager;
 
+    private boolean initialMatchCheckDone = false;
+
     public MainMenuController(AppNavigator navigator, ServiceManager serviceManager) {
         this.navigator = navigator;
         this.serviceManager = serviceManager;
@@ -25,6 +27,7 @@ public class MainMenuController implements ScreenController {
         panel.setOnStats(() -> navigator.goTo(AppState.STATS));
         panel.setOnLogout(() -> {
             serviceManager.clearMatchmakingData();
+            initialMatchCheckDone = false;
             navigator.goTo(AppState.LOGIN);
         });
     }
@@ -36,7 +39,10 @@ public class MainMenuController implements ScreenController {
 
     @Override
     public void onEnter() {
-        checkForOngoingMatch();
+        if (!initialMatchCheckDone) {
+            initialMatchCheckDone = true;
+            checkForOngoingMatch();
+        }
     }
 
     @Override
@@ -52,7 +58,7 @@ public class MainMenuController implements ScreenController {
                 return Optional.empty();
             }
         }).thenAcceptAsync(match -> {
-            if (match.isPresent()) {
+            if (match != null && match.isPresent()) {
                 logger.info("Ongoing match found for user! Prompting reconnection dialog");
                 MainMenuPanel.ReconnectionChoice choice = panel.showReconnectionDialog();
                 handleReconnectionChoice(choice);
@@ -67,7 +73,7 @@ public class MainMenuController implements ScreenController {
             logger.info("Reconnecting user to ongoing match...");
             navigator.goTo(AppState.IN_GAME);
         } else {
-            logger.info("User declined reconnection. Leaving match for good...");
+            logger.info("User declined reconnection. Leaving match...");
             CompletableFuture.runAsync(() -> {
                 try {
                     serviceManager.quitMatch();
