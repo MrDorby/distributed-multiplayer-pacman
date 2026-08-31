@@ -1,5 +1,11 @@
 package it.unibo.mongodb;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -12,22 +18,31 @@ import it.unibo.dto.GameServerInfo;
 @Service
 public class MongoBackground {
     
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
     /**
      * It saves the match informations on db.
      * @param match the object to store on the db.
      * @param gameServerInfo the response of the GameServerManager.
      * @param matchCollection the match repository.
      */
-    @Async
+    @Async("threadPoolExecutor")
     public void saveMatchInfo(
         MatchInfoMongoDB match,
         GameServerInfo gameServerInfo,
         ShortTermMatchRepository matchCollection) {
 
-        match.setGameServerName(gameServerInfo.name());
-        match.setServerParameters(
-            new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
-        matchCollection.save(match);
+        Query query = new Query(Criteria.where("id").is(match.getId()));
+        Update update = new Update()
+            .set("gameServerName", gameServerInfo.name())
+            .set("serverParameters", new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
+        
+        mongoTemplate.updateFirst(query, update, MatchInfoMongoDB.class);
+        // match.setGameServerName(gameServerInfo.name());
+        // match.setServerParameters(
+        //     new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
+        // matchCollection.save(match);
     }
 
     /**
@@ -36,16 +51,32 @@ public class MongoBackground {
      * @param lobbyCollection the repository with the lobby collection.
      * @param lobbySize the size of the lobby.
      */
-    @Async
+    @Async("threadPoolExecutor")
     public void checkLobbyToDelete(
         LobbyInfoMongoDB lobby, 
         ShortTermLobbyRepository lobbyCollection,
         int lobbySize) {
-        lobby.setCounter(lobby.getCounter() + 1);
-        lobbyCollection.save(lobby);
-        if (lobby.getCounter() >= lobbySize) {
+        
+        Query query = new Query(Criteria.where("id").is(lobby.getId()));
+        Update update = new Update()
+            .inc("counter", 1);
+        
+        LobbyInfoMongoDB updatedLobby = mongoTemplate
+            .findAndModify(
+                query, 
+                update, 
+                FindAndModifyOptions.options().returnNew(true), 
+                LobbyInfoMongoDB.class
+        );
+
+        if (updatedLobby != null && updatedLobby.getCounter() >= lobbySize) {
             lobbyCollection.deleteById(lobby.getId());
         }
+        // lobby.setCounter(lobby.getCounter() + 1);
+        // lobbyCollection.save(lobby);
+        // if (lobby.getCounter() >= lobbySize) {
+        //     lobbyCollection.deleteById(lobby.getId());
+        // }
     }
 
     /**
@@ -54,13 +85,21 @@ public class MongoBackground {
      * @param info the new information about the GameServer.
      * @param repository the short term repository, matches collection.
      */
-    @Async
+    @Async("threadPoolExecutor")
     public void saveNewGameServerInfo(
         MatchInfoMongoDB match, 
         GameServerInfo info,
         ShortTermMatchRepository repository) {
-        match.setGameServerName(info.name());
-        match.setServerParameters(new ServerParameters(info.ip(), info.tcpPort(), info.udpPort()));
-        repository.save(match);
+        
+        Query query = new Query(Criteria.where("id").is(match.getId()));
+        Update update = new Update()
+            .set("gameServerName", info.name())
+            .set("serverParameters", new ServerParameters(info.ip(), info.tcpPort(), info.udpPort()));
+        
+        mongoTemplate.updateFirst(query, update, MatchInfoMongoDB.class);
+        // mongoTemplate.updateFirst(query, update, MatchInfoMongoDB.class);
+        // match.setGameServerName(info.name());
+        // match.setServerParameters(new ServerParameters(info.ip(), info.tcpPort(), info.udpPort()));
+        // repository.save(match);
     }
 }

@@ -1,5 +1,7 @@
 package it.unibo.matchmaker;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -19,7 +21,7 @@ public interface Matchmaker {
      * @return a Response containing the type and the specific identifier.
      * Type WAITING will give a lobbyId, while Type FOUND will give matchId.
      */
-    ResponseEntity<String> joinLobby(@RequestBody JoinLobbyRequest join);
+    CompletableFuture<ResponseEntity<String>> joinLobby(@RequestBody JoinLobbyRequest join);
 
     /**
      * Call to let the user to be deleted from the lobby queue.
@@ -33,7 +35,7 @@ public interface Matchmaker {
      * @param info the initial request.
      * @return a Response containing the IP and ports of the GameServer.
      */
-    ResponseEntity<String> getGameServer(@RequestBody GameServerRequest info);
+    CompletableFuture<ResponseEntity<String>> getGameServer(@RequestBody GameServerRequest info);
 
     /**
      * Request to delete a match on database once it is concluded.

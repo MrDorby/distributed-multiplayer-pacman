@@ -7,10 +7,16 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+
+import javax.management.RuntimeErrorException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -45,6 +51,7 @@ public class MatchmakerDetailsService {
 
     private static final int FAILURE_RETRY = 5;
     private static final int LOBBY_SIZE = 4;
+    private static final Long TIME_LEFT_LIMIT = 30000L;
     private static final String MANAGER = "MANAGER";
     private static final String MANAGER_URI = System.getenv(MANAGER) + "/gameservermanager";
     private static final String GAMESERVER_DIR = MANAGER_URI + "/gameserver";
@@ -63,6 +70,10 @@ public class MatchmakerDetailsService {
 
     @Autowired
     private MongoBackground mongoBackground;
+
+    @Autowired
+    @Qualifier("threadPoolExecutor")
+    private Executor executor;
 
     /**
      * Find a lobby if it presents otherwise it throws an Exception.
@@ -98,27 +109,42 @@ public class MatchmakerDetailsService {
                 new JoinLobbyResponse(LobbyTypeResponse.WAITING, lobby.get().getId()) : 
                 foundResponse(lobby.get());
         }
-        List<LobbyInfoMongoDB> lobbies = lobbyCollection.findByMap(map);
-        if (lobbies.isEmpty()) {
-            List<String> players = new ArrayList<>();
-            players.add(username);
-            LobbyInfoMongoDB newLobby = new LobbyInfoMongoDB("", map, players, 0);
-            lobbyCollection.save(newLobby);
-            return new JoinLobbyResponse(LobbyTypeResponse.WAITING, newLobby.getId());
-        } else {
-            //lobbies.sort(Comparator.comparingInt(l -> l.getPlayers().size()));
-            LobbyInfoMongoDB newLobby = lobbies
-                                    .stream()
-                                    .filter(l -> l.getPlayers().size() < LOBBY_SIZE)
-                                    .findFirst()
-                                    .get();
-            
-            newLobby.getPlayers().add(username);
-            LobbyInfoMongoDB res = this.lobbyCollection.save(newLobby);
-            return res.getPlayers().size() == LOBBY_SIZE ? 
-                foundResponse(res) : 
-                new JoinLobbyResponse(LobbyTypeResponse.WAITING, res.getId());
+        int counter = 0;
+        while (counter < FAILURE_RETRY) {
+            List<LobbyInfoMongoDB> lobbies = lobbyCollection.findByMap(map);
+            if (lobbies.isEmpty()) {
+                List<String> players = new ArrayList<>();
+                players.add(username);
+                LobbyInfoMongoDB newLobby = new LobbyInfoMongoDB(null, map, players, 0);
+                lobbyCollection.save(newLobby);
+                return new JoinLobbyResponse(LobbyTypeResponse.WAITING, newLobby.getId());
+            } else {
+                //lobbies.sort(Comparator.comparingInt(l -> l.getPlayers().size()));
+                Optional<LobbyInfoMongoDB> suppLobby = lobbies
+                                        .stream()
+                                        .filter(l -> l.getPlayers().size() < LOBBY_SIZE)
+                                        .findFirst();
+                
+                if (suppLobby.isEmpty()) {
+                    counter++;
+                    continue;
+                }
+                LobbyInfoMongoDB targetLobby = suppLobby.get();
+                targetLobby.getPlayers().add(username);
+                try {
+                    LobbyInfoMongoDB res = this.lobbyCollection.save(targetLobby);
+                    return res.getPlayers().size() == LOBBY_SIZE ? 
+                        foundResponse(res) : 
+                        new JoinLobbyResponse(LobbyTypeResponse.WAITING, res.getId());   
+                } catch (OptimisticLockingFailureException e) {
+                    counter++;
+                    if (counter < FAILURE_RETRY) {
+                        Thread.sleep(500);
+                    }
+                }
+            }
         }
+        throw new Exception("No lobby is available!");
     }
 
     /* Deals with the management of the FOUND type response. */
@@ -129,8 +155,8 @@ public class MatchmakerDetailsService {
                 createGameServerRequest(match, lobby.getMap());
                 return new JoinLobbyResponse(LobbyTypeResponse.FOUND, match.getId());
             } catch (Exception e) {
-                if (e instanceof DuplicateKeyException) {
-                    return checkDuplicaKeyException(lobby.getId());
+                if (e instanceof DuplicateKeyException || e instanceof OptimisticLockingFailureException) {
+                    return checkDBException(lobby.getId());
                 }
                 throw new Exception(e.getMessage());
             }
@@ -199,12 +225,15 @@ public class MatchmakerDetailsService {
     }
 
     /* Deals with the management of the DuplicateKeyException thrown when a match with the existing lobbyId is inserted. */
-    private JoinLobbyResponse checkDuplicaKeyException(String lobbyId) throws Exception {
+    private JoinLobbyResponse checkDBException(String lobbyId) throws Exception {
         int counter = 0;
         while (counter < FAILURE_RETRY) {
-            String matchId = this.lobbyCollection.findById(lobbyId).get().getMatchId();
-            if (Objects.nonNull(matchId) && !matchId.isBlank()) {
-                return new JoinLobbyResponse(LobbyTypeResponse.FOUND, matchId);
+            Optional<LobbyInfoMongoDB> lobby = this.lobbyCollection.findById(lobbyId);
+            if (lobby.isPresent()) {
+                String matchId = lobby.get().getMatchId();
+                if (Objects.nonNull(matchId) && !matchId.isBlank()) {
+                    return new JoinLobbyResponse(LobbyTypeResponse.FOUND, matchId);
+                }   
             }
             Thread.sleep(500);
             counter++;
@@ -216,19 +245,19 @@ public class MatchmakerDetailsService {
      * Returns the information for the specified match.
      * @param matchId the identifier of the match.
      * @return the MatchInfoMongoDB when it exists or throws an Exception because the match is not in the database.  
-     * @throws Exception
      */
-    public MatchInfoMongoDB getMatchById(String matchId) throws Exception {
-        MatchInfoMongoDB match = this.matchCollection
+    public CompletableFuture<MatchInfoMongoDB> getMatchById(String matchId) {
+        return CompletableFuture.supplyAsync(() -> {
+            MatchInfoMongoDB match = this.matchCollection
             .findById(matchId)
             .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
-        return Objects.isNull(match.getGameServerName()) || Objects.isNull(match.getServerParameters()) ? 
-            getMatchInfo(match) : match;
-        //return lobby.isEmpty() ? getMatchInfo(match) : match;
+            return Objects.isNull(match.getGameServerName()) || Objects.isNull(match.getServerParameters()) ? 
+                getMatchInfo(match) : match;
+        }, executor);
     }
 
     /* Returns the match info once the GameServer infos are inserted. */
-    private MatchInfoMongoDB getMatchInfo(MatchInfoMongoDB match) throws InterruptedException {
+    private MatchInfoMongoDB getMatchInfo(MatchInfoMongoDB match) {
         LobbyInfoMongoDB lobby = this.lobbyCollection.findByMatchId(match.getId()).orElseThrow(() -> new NoSuchElementException("MatchId not in the Lobby!"));
         int counter = 0;
         while (counter < FAILURE_RETRY) {
@@ -240,7 +269,12 @@ public class MatchmakerDetailsService {
                     return match;
                 }
             }
-            Thread.sleep(500);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
             counter++;
         }
         throw new NoSuchElementException("MatchId not in the Lobby!");
@@ -252,16 +286,17 @@ public class MatchmakerDetailsService {
      * @return the last match joined.
      * @throws Exception
      */
-    public MatchInfoMongoDB getMatchByToken(String username) throws Exception {
-        MatchInfoMongoDB match = matchCollection
+    public CompletableFuture<MatchInfoMongoDB> getMatchByToken(String username) throws Exception {
+        return CompletableFuture.supplyAsync(() -> {
+            MatchInfoMongoDB match = matchCollection
             .findByUsername(username)
             .stream()
-            .sorted((x, y) -> Long.compare(x.getTimeOfCreation(), y.getTimeOfCreation()))
+            .sorted((x, y) -> Long.compare(y.getTimeOfCreation(), x.getTimeOfCreation()))
             .findFirst()
             .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
-        return Objects.isNull(match.getGameServerName()) || Objects.isNull(match.getServerParameters()) ? 
-            getMatchInfo(match) : match;
-        //return lobby.isEmpty() ? getMatchInfo(match) : match;
+            return Objects.isNull(match.getGameServerName()) || Objects.isNull(match.getServerParameters()) ? 
+                getMatchInfo(match) : match;
+        }, executor);
     }
 
     /**
@@ -290,7 +325,10 @@ public class MatchmakerDetailsService {
     public GameServerInfo checkGameServerAvailability(MatchInfoMongoDB match) throws Exception {
         Long timeLeft;
         try {
-            timeLeft = this.matchCollection.getTimeLeft(match.getId()).orElse(Long.MAX_VALUE);   
+            timeLeft = this.matchCollection.getTimeLeft(match.getId()).orElse(Long.MAX_VALUE);
+            if (timeLeft <= TIME_LEFT_LIMIT) {
+                return null;
+            }  
         } catch (MappingException e) {
             timeLeft = Long.MAX_VALUE;
         }

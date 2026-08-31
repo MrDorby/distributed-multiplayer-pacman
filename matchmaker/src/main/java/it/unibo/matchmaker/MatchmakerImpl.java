@@ -6,6 +6,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.net.http.HttpResponse;
 
 import org.slf4j.Logger;
@@ -69,16 +70,18 @@ public class MatchmakerImpl implements Matchmaker{
 
     @Override
     @PostMapping(value = "/join_lobby", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> joinLobby(@RequestBody JoinLobbyRequest join) {
-        try {
-            String token = join.token();
-            String username = checkTokenPermission(token);
-            JoinLobbyResponse response = this.matchmakerDetailsService.checkForLobby(username, join.map());
-            String res = this.objectMapper.writeValueAsString(response);
-            return ResponseEntity.ok(res);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(e.getMessage());
-        }
+    public CompletableFuture<ResponseEntity<String>> joinLobby(@RequestBody JoinLobbyRequest join) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String token = join.token();
+                String username = checkTokenPermission(token);
+                JoinLobbyResponse response = this.matchmakerDetailsService.checkForLobby(username, join.map());
+                String res = this.objectMapper.writeValueAsString(response);
+                return ResponseEntity.ok(res);
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().body(e.getMessage());
+            }
+        });
     }
 
     @Override
@@ -118,33 +121,37 @@ public class MatchmakerImpl implements Matchmaker{
     
     @Override
     @PostMapping(value = "/game_server", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> getGameServer(@RequestBody GameServerRequest info) {
-        try {
-            LOGGER.debug("GAME SERVER REQUEST {}", info);
-            String username = checkTokenPermission(info.token());
-            MatchInfoMongoDB match = getMatch(info.matchId(), username);
-            ServerParameters serverParameters = match.getServerParameters();
-            if (info.recover()) {
-                GameServerInfo gameServerInfo = this.matchmakerDetailsService.checkGameServerAvailability(match);
-                if (Objects.nonNull(gameServerInfo)) {
-                    serverParameters = new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort());
-                    this.matchmakerDetailsService.setNewGameServerInfo(match, gameServerInfo);
+    public CompletableFuture<ResponseEntity<String>> getGameServer(@RequestBody GameServerRequest info) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                LOGGER.debug("GAME SERVER REQUEST {}", info);
+                String username = checkTokenPermission(info.token());
+                MatchInfoMongoDB match = getMatch(info.matchId(), username).join();
+                ServerParameters serverParameters = match.getServerParameters();
+                if (info.recover()) {
+                    GameServerInfo gameServerInfo = this.matchmakerDetailsService.checkGameServerAvailability(match);
+                    if (Objects.nonNull(gameServerInfo)) {
+                        serverParameters = new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort());
+                        this.matchmakerDetailsService.setNewGameServerInfo(match, gameServerInfo);
+                    } else {
+                        serverParameters = null;
+                    }
                 }
+                if (IS_CLUSTER_LOCAL) {
+                    serverParameters = new ServerParameters("127.0.0.1", serverParameters.tcpPort(), serverParameters.udpPort());
+                }
+                GameServerResponse response = new GameServerResponse(Objects.isNull(info.matchId()) ? match.getId() : info.matchId(), serverParameters);
+                LOGGER.debug("GAME SERVER INFOS {}", response);
+                String result = this.objectMapper.writeValueAsString(response);
+                return ResponseEntity.ok(result);
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatusCode.valueOf(500)).body(e.getMessage());
             }
-            if (IS_CLUSTER_LOCAL) {
-                serverParameters = new ServerParameters("127.0.0.1", serverParameters.tcpPort(), serverParameters.udpPort());
-            }
-            GameServerResponse response = new GameServerResponse(Objects.isNull(info.matchId()) ? match.getId() : info.matchId(), serverParameters);
-            LOGGER.debug("GAME SERVER INFOS {}", response);
-            String result = this.objectMapper.writeValueAsString(response);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatusCode.valueOf(500)).body(e.getMessage());
-        }
+        });
     }
 
     /* Retrieves the match from the specified matchId or by Token. */
-    private MatchInfoMongoDB getMatch(String matchId, String username) throws Exception {
+    private CompletableFuture<MatchInfoMongoDB> getMatch(String matchId, String username) throws Exception {
         if (matchId != null && !matchId.isBlank()) {
             return this.matchmakerDetailsService.getMatchById(matchId);
         }

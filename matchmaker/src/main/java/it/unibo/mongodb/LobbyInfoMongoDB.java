@@ -17,7 +17,7 @@ public class LobbyInfoMongoDB {
     @Id
     private String id;
 
-    @Indexed(unique = true)
+    @Indexed(unique = true, sparse = true)
     private String matchId;
     private String map;
     private List<String> players;
