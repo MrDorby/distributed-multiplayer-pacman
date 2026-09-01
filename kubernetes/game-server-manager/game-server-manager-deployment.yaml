@@ -24,6 +24,8 @@ spec:
           ports:
             - containerPort: 8080
           env:
+            - name: GAMESERVER_MANAGER_URI
+              value: "http://game-server-manager:8080"
             - name: MATCHMAKER_URI
               value: "http://matchmaker:8080"
             - name: GAMESERVER_IMAGE_NAME

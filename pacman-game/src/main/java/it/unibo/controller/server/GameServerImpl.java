@@ -60,7 +60,6 @@ public class GameServerImpl implements GameServer {
             gateway.start();
             persistenceManager.start();
             orchestrator.start();
-            //orchestrator.startHeartbeat(); TODO: remove
             lobbyManager.onServerStart();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -70,7 +69,6 @@ public class GameServerImpl implements GameServer {
     @Override
     public void stop() throws Exception {
         try {
-            //orchestrator.stopHeartbeat(); TODO: remove
             engine.stop();
             gateway.stop();
             persistenceManager.close();

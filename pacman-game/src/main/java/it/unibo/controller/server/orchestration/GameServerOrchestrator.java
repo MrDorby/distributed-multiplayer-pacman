@@ -13,7 +13,8 @@ public interface GameServerOrchestrator {
 
     /**
      * Stops the GameServer's heartbeat mechanism and signals that the GameServer is shutting down and can be
-     * deallocated.
+     * deallocated. The shutdown operation includes signaling to the GameServerManager that the associated match has
+     * ended.
      */
     void shutdown();
 }

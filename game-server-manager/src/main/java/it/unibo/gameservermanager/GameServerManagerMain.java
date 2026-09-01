@@ -8,6 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * The controller used by the GameServerManager requires the following parameters, in the form of environment
  * variables:
  * <ul>
+ *     <li>{@code GAMESERVER_MANAGER_URI} Mandatory. Specifies the absolute base URI of this service (port number
+ *     included).</li>
  *     <li>{@code MATCHMAKER_URI} Mandatory. Specifies the absolute base URI of the Matchmaker service (port number
  *     included).</li>
  *     <li>{@code MIN_TIME_LEFT} Optional. Specifies the minimum match's time left for the GameServerManager to

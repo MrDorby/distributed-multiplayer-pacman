@@ -12,6 +12,7 @@ import it.unibo.gameservermanager.dto.GameServerInitParameters;
 import it.unibo.gameservermanager.dto.GameServerStatus;
 import it.unibo.gameservermanager.instantiator.exceptions.GameServerCheckException;
 import it.unibo.gameservermanager.instantiator.exceptions.GameServerInstantiationException;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
@@ -33,6 +34,7 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
     private final String gameServerImageName;
     private final String shortTermDbUri;
     private final String longTermDbUri;
+    private final String gameServerManagerUri;
 
     public KubernetesGameServerInstantiator() {
         this.kubernetesClient = new KubernetesClientBuilder().build();
@@ -44,6 +46,10 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
                 .get();
         this.gameServerDefinitionContext = CustomResourceDefinitionContext.fromCrd(gameServerDefinition);
         Logger logger = LoggerFactory.getLogger(KubernetesGameServerInstantiator.class);
+        this.gameServerManagerUri = System.getenv("GAMESERVER_MANAGER_URI"); // TODO: IMPLEMENT CHECK ON VALIDITY OF THE URI? (SEE MATCHMAKER_URI)
+        if(this.gameServerManagerUri == null) {
+            throw new IllegalStateException("Environment variable GAMESERVER_MANAGER_URI must be set.");
+        }
         String gameServerImageName = System.getenv("GAMESERVER_IMAGE_NAME");
         this.gameServerImageName = gameServerImageName != null ? gameServerImageName : DEFAULT_GAMESERVER_IMAGE_NAME;
         logger.info("Using GameServer image: {}", this.gameServerImageName);
@@ -83,16 +89,7 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
      * @throws GameServerInstantiationException in case the GameServer is not allocated correctly.
      */
     private GameServerInfo instantiateGameServer(List<String> gameServerArgs) throws NullPointerException, GameServerInstantiationException {
-        String environmentVariablesJSON = usesRemotePersistence() ?
-                ",\"env\": [{" +
-                        "\"name\": \"SHORT_TERM_DB_URI\"," +
-                        "\"value\": \"" + this.shortTermDbUri + "\"" +
-                    "}," +
-                    "{" +
-                        "\"name\": \"LONG_TERM_DB_URI\"," +
-                        "\"value\": \"" + this.longTermDbUri + "\"" +
-                "}]"
-                : "";
+        String environmentVariablesJSON = getEnvironmentVariablesJSON();
         String gameServerJSON = "{" +
                     "\"apiVersion\": \"agones.dev/v1\"," +
                     "\"kind\": \"GameServer\"," +
@@ -148,6 +145,23 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
         final int TCPPort = gameServerUpdated.get("status", "ports", TCPPortIndex, "port");
         final int UDPPort = gameServerUpdated.get("status", "ports", UDPPortIndex, "port");
         return new GameServerInfo(gameServerName, IP, TCPPort, UDPPort);
+    }
+
+    private String getEnvironmentVariablesJSON() {
+        String dbEnvironmentVariablesJSON = ",{" +
+                "\"name\": \"SHORT_TERM_DB_URI\"," +
+                "\"value\": \"" + this.shortTermDbUri + "\"" +
+                "}," +
+                "{" +
+                "\"name\": \"LONG_TERM_DB_URI\"," +
+                "\"value\": \"" + this.longTermDbUri + "\"" +
+                "}";
+        return ",\"env\": [{" +
+                "\"name\": \"GAMESERVER_MANAGER_URI\"," +
+                "\"value\": \"" + this.gameServerManagerUri + "\"" +
+                "}" +
+                (usesRemotePersistence() ? dbEnvironmentVariablesJSON : "") +
+                "]";
     }
 
     /**

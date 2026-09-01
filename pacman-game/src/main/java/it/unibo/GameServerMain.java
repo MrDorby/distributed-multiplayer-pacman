@@ -19,7 +19,8 @@ import java.util.UUID;
  *   <li>{@code --orchestrated} : Enables cluster orchestration. To be used when deploying the GameServer on a cluster.
  *        When active, the port used to communicate with the sidecar container ({@code AGONES_SIDECAR_HTTP_PORT}) can be
  *        set dynamically via an environment variable. If no variable is specified, this parameter is set by default
- *        to port 9358.</li>
+ *        to port 9358. The usage of this option also requires specifying the GameServerManager's URI, through the
+ *        environment variable {@code GAMESERVER_MANAGER_URI}. The specified value must be a valid, absolute URI.</li>
  * </ul>
  *
  * <h2>Positional Arguments</h2>
@@ -68,7 +69,7 @@ public class GameServerMain {
             builder = isRecovery ? builder.asRecovery() : builder.asWhitelisted().withMap(mapName);
             builder = isLocal ? builder.withLocalPersistence() : builder.withRemotePersistence();
             if (isOrchestrated) {
-                builder = builder.withOrchestrator(new AgonesRESTGameServerOrchestrator());
+                builder = builder.withOrchestrator(new AgonesRESTGameServerOrchestrator(matchId));
             }
             server = builder.build();
         } catch (Exception e) {
@@ -150,6 +151,8 @@ public class GameServerMain {
               - Required for Remote Persistence (default, when --local is NOT set):
                 SHORT_TERM_DB_URI       : Connection URI for snapshot storage service.
                 LONG_TERM_DB_URI        : Connection URI for results service.
+              - Mandatory when using --orchestrated:
+                GAMESERVER_MANAGER_URI : Absolute URI of the GameServerManager service (port number included).
               - Optional when using --orchestrated:
                 AGONES_SIDECAR_HTTP_PORT : Port to be used when interacting with the GameServer's sidecar container.
                 Defaults to 9358.
