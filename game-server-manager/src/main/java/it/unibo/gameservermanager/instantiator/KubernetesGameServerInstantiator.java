@@ -51,7 +51,7 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
         if(this.gameServerManagerUri == null) {
             throw new IllegalStateException("Environment variable " + GAMESERVER_MANAGER_URI_ENV_NAME + " must be set.");
         }
-        UriValidator.validateURI(this.gameServerManagerUri, GAMESERVER_MANAGER_URI_ENV_NAME); // TODO: TEST
+        UriValidator.validateURI(this.gameServerManagerUri, GAMESERVER_MANAGER_URI_ENV_NAME);
         String gameServerImageName = System.getenv("GAMESERVER_IMAGE_NAME");
         this.gameServerImageName = gameServerImageName != null ? gameServerImageName : DEFAULT_GAMESERVER_IMAGE_NAME;
         logger.info("Using GameServer image: {}", this.gameServerImageName);

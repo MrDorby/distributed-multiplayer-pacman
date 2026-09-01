@@ -37,15 +37,7 @@ public class GameServerManagerControllerImpl implements GameServerManagerControl
         if (matchmakerURIString == null) {
             throw new IllegalStateException("Environment variable " + MATCHMAKER_URI_ENV_NAME + " must be set.");
         }
-        this.matchmakerURI = UriValidator.validateURI(matchmakerURIString, MATCHMAKER_URI_ENV_NAME); // TODO: TEST
-//        try { TODO: remove
-//            this.matchmakerURI = new URI(matchmakerURIString);
-//            if (!this.matchmakerURI.isAbsolute()) {
-//                throw new IllegalArgumentException("The specified MATCHMAKER_URI is not absolute.");
-//            }
-//        } catch (URISyntaxException e) {
-//            throw new IllegalStateException("Syntax error in the specified MATCHMAKER_URI: " + e);
-//        }
+        this.matchmakerURI = UriValidator.validateURI(matchmakerURIString, MATCHMAKER_URI_ENV_NAME);
         this.instantiator = instantiator;
         this.objectMapper = new ObjectMapper();
         long minTimeLeft;
@@ -95,7 +87,7 @@ public class GameServerManagerControllerImpl implements GameServerManagerControl
                     .status(response.statusCode())
                     .body("Matchmaker's response: " + response.body());
         } catch (Exception e) {
-            throw new MatchmakerCommunicationException(e.getMessage());
+            throw new MatchmakerCommunicationException(e);
         }
     }
 }
