@@ -78,7 +78,7 @@ public class GameServerManagerControllerImpl implements GameServerManagerControl
     }
 
     @Override
-    @PostMapping("/match/ended")
+    @PostMapping(value = "/match/ended", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> matchEnded(@RequestBody String matchID) {
         final String relativeURIString = "/matchmaker/delete_match";
         this.logger.debug("Sending request at URI: {}", this.matchmakerURI.resolve(relativeURIString));

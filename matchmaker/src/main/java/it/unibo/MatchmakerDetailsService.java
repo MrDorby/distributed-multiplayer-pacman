@@ -2,6 +2,7 @@ package it.unibo;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -282,7 +283,7 @@ public class MatchmakerDetailsService {
             MatchInfoMongoDB match = matchCollection
             .findByUsername(username)
             .stream()
-            .sorted((x, y) -> Long.compare(y.getTimeOfCreation(), x.getTimeOfCreation()))
+            .sorted((x, y) -> Comparator.comparingLong(MatchInfoMongoDB::getTimeOfCreation).reversed().compare(x, y))  //Long.compare(y.getTimeOfCreation(), x.getTimeOfCreation())
             .findFirst()
             .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
             return Objects.isNull(match.getGameServerName()) || Objects.isNull(match.getServerParameters()) ? 
