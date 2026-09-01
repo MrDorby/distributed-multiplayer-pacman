@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.unibo.MatchmakerDetailsService;
 import it.unibo.dto.GameServerRequest;
 import it.unibo.dto.GameServerResponse;
+import it.unibo.dto.DeleteMatchDTO;
 import it.unibo.dto.GameServerInfo;
 import it.unibo.dto.JoinLobbyRequest;
 import it.unibo.dto.JoinLobbyResponse;
@@ -160,8 +161,13 @@ public class MatchmakerImpl implements Matchmaker{
 
     @Override
     @PostMapping(value = "/delete_match", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void deleteMatchOnDB(@RequestBody String matchId) {
+    public ResponseEntity<String> deleteMatchOnDB(@RequestBody DeleteMatchDTO deleteMatchDTO) {
+        String matchId = deleteMatchDTO.matchId();
+        if (Objects.isNull(matchId)) {
+            return ResponseEntity.status(HttpStatusCode.valueOf(400)).body("MatchId is null.");
+        }
         this.matchmakerDetailsService.deleteMatch(matchId);
+        return ResponseEntity.ok().build();
     }
 
     @Override

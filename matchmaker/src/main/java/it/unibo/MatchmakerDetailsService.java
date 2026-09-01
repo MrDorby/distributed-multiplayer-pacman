@@ -108,7 +108,7 @@ public class MatchmakerDetailsService {
             List<LobbyInfoMongoDB> lobbies = lobbyCollection
                 .findByMap(map)
                 .stream()
-                .filter(l -> l.getPlayers().size() < LOBBY_SIZE && l.getCounter() == 0)
+                .filter(l -> l.getPlayers().size() < LOBBY_SIZE && l.getCounter() == 0 && Objects.isNull(l.getMatchId()))
                 .toList();
             if (lobbies.isEmpty()) {
                 List<String> players = new ArrayList<>();

@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import it.unibo.dto.DeleteMatchDTO;
 import it.unibo.dto.GameServerRequest;
 import it.unibo.dto.JoinLobbyRequest;
 import it.unibo.dto.QuitLobbyRequest;
@@ -39,9 +40,9 @@ public interface Matchmaker {
 
     /**
      * Request to delete a match on database once it is concluded.
-     * @param matchId the identifier of the match to delete on db.
+     * @param deleteMatchDTO the identifier of the match to delete on db.
      */
-    void deleteMatchOnDB(@RequestBody String matchId);
+    ResponseEntity<String> deleteMatchOnDB(@RequestBody DeleteMatchDTO deleteMatchDTO);
     
     /**
      * Removes a player from a match if it is not anymore interested in that match.
