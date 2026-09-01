@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -18,12 +19,26 @@ public class AgonesRESTGameServerOrchestrator implements GameServerOrchestrator 
     private static final long HEALTHCHECK_PERIOD_IN_MILLIS = 2000;
 
     private final String agonesRestApiBaseUrl;
+    private final String matchId;
+    private final URI gameServerManagerUri;
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ScheduledExecutorService healthCheckExecutor = Executors.newSingleThreadScheduledExecutor();
-    // private final ExecutorService gameServerWatcherExecutor = Executors.newSingleThreadExecutor(); TODO: implement GameServer watching?
     private final Logger logger = LoggerFactory.getLogger(AgonesRESTGameServerOrchestrator.class);
 
-    public AgonesRESTGameServerOrchestrator () {
+    public AgonesRESTGameServerOrchestrator (final String matchId) {
+        this.matchId = matchId;
+        String gameServerManagerUriString = System.getenv("GAMESERVER_MANAGER_URI");
+        if (gameServerManagerUriString == null) {
+            throw new IllegalStateException("Environment variable GAMESERVER_MANAGER_URI must be set.");
+        }
+        try {
+            this.gameServerManagerUri = new URI(gameServerManagerUriString);
+            if (!this.gameServerManagerUri.isAbsolute()) {
+                throw new IllegalArgumentException("The specified GAMESERVER_MANAGER_URI is not absolute.");
+            }
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Syntax error in the specified GAMESERVER_MANAGER_URI: " + e);
+        }
         String agonesSidecarHTTPPort = System.getenv("AGONES_SIDECAR_HTTP_PORT");
         if (agonesSidecarHTTPPort == null) {
             agonesSidecarHTTPPort = AGONES_SIDECAR_DEFAULT_HTTP_PORT;
@@ -47,10 +62,10 @@ public class AgonesRESTGameServerOrchestrator implements GameServerOrchestrator 
     @Override
     public void shutdown() {
         try {
+            signalMatchEnded();
             stopHealthCheck();
             this.logger.info("Shutting down game server orchestration");
             shutdownRequest();
-            //TODO: send match ended signal to Manager
         } catch (Exception e) {
             this.logger.error(e.getMessage());
         }
@@ -88,14 +103,24 @@ public class AgonesRESTGameServerOrchestrator implements GameServerOrchestrator 
         sendAgonesAPIRequest("/health");
     }
 
+    private void signalMatchEnded() throws Exception {
+        sendAPIPostRequest(
+                this.gameServerManagerUri.resolve("/gameservermanager/match/ended"),
+                "{\"match-id\": \"" + matchId + "\"}");
+    }
+
     private void sendAgonesAPIRequest(final String path) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(agonesRestApiBaseUrl + path))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString("{}"))
-                .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = sendAPIPostRequest(URI.create(agonesRestApiBaseUrl + path), "{}");
         this.logger.debug("Response status for endpoint \"{}\": {}", path, response.statusCode()); // TODO: debug log to see response status
         // this.logger.debug(response.body()); TODO: debug log to see response
+    }
+
+    private HttpResponse<String> sendAPIPostRequest(final URI uri, final String body) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(uri)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     }
 }
