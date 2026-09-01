@@ -64,7 +64,7 @@ Another requirement is MongoDB. We can install the necessary operators with the 
 
 In the root directory of the project, execute Gradle's `build` task. This will build the jar files for every subproject.
 
-**Building the docker images**
+**Building Docker images**
 
 After building the jars, we will need to add the corresponding Docker images to Minikube's docker registry.
 This can be done by running the provided script for the specific platform from the root directory of the project.
