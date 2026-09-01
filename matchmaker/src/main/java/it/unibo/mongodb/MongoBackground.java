@@ -39,10 +39,6 @@ public class MongoBackground {
             .set("serverParameters", new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
         
         mongoTemplate.updateFirst(query, update, MatchInfoMongoDB.class);
-        // match.setGameServerName(gameServerInfo.name());
-        // match.setServerParameters(
-        //     new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort()));
-        // matchCollection.save(match);
     }
 
     /**
@@ -72,11 +68,6 @@ public class MongoBackground {
         if (updatedLobby != null && (updatedLobby.getCounter() >= lobbySize || updatedLobby.getPlayers().isEmpty())) {
             lobbyCollection.deleteById(lobby.getId());
         }
-        // lobby.setCounter(lobby.getCounter() + 1);
-        // lobbyCollection.save(lobby);
-        // if (lobby.getCounter() >= lobbySize) {
-        //     lobbyCollection.deleteById(lobby.getId());
-        // }
     }
 
     /**
@@ -97,9 +88,5 @@ public class MongoBackground {
             .set("serverParameters", new ServerParameters(info.ip(), info.tcpPort(), info.udpPort()));
         
         mongoTemplate.updateFirst(query, update, MatchInfoMongoDB.class);
-        // mongoTemplate.updateFirst(query, update, MatchInfoMongoDB.class);
-        // match.setGameServerName(info.name());
-        // match.setServerParameters(new ServerParameters(info.ip(), info.tcpPort(), info.udpPort()));
-        // repository.save(match);
     }
 }

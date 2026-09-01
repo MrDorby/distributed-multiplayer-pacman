@@ -38,6 +38,7 @@ public class MatchInfoMongoDB {
         List<String> users, 
         ServerParameters serverParameters,
         Long timeOfCreation) {
+        this.lobbyId = lobbyId;
         this.gameServerName = gameServerName;
         this.users = users;
         this.serverParameters = serverParameters;
