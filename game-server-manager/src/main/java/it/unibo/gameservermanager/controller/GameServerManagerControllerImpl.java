@@ -3,6 +3,7 @@ package it.unibo.gameservermanager.controller;
 import it.unibo.gameservermanager.controller.exceptions.MatchmakerCommunicationException;
 import it.unibo.gameservermanager.dto.*;
 import it.unibo.gameservermanager.instantiator.GameServerInstantiator;
+import it.unibo.gameservermanager.utils.UriValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -23,6 +23,7 @@ import java.net.http.HttpResponse;
 @RequestMapping("/gameservermanager")
 public class GameServerManagerControllerImpl implements GameServerManagerController {
     private static final long DEFAULT_MIN_TIME_LEFT = 5000;
+    private static final String MATCHMAKER_URI_ENV_NAME = "MATCHMAKER_URI";
 
     private final Logger logger = LoggerFactory.getLogger(GameServerManagerControllerImpl.class);
     private final GameServerInstantiator instantiator;
@@ -32,18 +33,19 @@ public class GameServerManagerControllerImpl implements GameServerManagerControl
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
     public GameServerManagerControllerImpl(GameServerInstantiator instantiator) {
-        String matchmakerURIString = System.getenv("MATCHMAKER_URI");
+        String matchmakerURIString = System.getenv(MATCHMAKER_URI_ENV_NAME);
         if (matchmakerURIString == null) {
-            throw new IllegalStateException("Environment variable MATCHMAKER_URI must be set.");
+            throw new IllegalStateException("Environment variable " + MATCHMAKER_URI_ENV_NAME + " must be set.");
         }
-        try {
-            this.matchmakerURI = new URI(matchmakerURIString);
-            if (!this.matchmakerURI.isAbsolute()) {
-                throw new IllegalArgumentException("The specified MATCHMAKER_URI is not absolute.");
-            }
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException("Syntax error in the specified MATCHMAKER_URI: " + e);
-        }
+        this.matchmakerURI = UriValidator.validateURI(matchmakerURIString, MATCHMAKER_URI_ENV_NAME); // TODO: TEST
+//        try { TODO: remove
+//            this.matchmakerURI = new URI(matchmakerURIString);
+//            if (!this.matchmakerURI.isAbsolute()) {
+//                throw new IllegalArgumentException("The specified MATCHMAKER_URI is not absolute.");
+//            }
+//        } catch (URISyntaxException e) {
+//            throw new IllegalStateException("Syntax error in the specified MATCHMAKER_URI: " + e);
+//        }
         this.instantiator = instantiator;
         this.objectMapper = new ObjectMapper();
         long minTimeLeft;

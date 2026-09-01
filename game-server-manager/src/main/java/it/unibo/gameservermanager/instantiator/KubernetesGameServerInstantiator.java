@@ -12,7 +12,7 @@ import it.unibo.gameservermanager.dto.GameServerInitParameters;
 import it.unibo.gameservermanager.dto.GameServerStatus;
 import it.unibo.gameservermanager.instantiator.exceptions.GameServerCheckException;
 import it.unibo.gameservermanager.instantiator.exceptions.GameServerInstantiationException;
-import org.jspecify.annotations.NonNull;
+import it.unibo.gameservermanager.utils.UriValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class KubernetesGameServerInstantiator implements GameServerInstantiator {
     private static final long ALLOCATION_WAITING_TIME_SECONDS = 15;
     private static final String DEFAULT_GAMESERVER_IMAGE_NAME = "pacman-game-server:latest";
+    private static final String GAMESERVER_MANAGER_URI_ENV_NAME = "GAMESERVER_MANAGER_URI";
 
     private final KubernetesClient kubernetesClient;
     private final ResourceDefinitionContext gameServerDefinitionContext;
@@ -46,10 +47,11 @@ public class KubernetesGameServerInstantiator implements GameServerInstantiator 
                 .get();
         this.gameServerDefinitionContext = CustomResourceDefinitionContext.fromCrd(gameServerDefinition);
         Logger logger = LoggerFactory.getLogger(KubernetesGameServerInstantiator.class);
-        this.gameServerManagerUri = System.getenv("GAMESERVER_MANAGER_URI"); // TODO: IMPLEMENT CHECK ON VALIDITY OF THE URI? (SEE MATCHMAKER_URI)
+        this.gameServerManagerUri = System.getenv(GAMESERVER_MANAGER_URI_ENV_NAME);
         if(this.gameServerManagerUri == null) {
-            throw new IllegalStateException("Environment variable GAMESERVER_MANAGER_URI must be set.");
+            throw new IllegalStateException("Environment variable " + GAMESERVER_MANAGER_URI_ENV_NAME + " must be set.");
         }
+        UriValidator.validateURI(this.gameServerManagerUri, GAMESERVER_MANAGER_URI_ENV_NAME); // TODO: TEST
         String gameServerImageName = System.getenv("GAMESERVER_IMAGE_NAME");
         this.gameServerImageName = gameServerImageName != null ? gameServerImageName : DEFAULT_GAMESERVER_IMAGE_NAME;
         logger.info("Using GameServer image: {}", this.gameServerImageName);
