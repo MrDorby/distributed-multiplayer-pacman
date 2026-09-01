@@ -43,17 +43,17 @@ public class MongoBackground {
 
     /**
      * Checks if it is necessary to delete the lobby on the db.
-     * @param lobby the lobby informations.
+     * @param lobbyId the lobby identifier.
      * @param lobbyCollection the repository with the lobby collection.
      * @param lobbySize the size of the lobby.
      */
     @Async("threadPoolExecutor")
     public void checkLobbyToDelete(
-        LobbyInfoMongoDB lobby, 
+        String lobbyId, 
         ShortTermLobbyRepository lobbyCollection,
         int lobbySize) {
         
-        Query query = new Query(Criteria.where("id").is(lobby.getId()));
+        Query query = new Query(Criteria.where("id").is(lobbyId));
         Update update = new Update()
             .inc("counter", 1);
         
@@ -65,8 +65,11 @@ public class MongoBackground {
                 LobbyInfoMongoDB.class
         );
 
-        if (updatedLobby != null && (updatedLobby.getCounter() >= lobbySize || updatedLobby.getPlayers().isEmpty())) {
-            lobbyCollection.deleteById(lobby.getId());
+        if (updatedLobby != null && 
+            updatedLobby.getMatchId() != null && 
+            (updatedLobby.getCounter() >= lobbySize || updatedLobby.getPlayers().isEmpty())
+        ) {
+            lobbyCollection.deleteById(lobbyId);
         }
     }
 

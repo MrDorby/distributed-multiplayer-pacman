@@ -104,7 +104,11 @@ public class MatchmakerDetailsService {
         }
         int counter = 0;
         while (counter < FAILURE_RETRY) {
-            List<LobbyInfoMongoDB> lobbies = lobbyCollection.findByMap(map);
+            List<LobbyInfoMongoDB> lobbies = lobbyCollection
+                .findByMap(map)
+                .stream()
+                .filter(l -> l.getPlayers().size() < LOBBY_SIZE && l.getCounter() == 0)
+                .toList();
             if (lobbies.isEmpty()) {
                 List<String> players = new ArrayList<>();
                 players.add(username);
@@ -115,7 +119,6 @@ public class MatchmakerDetailsService {
                 //lobbies.sort(Comparator.comparingInt(l -> l.getPlayers().size()));
                 Optional<LobbyInfoMongoDB> suppLobby = lobbies
                                         .stream()
-                                        .filter(l -> l.getPlayers().size() < LOBBY_SIZE && l.getCounter() == 0)
                                         .findFirst();
                 
                 if (suppLobby.isEmpty()) {
@@ -247,14 +250,13 @@ public class MatchmakerDetailsService {
 
     /* Returns the match info once the GameServer infos are inserted. */
     private MatchInfoMongoDB getMatchInfo(MatchInfoMongoDB match) {
-        LobbyInfoMongoDB lobby = this.lobbyCollection.findByMatchId(match.getId()).orElseThrow(() -> new NoSuchElementException("MatchId not in the Lobby!"));
         int counter = 0;
         while (counter < FAILURE_RETRY) {
             Optional<MatchInfoMongoDB> matchOpt = this.matchCollection.findById(match.getId());
             if (matchOpt.isPresent()) {
                 match = matchOpt.get();
                 if (Objects.nonNull(match.getGameServerName()) && Objects.nonNull(match.getServerParameters())) {
-                    this.mongoBackground.checkLobbyToDelete(lobby, lobbyCollection, LOBBY_SIZE);
+                    this.mongoBackground.checkLobbyToDelete(match.getLobbyId(), lobbyCollection, LOBBY_SIZE);
                     return match;
                 }
             }
