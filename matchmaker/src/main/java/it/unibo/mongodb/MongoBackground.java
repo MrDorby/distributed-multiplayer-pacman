@@ -74,6 +74,20 @@ public class MongoBackground {
     }
 
     /**
+     * Deletes the lobby on the db by the matchId.
+     * @param matchId the match identifier.
+     * @param lobbyCollection the repository with the lobby collection.
+     */
+    @Async("threadPoolExecutor")
+    public void deleteLobbyByMatchId(
+        String matchId, 
+        ShortTermLobbyRepository lobbyCollectio) {
+        
+        Query query = new Query(Criteria.where("matchId").is(matchId));
+        mongoTemplate.remove(query, LobbyInfoMongoDB.class); 
+    }
+
+    /**
      * Saves new match informations when the previous GameServer is collapsed. 
      * @param match the match to update.
      * @param info the new information about the GameServer.

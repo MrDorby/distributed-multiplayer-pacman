@@ -1,5 +1,5 @@
 {
-    "authenticator": "http://localhost:58404/auth",
-    "queries": "http://localhost:54614/queries",
-    "matchmaker": "http://localhost:65385/matchmaker"
+    "authenticator": "http://multiplayer-pacman.unibo.it:8080/auth",
+    "queries": "http://multiplayer-pacman.unibo.it:8080/queries",
+    "matchmaker": "http://multiplayer-pacman.unibo.it:8080/matchmaker"
 }

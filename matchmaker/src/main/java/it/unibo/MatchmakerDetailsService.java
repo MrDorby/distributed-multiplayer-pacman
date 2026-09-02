@@ -257,7 +257,7 @@ public class MatchmakerDetailsService {
             if (matchOpt.isPresent()) {
                 match = matchOpt.get();
                 if (Objects.nonNull(match.getGameServerName()) && Objects.nonNull(match.getServerParameters())) {
-                    this.mongoBackground.checkLobbyToDelete(match.getLobbyId(), lobbyCollection, LOBBY_SIZE);
+                    //this.mongoBackground.checkLobbyToDelete(match.getLobbyId(), lobbyCollection, LOBBY_SIZE);
                     return match;
                 }
             }
@@ -296,6 +296,7 @@ public class MatchmakerDetailsService {
      * @param matchId the identifier of the match.
      */
     public void deleteMatch(String matchId) {
+        this.mongoBackground.deleteLobbyByMatchId(matchId, lobbyCollection);
         this.matchCollection.deleteById(matchId);
     }
 
