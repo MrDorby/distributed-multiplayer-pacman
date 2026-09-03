@@ -64,13 +64,16 @@ public class MatchmakerController implements ScreenController {
         boolean matchFound = (serviceManager.getCurrentMatchId() != null);
         while (searching.get() && !matchFound) {
             updateSearchingStatus("Searching for players...");
+            Thread.sleep(1000);
             matchFound = serviceManager.checkQueueStatus();
         }
-        searching.set(false);
-        logger.info("Match found! Match ID: {}", serviceManager.getCurrentMatchId());
-        updateSearchingStatus("Match found!");
-        Thread.sleep(500);
-        SwingUtilities.invokeLater(() -> navigator.goTo(AppState.IN_GAME));
+        if (matchFound) {
+            searching.set(false);
+            logger.info("Match found! Match ID: {}", serviceManager.getCurrentMatchId());
+            updateSearchingStatus("Match found!");
+            Thread.sleep(500);
+            SwingUtilities.invokeLater(() -> navigator.goTo(AppState.IN_GAME));
+        }
     }
 
     private void cancelQueue() {
@@ -122,6 +125,8 @@ public class MatchmakerController implements ScreenController {
 
     @Override
     public void onExit() {
-        cancelQueue();
+        if (searching.get()) {
+            cancelQueue();
+        }
     }
 }
