@@ -62,7 +62,7 @@ public class GameServerManagerControllerImpl implements GameServerManagerControl
     public ResponseEntity<String> checkGameServer(@RequestBody CheckGameServerRequest checkRequest) {
         GameServerCheckResults checkResults;
         GameServerStatus gameServerStatus = this.instantiator.getGameServerStatus(checkRequest.serverName());
-        if (gameServerStatus.equals(GameServerStatus.UNHEALTHY) && checkRequest.timeLeft() >= minTimeLeft) {
+        if (mustInstantiateRecoveryGameServer(gameServerStatus, checkRequest)) {
             GameServerInfo recoveryGameServerInfo = this.instantiator.instantiateRecoveryGameServer(checkRequest.matchID());
             checkResults = new GameServerCheckResults(gameServerStatus, recoveryGameServerInfo);
         } else {
@@ -89,5 +89,18 @@ public class GameServerManagerControllerImpl implements GameServerManagerControl
         } catch (Exception e) {
             throw new MatchmakerCommunicationException(e);
         }
+    }
+
+    /**
+     * Tells whether a recovery GameServer must be instantiated or not, based on the current GameServer's status and
+     * on the request received.
+     * @param gameServerStatus the status of the current GameServer.
+     * @param checkRequest the CheckGameServer request.
+     * @return True if a recovery GameServer must be instantiated, false otherwise.
+     */
+    private boolean mustInstantiateRecoveryGameServer(GameServerStatus gameServerStatus, CheckGameServerRequest checkRequest) {
+        return (gameServerStatus.equals(GameServerStatus.UNHEALTHY) || gameServerStatus.equals(GameServerStatus.NOT_FOUND))
+                && checkRequest.timeLeft() >= minTimeLeft;
+
     }
 }

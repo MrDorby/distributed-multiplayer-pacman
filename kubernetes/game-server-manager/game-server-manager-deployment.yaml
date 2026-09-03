@@ -30,8 +30,8 @@ spec:
               value: "http://matchmaker:8080"
             - name: GAMESERVER_IMAGE_NAME
               value: "pacman-game:latest"
-            #- name: MIN_TIME_LEFT
-            #  value: 8000
+            - name: MIN_TIME_LEFT
+              value: "30000"
             - name: SHORT_TERM_DB_URI
               value: "mongodb://admin:password@shortdb-mongo-0.shortdb-mongo-svc.shortdb.svc.cluster.local:27017,shortdb-mongo-1.shortdb-mongo-svc.shortdb.svc.cluster.local:27017/shortDB?authSource=admin&replicaSet=shortdb-mongo"
             - name: LONG_TERM_DB_URI
