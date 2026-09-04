@@ -27,8 +27,8 @@ public interface GameServerManagerController {
 
     /**
      * Checks the current status of the GameServer associated to the specified match.
-     * If the GameServer's status is {@code HEALTHY} or {@code NOT_FOUND}, does nothing.
-     * If the status is {@code UNHEALTHY}, decides whether to instantiate a recovery GameServer to take its place,
+     * If the GameServer's status is {@code HEALTHY}, does nothing.
+     * If the status is {@code UNHEALTHY} or {@code NOT_FOUND}, decides whether to instantiate a recovery GameServer to take its place,
      * based on the match's time left. If a recovery GameServer has been instantiated, also returns the information
      * about it.<br>
      * Reachable at endpoint: {@code /gameservermanager/gameserver/check}.
