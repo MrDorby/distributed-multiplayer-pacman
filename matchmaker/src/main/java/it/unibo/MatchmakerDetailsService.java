@@ -365,6 +365,8 @@ public class MatchmakerDetailsService {
                     this.matchCollection.save(optMatchGet);
                     return finalServerParameters;
                 } catch (OptimisticLockingFailureException | RestClientResponseException e) {
+                    optMatchGet.setRecovery(false);
+                    this.matchCollection.save(optMatchGet);
                     return null;
                 }
             }
