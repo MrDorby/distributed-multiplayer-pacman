@@ -134,8 +134,6 @@ public class MatchmakerImpl implements Matchmaker{
                     if (Objects.nonNull(gameServerInfo)) {
                         serverParameters = new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort());
                         this.matchmakerDetailsService.setNewGameServerInfo(match, gameServerInfo);
-                    } else {
-                        serverParameters = null;
                     }
                 }
                 if (IS_CLUSTER_LOCAL) {
