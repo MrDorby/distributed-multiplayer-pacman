@@ -150,19 +150,23 @@ public class MongoDBServerConnection {
         Bson filter = eq(shortTermFields.getMatchIdLabel(), new ObjectId(matchId));
         Publisher<Document> publisher = this.collection.find(filter).first();
         return Mono.from(publisher).map(doc -> {
-            if (doc == null || doc.isEmpty()) {
+            try {
+                if (doc == null || doc.isEmpty()) {
+                    return Optional.<MatchSnapshot>empty();
+                }
+                List<Checkpoint> rawCheckpoints = (List<Checkpoint>) doc.get(shortTermFields.getCheckpointsLabel());
+                if (rawCheckpoints == null || rawCheckpoints.isEmpty()) {
+                    return Optional.<MatchSnapshot>empty();
+                }
+                if (!rawCheckpoints.isEmpty()) {
+                    Checkpoint lastItem = rawCheckpoints.getLast();
+                    MatchSnapshot matchSnapshot = new MatchSnapshot(matchId, lastItem.timestamp(), lastItem.gameContextDTO());
+                    return Optional.<MatchSnapshot>of(matchSnapshot);
+                }
+                return Optional.<MatchSnapshot>empty();
+            } catch (Exception e) {
                 return Optional.<MatchSnapshot>empty();
             }
-            List<?> rawCheckpoints = doc.get(shortTermFields.getCheckpointsLabel(), List.class);
-            if (rawCheckpoints == null || rawCheckpoints.isEmpty()) {
-                return Optional.<MatchSnapshot>empty();
-            }
-            Object lastItem = rawCheckpoints.getLast();
-            if (lastItem instanceof Checkpoint(GameContextDTO gameContextDTO, Long timestamp)) {
-                MatchSnapshot matchSnapshot = new MatchSnapshot(matchId, timestamp, gameContextDTO);
-                return Optional.<MatchSnapshot>of(matchSnapshot);
-            }
-            return Optional.<MatchSnapshot>empty();
         })
         .defaultIfEmpty(Optional.<MatchSnapshot>empty())
         .toFuture();
