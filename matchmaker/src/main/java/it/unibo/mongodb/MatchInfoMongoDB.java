@@ -24,6 +24,7 @@ public class MatchInfoMongoDB {
     private ServerParameters serverParameters;
     private Long timeOfCreation;
     private List<Checkpoint> checkpoints;
+    private boolean recovery;
 
     @Version
     private Long version;
@@ -140,5 +141,20 @@ public class MatchInfoMongoDB {
      */
     public void setCheckpoints(List<Checkpoint> checkpoints) {
         this.checkpoints = checkpoints;
+    }
+
+    /**
+     * @return if the process of recovery is on.
+     */
+    public boolean isRecovery() {
+        return recovery;
+    }
+
+    /**
+     * Sets if the process of recovery is on.
+     * @param recovery
+     */
+    public void setRecovery(boolean recovery) {
+        this.recovery = recovery;
     }
 }

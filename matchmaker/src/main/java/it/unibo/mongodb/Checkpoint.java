@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param timestamp the time of the checkpoint.
  */
 public record Checkpoint(
-    @JsonProperty("context") Object context,
-    @JsonProperty("timeLeft") Long timestamp) {
+    @JsonProperty("gamecontext") Object context,
+    @JsonProperty("timestamp") Long timestamp) {
         
 }

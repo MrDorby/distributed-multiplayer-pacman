@@ -26,7 +26,6 @@ import it.unibo.MatchmakerDetailsService;
 import it.unibo.dto.GameServerRequest;
 import it.unibo.dto.GameServerResponse;
 import it.unibo.dto.DeleteMatchDTO;
-import it.unibo.dto.GameServerInfo;
 import it.unibo.dto.JoinLobbyRequest;
 import it.unibo.dto.JoinLobbyResponse;
 import it.unibo.dto.QuitLobbyRequest;
@@ -128,15 +127,8 @@ public class MatchmakerImpl implements Matchmaker{
                 LOGGER.debug("GAME SERVER REQUEST {}", info);
                 String username = checkTokenPermission(info.token());
                 MatchInfoMongoDB match = getMatch(info.matchId(), username).join();
-                ServerParameters serverParameters = match.getServerParameters();
-                if (info.recover()) {
-                    GameServerInfo gameServerInfo = this.matchmakerDetailsService.checkGameServerAvailability(match);
-                    if (Objects.nonNull(gameServerInfo)) {
-                        serverParameters = new ServerParameters(gameServerInfo.ip(), gameServerInfo.tcpPort(), gameServerInfo.udpPort());
-                        this.matchmakerDetailsService.setNewGameServerInfo(match, gameServerInfo);
-                    }
-                }
-                if (IS_CLUSTER_LOCAL) {
+                ServerParameters serverParameters = this.matchmakerDetailsService.checkGameServerAvailability(match);
+                if (IS_CLUSTER_LOCAL && Objects.nonNull(serverParameters)) {
                     serverParameters = new ServerParameters("127.0.0.1", serverParameters.tcpPort(), serverParameters.udpPort());
                 }
                 GameServerResponse response = new GameServerResponse(Objects.isNull(info.matchId()) ? match.getId() : info.matchId(), serverParameters);

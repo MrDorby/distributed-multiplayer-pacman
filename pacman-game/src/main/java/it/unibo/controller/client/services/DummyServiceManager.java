@@ -99,7 +99,7 @@ public class DummyServiceManager implements ServiceManager {
     }
 
     @Override
-    public Optional<ConnectionParameters> getGameServerParametersByToken(boolean recover) throws Exception {
+    public Optional<ConnectionParameters> getGameServerParametersByToken() throws Exception {
         Thread.sleep(500);
         if (Math.random() > 0.5) {
             this.currentMatchId = "match_" + UUID.randomUUID().toString().substring(0, 8);

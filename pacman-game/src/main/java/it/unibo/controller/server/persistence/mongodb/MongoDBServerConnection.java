@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import it.unibo.controller.shared.network.dto.PacmanDTO;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -16,9 +15,6 @@ import org.reactivestreams.Publisher;
 
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.result.InsertOneResult;
-import com.mongodb.client.result.UpdateResult;
-import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -31,10 +27,7 @@ import it.unibo.controller.server.persistence.mongodb.MongoDBConstants.ConnectTo
 import it.unibo.controller.server.persistence.mongodb.MongoDBConstants.LongTermFields;
 import it.unibo.controller.server.persistence.mongodb.MongoDBConstants.ShortTermFields;
 import it.unibo.controller.shared.network.dto.GameContextDTO;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * MongoDBServerConnection manages the GameServer connections with the MongoDB instances.
@@ -91,7 +84,7 @@ public class MongoDBServerConnection {
         if (snapshot.matchId() == null || snapshot.matchId().isBlank()) {
             return CompletableFuture.completedFuture(null);
         } 
-        Bson filter = eq(shortTermFields.getMatchIdLabel(), snapshot.matchId());
+        Bson filter = eq(shortTermFields.getMatchIdLabel(), new ObjectId(snapshot.matchId()));
         Publisher<Document> publisher = this.collection.find(filter).first();
         return Mono.from(publisher)
             .flatMap(doc -> {
@@ -99,7 +92,7 @@ public class MongoDBServerConnection {
                 int sizeCheck = 3;
                 Bson bson;
                 if (checkpoints == null || !doc.containsKey(shortTermFields.getCheckpointsLabel())) {
-                    bson = set(shortTermFields.getCheckpointsLabel(), checkpoint);
+                    bson = set(shortTermFields.getCheckpointsLabel(), List.of(checkpoint));
                 } else if (checkpoints != null && checkpoints.size() < sizeCheck) {
                     bson = push(shortTermFields.getCheckpointsLabel(), checkpoint);
                 } else {
@@ -153,25 +146,26 @@ public class MongoDBServerConnection {
      * @return a MatchSnapshot containing all the info for the checkpoint.
      */
     public CompletableFuture<Optional<MatchSnapshot>> getCheckpoint(String matchId) {
-        return CompletableFuture.supplyAsync(() -> {
-            ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
-            Bson filter = eq(shortTermFields.getMatchIdLabel(), matchId);
-            FindPublisher<Document> publisher = (FindPublisher<Document>) this.collection.find(filter).first();
-            Document doc = Flux.from(publisher).blockLast();
+        ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
+        Bson filter = eq(shortTermFields.getMatchIdLabel(), new ObjectId(matchId));
+        Publisher<Document> publisher = this.collection.find(filter).first();
+        return Mono.from(publisher).map(doc -> {
             if (doc == null || doc.isEmpty()) {
-                return Optional.empty();
+                return Optional.<MatchSnapshot>empty();
             }
             List<?> rawCheckpoints = doc.get(shortTermFields.getCheckpointsLabel(), List.class);
             if (rawCheckpoints == null || rawCheckpoints.isEmpty()) {
-                return Optional.empty();
+                return Optional.<MatchSnapshot>empty();
             }
             Object lastItem = rawCheckpoints.getLast();
             if (lastItem instanceof Checkpoint(GameContextDTO gameContextDTO, Long timestamp)) {
                 MatchSnapshot matchSnapshot = new MatchSnapshot(matchId, timestamp, gameContextDTO);
-                return Optional.of(matchSnapshot);
+                return Optional.<MatchSnapshot>of(matchSnapshot);
             }
-            return Optional.empty();
-        });
+            return Optional.<MatchSnapshot>empty();
+        })
+        .defaultIfEmpty(Optional.<MatchSnapshot>empty())
+        .toFuture();
     }
 
     /**
@@ -180,19 +174,20 @@ public class MongoDBServerConnection {
      * @return a List of Strings containing the users identifiers.
      */
     public CompletableFuture<Optional<List<String>>> retrievePlayers(String matchId) {
-        return CompletableFuture.supplyAsync(() -> {
-            ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
-            Bson filter = eq(shortTermFields.getMatchIdLabel(), new ObjectId(matchId));
-            Publisher<Document> publisher = this.collection.find(filter).first();
-            Document doc = Mono.from(publisher).block();
+        ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
+        Bson filter = eq(shortTermFields.getMatchIdLabel(), new ObjectId(matchId));
+        Publisher<Document> publisher = this.collection.find(filter).first();
+        return Mono.from(publisher).map(doc -> {
             if (doc == null || doc.isEmpty()) {
-                return Optional.empty();
+                return Optional.<List<String>>empty();
             }
             List<String> players = (List<String>) doc.get(shortTermFields.getUserListLabel());
             if (players == null || players.isEmpty()) {
-                return Optional.empty();
+                return Optional.<List<String>>empty();
             }
             return Optional.of(players);
-        });
+        })
+        .defaultIfEmpty(Optional.<List<String>>empty())
+        .toFuture();
     }
 }

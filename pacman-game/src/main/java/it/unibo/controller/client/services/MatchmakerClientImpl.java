@@ -78,7 +78,7 @@ public class MatchmakerClientImpl implements MatchmakerClient {
             throw new IllegalStateException("Cannot check status: No active queue");
         }
         if (this.currentMatchId != null) return true;
-        var payload = objectMapper.writeValueAsString(new GameServerRequest(userToken, null, false));
+        var payload = objectMapper.writeValueAsString(new GameServerRequest(userToken, null));
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(gameServerUrl))
                 .header("Content-Type", "application/json")
@@ -100,16 +100,16 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         if (matchId == null || matchId.isBlank()) {
             throw new IllegalArgumentException("matchId cannot be null or blank");
         }
-        return fetchServerParameters(userToken, matchId, false);
+        return fetchServerParameters(userToken, matchId);
     }
 
     @Override
-    public Optional<ConnectionParameters> getServerParametersByToken(String userToken, boolean recover) throws Exception {
-        return fetchServerParameters(userToken, null, recover);
+    public Optional<ConnectionParameters> getServerParametersByToken(String userToken) throws Exception {
+        return fetchServerParameters(userToken, null);
     }
 
-    private Optional<ConnectionParameters> fetchServerParameters(String userToken, String matchId, boolean recover) throws Exception {
-        var payload = objectMapper.writeValueAsString(new GameServerRequest(userToken, matchId, recover));
+    private Optional<ConnectionParameters> fetchServerParameters(String userToken, String matchId) throws Exception {
+        var payload = objectMapper.writeValueAsString(new GameServerRequest(userToken, matchId));
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(gameServerUrl))
                 .header("Content-Type", "application/json")
@@ -172,8 +172,7 @@ public class MatchmakerClientImpl implements MatchmakerClient {
 
     private record GameServerRequest(
             @JsonProperty("token") String token,
-            @JsonProperty("match") String matchId,
-            @JsonProperty("recover") boolean recover
+            @JsonProperty("match") String matchId
     ) {}
 
     private record RemoveRequest(

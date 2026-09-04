@@ -51,7 +51,7 @@ public class GameControllerWithDirectConnection extends AbstractGameController {
                 // If local matchId was lost/null, query backend by session token
                 if (parameters.isEmpty()) {
                     logger.info("Match ID parameter lookup returned empty. Attempting recovery via user token...");
-                    parameters = serviceManager.getGameServerParametersByToken(false);
+                    parameters = serviceManager.getGameServerParametersByToken();
                 }
                 if (parameters.isPresent()) {
                     logger.info("Player {} is connected to GameServer with parameters: {}", serviceManager.getUsername(), parameters.get());

@@ -7,11 +7,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * the GameServer it wants to connect with. 
  * @param token of the player.
  * @param matchId the identifier of the match.
- * @param recover true if the recovery process is on and false otherwise (default case).
  */
 public record GameServerRequest(
     @JsonProperty("token") String token,
-    @JsonProperty("match") String matchId,
-    @JsonProperty("recover") boolean recover) {
+    @JsonProperty("match") String matchId) {
     
 }

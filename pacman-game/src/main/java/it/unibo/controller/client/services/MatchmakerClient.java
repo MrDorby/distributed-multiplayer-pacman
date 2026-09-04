@@ -43,10 +43,9 @@ public interface MatchmakerClient {
     /**
      * Fetches game server connection credentials directly using the user's token.
      * @param userToken the authenticated user's token.
-     * @param recover true if the recovery process is needed and false otherwise.
      * @return Optional containing parameters if match exists, or Optional.empty() if no active match is found.
      */
-    Optional<ConnectionParameters> getServerParametersByToken(String userToken, boolean recover) throws Exception;
+    Optional<ConnectionParameters> getServerParametersByToken(String userToken) throws Exception;
 
     /**
      * Leaves an in-progress match using the current match state.

@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DuplicateKeyException;
@@ -34,6 +35,7 @@ import it.unibo.dto.ManagerCreateServer;
 import it.unibo.mongodb.LobbyInfoMongoDB;
 import it.unibo.mongodb.MatchInfoMongoDB;
 import it.unibo.mongodb.MongoBackground;
+import it.unibo.mongodb.ServerParameters;
 import it.unibo.mongodb.ShortTermLobbyRepository;
 import it.unibo.mongodb.ShortTermMatchRepository;
 
@@ -315,7 +317,7 @@ public class MatchmakerDetailsService {
      * @return the information of the new GameServer to connect with or null if it's ok.
      * @throws Exception
      */
-    public GameServerInfo checkGameServerAvailability(MatchInfoMongoDB match) throws Exception {
+    public ServerParameters checkGameServerAvailability(MatchInfoMongoDB match) throws Exception {
         Long timeLeft;
         try {
             timeLeft = this.matchCollection.getTimeLeft(match.getId()).orElse(Long.MAX_VALUE);
@@ -325,22 +327,47 @@ public class MatchmakerDetailsService {
         } catch (MappingException e) {
             timeLeft = Long.MAX_VALUE;
         }
-        GameServerCheckRequest gameServerRequest = new GameServerCheckRequest(match.getId(), match.getGameServerName(), timeLeft);
-        String request = mapper.writeValueAsString(gameServerRequest);
 
-        ResponseEntity<String> result = RestClient
-            .create()
-            .post()
-            .uri(new URI(GAMESERVER_DIR + CHECK_GAMESERVER_URI))
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)
-            .body(request)
-            .retrieve()
-            .toEntity(String.class);
+        Optional<MatchInfoMongoDB> optMatch = this.matchCollection.findById(match.getId());
+        if (optMatch.isPresent()) {
+            MatchInfoMongoDB optMatchGet = optMatch.get();
+            if (!optMatchGet.isRecovery()) {
+                optMatchGet.setRecovery(true);
+                try {
+                    this.matchCollection.save(optMatchGet);
+                
+                    GameServerCheckRequest gameServerRequest = new GameServerCheckRequest(optMatchGet.getId(), optMatchGet.getGameServerName(), timeLeft);
+                    String request = mapper.writeValueAsString(gameServerRequest);
 
-        GameServerCheckResponse checkResponse = mapper.readValue(result.getBody(), GameServerCheckResponse.class);
-        if (checkResponse.status() == GameServerStatus.UNHEALTHY) {
-            return checkResponse.serverInfo();
+                    ResponseEntity<String> result = RestClient
+                        .create()
+                        .post()
+                        .uri(new URI(GAMESERVER_DIR + CHECK_GAMESERVER_URI))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .body(request)
+                        .retrieve()
+                        .toEntity(String.class);
+
+                    GameServerCheckResponse checkResponse = mapper.readValue(result.getBody(), GameServerCheckResponse.class);
+                    ServerParameters finalServerParameters = null;
+                    if (checkResponse.status() == GameServerStatus.UNHEALTHY || checkResponse.status() == GameServerStatus.NOT_FOUND) {
+                        setNewGameServerInfo(match, checkResponse.serverInfo());
+                        finalServerParameters = new ServerParameters(
+                            checkResponse.serverInfo().ip(), 
+                            checkResponse.serverInfo().tcpPort(), 
+                            checkResponse.serverInfo().udpPort());
+                    }
+                    if (checkResponse.status() == GameServerStatus.HEALTHY) {
+                        finalServerParameters = optMatchGet.getServerParameters();
+                    }
+                    optMatchGet.setRecovery(false);
+                    this.matchCollection.save(optMatchGet);
+                    return finalServerParameters;
+                } catch (OptimisticLockingFailureException | RestClientResponseException e) {
+                    return null;
+                }
+            }
         }
         return null;
     }
