@@ -27,24 +27,15 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO: make a general class for both clients and auth?
 /**
  * Handles the generation of the RSA key pair and save on files, if not done yet, the two keys.
  */
 public class KeyManager {
     
-    // TODO: FILE FOR CONSTANTS.
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyPairGenerator.class);
-    //private static final String PATH = "authenticator-service" + File.separator + "keys" + File.separator;
-    // private static final String PATH1 = "authenticator-service";  //TODO: define the correct path for the keys.
-    // private static final String PATH2 = "src";
-    // private static final String PATH3 = "main";
-    // private static final String PATH4 = "resources";
-    // private static final String PATH5 = "keys";
     private static final String PATH = "keys";
     private static final String PUBLIC_KEY_FILE = "public_key.der";
     private static final String PRIVATE_KEY_FILE = "private_key.der";
-    // TODO: For the variable on top define them better?
 
     private static final String RSA_ALGORITHM = "RSA";
     private static final String AES_ALGORITHM = "AES";
@@ -213,7 +204,7 @@ public class KeyManager {
 }
 
 
-// TODO: EXAMPLE
+// EXAMPLE
 // PublicKey public_key = CryptographyHelper.ellipticCurveCrypto().getPublic();     
 // System.out.println("PUBLIC KEY::" + public_key);
 

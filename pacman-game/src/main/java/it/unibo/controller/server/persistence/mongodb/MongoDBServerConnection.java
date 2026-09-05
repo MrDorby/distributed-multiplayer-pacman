@@ -8,13 +8,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.bson.BsonDocumentReader;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
-import org.bson.codecs.DecoderContext;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -53,6 +53,7 @@ public class MongoDBServerConnection {
         Long timestamp) {
     }
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MongoDBServerConnection.class);
     private final MongoClient mongoClient;
     private final MongoDatabase mongoDatabase;
     private final MongoCollection<Document> collection;
@@ -116,33 +117,12 @@ public class MongoDBServerConnection {
         } catch (JsonProcessingException e) {
             return CompletableFuture.completedFuture(null);
         }
-
-        // Publisher<Document> publisher = this.collection.find(filter).first();
-        // return Mono.from(publisher)
-        //     .flatMap(doc -> {
-        //         List<Checkpoint> checkpoints = doc.getList(shortTermFields.getCheckpointsLabel(), Checkpoint.class);
-        //         int sizeCheck = 3;
-        //         List<Bson> bson = new ArrayList<>();
-        //         if (checkpoints == null || !doc.containsKey(shortTermFields.getCheckpointsLabel())) {
-        //             bson.add(set(shortTermFields.getCheckpointsLabel(), List.of(checkpoint)));
-        //         } 
-        //         if (checkpoints != null) {
-        //             if (checkpoints.size() < sizeCheck) {
-        //                 bson.add(push(shortTermFields.getCheckpointsLabel(), checkpoint));
-        //             } else {
-        //                 bson.add(popFirst(shortTermFields.getCheckpointsLabel()));
-        //                 bson.add(push(shortTermFields.getCheckpointsLabel(), checkpoint));
-        //             }
-        //         }
-        //         return Mono.from(this.collection.updateOne(filter, bson)).then();
-        // }).toFuture();
     }
 
     /* Handles the requests for the long-term database. */
     private CompletableFuture<Void> longTermDB(GameContextDTO gameContextDTO) {
         LongTermFields longTermFields = this.connectToDatabase.getLongTermFields();
         Map<String, Integer> leaderboard = gameContextDTO.gameState().leaderboard();
-        //List<CompletableFuture<Void>> futures = new ArrayList<>(leaderboard.size());
         List<Mono<Void>> monos = new ArrayList<>(leaderboard.size());
 
         for (var player: leaderboard.entrySet()) {
@@ -166,7 +146,6 @@ public class MongoDBServerConnection {
             monos.add(Mono.from(publisher).then());
         }
         return Mono.when(monos).toFuture();
-        //return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     /*
@@ -186,6 +165,7 @@ public class MongoDBServerConnection {
             return CompletableFuture.completedFuture(Optional.<MatchSnapshot>empty());
         }
 
+        LOGGER.info("MATCH ID VALUE {}", matchId);
         ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
         Bson filter = eq(shortTermFields.getMatchIdLabel(), new ObjectId(matchId));
         Publisher<Document> publisher = this.collection.find(filter).first();
@@ -194,6 +174,7 @@ public class MongoDBServerConnection {
             try {
                 List<Document> rawCheckpoints = doc.getList(shortTermFields.getCheckpointsLabel(), Document.class);
                 if (rawCheckpoints == null || rawCheckpoints.isEmpty()) {
+                    LOGGER.warn("CHECKPOINTS LIST IS NULL.");
                     return Optional.<MatchSnapshot>empty();
                 }
 
@@ -202,6 +183,7 @@ public class MongoDBServerConnection {
                 Document gameContextDoc = (Document) lastItem.get("gamecontext");
 
                 if (Objects.isNull(gameContextDoc)) {
+                    LOGGER.warn("GAME CONTEXT DOC IS NULL.");
                     return Optional.<MatchSnapshot>empty();
                 }
 
@@ -209,6 +191,7 @@ public class MongoDBServerConnection {
                 MatchSnapshot matchSnapshot = new MatchSnapshot(matchId, timestamp, gameContextDTO);
                 return Optional.<MatchSnapshot>of(matchSnapshot);    
             } catch (Exception e) {
+                LOGGER.error("EXCEPTION THROWN {}", e.getMessage());
                 return Optional.<MatchSnapshot>empty();
             }
         })

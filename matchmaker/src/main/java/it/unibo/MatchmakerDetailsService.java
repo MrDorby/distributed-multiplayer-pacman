@@ -14,6 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -66,6 +71,9 @@ public class MatchmakerDetailsService {
 
     @Autowired
     private MongoBackground mongoBackground;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     @Autowired
     @Qualifier("threadPoolExecutor")
@@ -328,50 +336,53 @@ public class MatchmakerDetailsService {
             timeLeft = Long.MAX_VALUE;
         }
 
-        Optional<MatchInfoMongoDB> optMatch = this.matchCollection.findById(match.getId());
-        if (optMatch.isPresent()) {
-            MatchInfoMongoDB optMatchGet = optMatch.get();
-            if (!optMatchGet.isRecovery()) {
-                optMatchGet.setRecovery(true);
-                try {
-                    this.matchCollection.save(optMatchGet);
-                
-                    GameServerCheckRequest gameServerRequest = new GameServerCheckRequest(optMatchGet.getId(), optMatchGet.getGameServerName(), timeLeft);
-                    String request = mapper.writeValueAsString(gameServerRequest);
+        Query query = new Query(Criteria.where("_id").is(match.getId()).and("recovery").is(false));
+        Update update = new Update().set("recovery", true);
 
-                    ResponseEntity<String> result = RestClient
-                        .create()
-                        .post()
-                        .uri(new URI(GAMESERVER_DIR + CHECK_GAMESERVER_URI))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .body(request)
-                        .retrieve()
-                        .toEntity(String.class);
+        MatchInfoMongoDB optMatchGet = mongoTemplate.findAndModify(
+            query, 
+            update, 
+            FindAndModifyOptions.options().returnNew(true),
+            MatchInfoMongoDB.class);
+        
+        if (Objects.nonNull(optMatchGet)) {
+            try {
+                GameServerCheckRequest gameServerRequest = new GameServerCheckRequest(optMatchGet.getId(), optMatchGet.getGameServerName(), timeLeft);
+                String request = mapper.writeValueAsString(gameServerRequest);
 
-                    GameServerCheckResponse checkResponse = mapper.readValue(result.getBody(), GameServerCheckResponse.class);
-                    ServerParameters finalServerParameters = null;
-                    if (checkResponse.status() == GameServerStatus.UNHEALTHY || checkResponse.status() == GameServerStatus.NOT_FOUND) {
-                        setNewGameServerInfo(match, checkResponse.serverInfo());
-                        finalServerParameters = new ServerParameters(
-                            checkResponse.serverInfo().ip(), 
-                            checkResponse.serverInfo().tcpPort(), 
-                            checkResponse.serverInfo().udpPort());
-                    }
-                    if (checkResponse.status() == GameServerStatus.HEALTHY) {
-                        finalServerParameters = optMatchGet.getServerParameters();
-                    }
-                    optMatchGet.setRecovery(false);
-                    this.matchCollection.save(optMatchGet);
-                    return finalServerParameters;
-                } catch (OptimisticLockingFailureException | RestClientResponseException e) {
-                    optMatchGet.setRecovery(false);
-                    this.matchCollection.save(optMatchGet);
-                    return null;
+                ResponseEntity<String> result = RestClient
+                    .create()
+                    .post()
+                    .uri(new URI(GAMESERVER_DIR + CHECK_GAMESERVER_URI))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(request)
+                    .retrieve()
+                    .toEntity(String.class);
+
+                GameServerCheckResponse checkResponse = mapper.readValue(result.getBody(), GameServerCheckResponse.class);
+                ServerParameters finalServerParameters = null;
+                if (checkResponse.status() == GameServerStatus.UNHEALTHY || checkResponse.status() == GameServerStatus.NOT_FOUND) {
+                    setNewGameServerInfo(match, checkResponse.serverInfo());
+                    finalServerParameters = new ServerParameters(
+                        checkResponse.serverInfo().ip(), 
+                        checkResponse.serverInfo().tcpPort(), 
+                        checkResponse.serverInfo().udpPort());
                 }
+                if (checkResponse.status() == GameServerStatus.HEALTHY) {
+                    finalServerParameters = optMatchGet.getServerParameters();
+                }
+                return finalServerParameters;
+            } catch (OptimisticLockingFailureException | RestClientResponseException e) {
+                return null;
+            } finally {
+                Query resetQuery = new Query(Criteria.where("_id").is(match.getId()));
+                Update resetUpdate = new Update().set("recovery", false);
+                mongoTemplate.updateFirst(resetQuery, resetUpdate, MatchInfoMongoDB.class);
             }
+        } else {
+            return null;
         }
-        return null;
     }
 
     /**
