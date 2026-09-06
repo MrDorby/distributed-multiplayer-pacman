@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -12,9 +13,16 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.PushOptions;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Updates;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -36,14 +44,21 @@ public class MongoDBServerConnection {
 
     /* Internal record for make it easy check the content of the short-term database. */
     public record Checkpoint(
-        @BsonProperty("gamecontext") GameContextDTO gameContextDTO, 
-        @BsonProperty("timestamp") Long timestamp) {
+        @BsonProperty("gamecontext") 
+        @JsonProperty("gamecontext")
+        GameContextDTO gameContextDTO,
+
+        @BsonProperty("timestamp") 
+        @JsonProperty("timestamp")
+        Long timestamp) {
     }
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MongoDBServerConnection.class);
     private final MongoClient mongoClient;
     private final MongoDatabase mongoDatabase;
     private final MongoCollection<Document> collection;
     private final ConnectToDatabase connectToDatabase;
+    private final ObjectMapper objectMapper;
 
     public MongoDBServerConnection(ConnectToDatabase connectToDatabase) {
         this(connectToDatabase, null);
@@ -57,6 +72,7 @@ public class MongoDBServerConnection {
         this.mongoClient = MongoClients.create(connectionUri);
         this.mongoDatabase = this.mongoClient.getDatabase(connectToDatabase.getDatabaseName());
         this.collection = this.mongoDatabase.getCollection(connectToDatabase.getCollectionName());
+        this.objectMapper = new ObjectMapper();
     }
 
     /**
@@ -79,34 +95,34 @@ public class MongoDBServerConnection {
 
     /*  Performs all the operations with the short-term database. */
     private CompletableFuture<Void> shortTermDB(MatchSnapshot snapshot) {
-        ShortTermFields shortTermFields = connectToDatabase.getShortTermFields(); 
-        Checkpoint checkpoint = new Checkpoint(snapshot.context(), snapshot.timestamp());
         if (snapshot.matchId() == null || snapshot.matchId().isBlank()) {
             return CompletableFuture.completedFuture(null);
-        } 
+        }
+
+        ShortTermFields shortTermFields = connectToDatabase.getShortTermFields(); 
+        //Checkpoint checkpoint = new Checkpoint(snapshot.context(), snapshot.timestamp()); 
         Bson filter = eq(shortTermFields.getMatchIdLabel(), new ObjectId(snapshot.matchId()));
-        Publisher<Document> publisher = this.collection.find(filter).first();
-        return Mono.from(publisher)
-            .flatMap(doc -> {
-                List<Checkpoint> checkpoints = (ArrayList<Checkpoint>) doc.get(shortTermFields.getCheckpointsLabel());
-                int sizeCheck = 3;
-                Bson bson;
-                if (checkpoints == null || !doc.containsKey(shortTermFields.getCheckpointsLabel())) {
-                    bson = set(shortTermFields.getCheckpointsLabel(), List.of(checkpoint));
-                } else if (checkpoints != null && checkpoints.size() < sizeCheck) {
-                    bson = push(shortTermFields.getCheckpointsLabel(), checkpoint);
-                } else {
-                    bson = popFirst(shortTermFields.getCheckpointsLabel());
-                }
-                return Mono.from(this.collection.updateOne(filter, bson)).then();
-        }).toFuture();
+
+        try {
+            Document gameContextDoc = Document.parse(this.objectMapper.writeValueAsString(snapshot.context()));
+            Document checkpointDoc = new Document("gamecontext", gameContextDoc)
+                .append("timestamp", snapshot.timestamp());
+
+            Bson updates = Updates.pushEach(
+                shortTermFields.getCheckpointsLabel(), 
+                List.of(checkpointDoc), 
+                new PushOptions().slice(-3));
+            
+            return Mono.from(this.collection.updateOne(filter, updates)).then().toFuture();
+        } catch (JsonProcessingException e) {
+            return CompletableFuture.completedFuture(null);
+        }
     }
 
     /* Handles the requests for the long-term database. */
     private CompletableFuture<Void> longTermDB(GameContextDTO gameContextDTO) {
         LongTermFields longTermFields = this.connectToDatabase.getLongTermFields();
         Map<String, Integer> leaderboard = gameContextDTO.gameState().leaderboard();
-        //List<CompletableFuture<Void>> futures = new ArrayList<>(leaderboard.size());
         List<Mono<Void>> monos = new ArrayList<>(leaderboard.size());
 
         for (var player: leaderboard.entrySet()) {
@@ -130,7 +146,6 @@ public class MongoDBServerConnection {
             monos.add(Mono.from(publisher).then());
         }
         return Mono.when(monos).toFuture();
-        //return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     /*
@@ -146,25 +161,37 @@ public class MongoDBServerConnection {
      * @return a MatchSnapshot containing all the info for the checkpoint.
      */
     public CompletableFuture<Optional<MatchSnapshot>> getCheckpoint(String matchId) {
+        if (Objects.isNull(matchId) || matchId.isBlank()) {
+            return CompletableFuture.completedFuture(Optional.<MatchSnapshot>empty());
+        }
+
+        LOGGER.info("MATCH ID VALUE {}", matchId);
         ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
         Bson filter = eq(shortTermFields.getMatchIdLabel(), new ObjectId(matchId));
         Publisher<Document> publisher = this.collection.find(filter).first();
+
         return Mono.from(publisher).map(doc -> {
             try {
-                if (doc == null || doc.isEmpty()) {
-                    return Optional.<MatchSnapshot>empty();
-                }
-                List<Checkpoint> rawCheckpoints = (List<Checkpoint>) doc.get(shortTermFields.getCheckpointsLabel());
+                List<Document> rawCheckpoints = doc.getList(shortTermFields.getCheckpointsLabel(), Document.class);
                 if (rawCheckpoints == null || rawCheckpoints.isEmpty()) {
+                    LOGGER.warn("CHECKPOINTS LIST IS NULL.");
                     return Optional.<MatchSnapshot>empty();
                 }
-                if (!rawCheckpoints.isEmpty()) {
-                    Checkpoint lastItem = rawCheckpoints.getLast();
-                    MatchSnapshot matchSnapshot = new MatchSnapshot(matchId, lastItem.timestamp(), lastItem.gameContextDTO());
-                    return Optional.<MatchSnapshot>of(matchSnapshot);
+
+                Document lastItem = rawCheckpoints.getLast();
+                Long timestamp = lastItem.getLong("timestamp");
+                Document gameContextDoc = (Document) lastItem.get("gamecontext");
+
+                if (Objects.isNull(gameContextDoc)) {
+                    LOGGER.warn("GAME CONTEXT DOC IS NULL.");
+                    return Optional.<MatchSnapshot>empty();
                 }
-                return Optional.<MatchSnapshot>empty();
+
+                GameContextDTO gameContextDTO = this.objectMapper.readValue(gameContextDoc.toJson(), GameContextDTO.class);
+                MatchSnapshot matchSnapshot = new MatchSnapshot(matchId, timestamp, gameContextDTO);
+                return Optional.<MatchSnapshot>of(matchSnapshot);    
             } catch (Exception e) {
+                LOGGER.error("EXCEPTION THROWN {}", e.getMessage());
                 return Optional.<MatchSnapshot>empty();
             }
         })
@@ -178,14 +205,15 @@ public class MongoDBServerConnection {
      * @return a List of Strings containing the users identifiers.
      */
     public CompletableFuture<Optional<List<String>>> retrievePlayers(String matchId) {
+        if (Objects.isNull(matchId) || matchId.isBlank()) {
+            return CompletableFuture.completedFuture(Optional.empty());
+        }
+
         ShortTermFields shortTermFields = connectToDatabase.getShortTermFields();
         Bson filter = eq(shortTermFields.getMatchIdLabel(), new ObjectId(matchId));
         Publisher<Document> publisher = this.collection.find(filter).first();
         return Mono.from(publisher).map(doc -> {
-            if (doc == null || doc.isEmpty()) {
-                return Optional.<List<String>>empty();
-            }
-            List<String> players = (List<String>) doc.get(shortTermFields.getUserListLabel());
+            List<String> players = doc.getList(shortTermFields.getUserListLabel(), String.class);
             if (players == null || players.isEmpty()) {
                 return Optional.<List<String>>empty();
             }

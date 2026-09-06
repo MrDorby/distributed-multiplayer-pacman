@@ -13,8 +13,6 @@ import java.util.Objects;
 
 import javax.crypto.Cipher;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -53,7 +51,6 @@ public class QueriesImpl implements Queries {
         @JsonProperty("token") String token) {
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(QueriesImpl.class);
     private static final String AUTHENTICATOR_ENV = "AUTHENTICATOR";
     private static final String AUTHENTICATOR_TOKEN = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/token";
     private static final String AUTHENTICATOR_KEYCLIENT = System.getenv().get(AUTHENTICATOR_ENV) + "/auth/keyClient";
@@ -68,7 +65,6 @@ public class QueriesImpl implements Queries {
         KeyManager.generateRSAKeys();
     }
 
-    // TODO: check https://spring.io/guides/gs/consuming-rest
     @Override
     @PostMapping(value = "/token", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> checkTokenPermission(@RequestBody String token) {

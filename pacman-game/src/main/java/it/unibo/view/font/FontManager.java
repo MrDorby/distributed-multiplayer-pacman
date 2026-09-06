@@ -20,7 +20,7 @@ public final class FontManager {
             fontStyle.close();
             return font;
         } catch (FontFormatException | IOException e) {
-            throw new IllegalArgumentException(e); //TODO: Correct exception type?
+            throw new IllegalArgumentException(e);
         }
     }
 }

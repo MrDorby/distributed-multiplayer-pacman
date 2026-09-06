@@ -8,9 +8,6 @@ import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.Update;
 import org.springframework.stereotype.Repository;
 
-//TODO: Check: 
-// https://docs.spring.io/spring-data/mongodb/reference/repositories/query-methods-details.html#repositories.query-async
-
 /**
  * 
  * The short-term repository interface used for matches informations.

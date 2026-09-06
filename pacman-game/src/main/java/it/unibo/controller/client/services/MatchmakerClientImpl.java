@@ -141,7 +141,7 @@ public class MatchmakerClientImpl implements MatchmakerClient {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         boolean success = response.statusCode() == 200;
         if (success) clearMatchmakingData();
-        return success; // TODO: NON VIENE MAI USATO IL RISULTATO, QUINDI CAMBIARE IN VOID E LANCIARE ECCEZIONE SE != 200.
+        return success;
     }
 
     @Override
