@@ -255,8 +255,14 @@ public class MatchmakerDetailsService {
             .findById(matchId)
             .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
             return Objects.isNull(match.getGameServerName()) || Objects.isNull(match.getServerParameters()) ? 
-                getMatchInfo(match) : match;
+                getMatchInfo(match) : getMatchAndRemoveLobby(match);
         }, executor);
+    }
+
+    /* Returns the current match and tries to deletes the lobby. */
+    private MatchInfoMongoDB getMatchAndRemoveLobby(MatchInfoMongoDB match) {
+        this.mongoBackground.checkLobbyToDelete(match.getLobbyId(), lobbyCollection, LOBBY_SIZE);
+        return match;
     }
 
     /* Returns the match info once the GameServer infos are inserted. */
@@ -267,8 +273,7 @@ public class MatchmakerDetailsService {
             if (matchOpt.isPresent()) {
                 match = matchOpt.get();
                 if (Objects.nonNull(match.getGameServerName()) && Objects.nonNull(match.getServerParameters())) {
-                    //this.mongoBackground.checkLobbyToDelete(match.getLobbyId(), lobbyCollection, LOBBY_SIZE);
-                    return match;
+                    getMatchAndRemoveLobby(match);
                 }
             }
             try {
@@ -297,7 +302,7 @@ public class MatchmakerDetailsService {
             .findFirst()
             .orElseThrow(() -> { throw new NoSuchElementException("Match does not exist!"); });
             return Objects.isNull(match.getGameServerName()) || Objects.isNull(match.getServerParameters()) ? 
-                getMatchInfo(match) : match;
+                getMatchInfo(match) : getMatchAndRemoveLobby(match);
         }, executor);
     }
 
@@ -306,7 +311,7 @@ public class MatchmakerDetailsService {
      * @param matchId the identifier of the match.
      */
     public void deleteMatch(String matchId) {
-        this.mongoBackground.deleteLobbyByMatchId(matchId, lobbyCollection);
+        //this.mongoBackground.deleteLobbyByMatchId(matchId, lobbyCollection);
         this.matchCollection.deleteById(matchId);
     }
 
