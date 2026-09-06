@@ -18,8 +18,6 @@ public class MainMenuController implements ScreenController {
     private final AppNavigator navigator;
     private final ServiceManager serviceManager;
 
-    private boolean initialMatchCheckDone = false;
-
     public MainMenuController(AppNavigator navigator, ServiceManager serviceManager) {
         this.navigator = navigator;
         this.serviceManager = serviceManager;
@@ -27,7 +25,6 @@ public class MainMenuController implements ScreenController {
         panel.setOnStats(() -> navigator.goTo(AppState.STATS));
         panel.setOnLogout(() -> {
             serviceManager.clearMatchmakingData();
-            initialMatchCheckDone = false;
             navigator.goTo(AppState.LOGIN);
         });
     }
@@ -39,10 +36,7 @@ public class MainMenuController implements ScreenController {
 
     @Override
     public void onEnter() {
-        if (!initialMatchCheckDone) {
-            initialMatchCheckDone = true;
-            checkForOngoingMatch();
-        }
+        checkForOngoingMatch();
     }
 
     @Override

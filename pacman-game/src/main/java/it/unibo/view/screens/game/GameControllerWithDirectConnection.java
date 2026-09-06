@@ -69,7 +69,18 @@ public class GameControllerWithDirectConnection extends AbstractGameController {
 
     @Override
     protected void handleClose() {
-        handleExitToMainMenu();
+        SwingUtilities.invokeLater(() -> {
+            int choice = JOptionPane.showConfirmDialog(
+                    screen,
+                    "Are you sure you want to leave the game? This is irreversible.",
+                    "Confirm Exit",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+            );
+            if (choice == JOptionPane.YES_OPTION) {
+                handleExitToMainMenu();
+            }
+        });
     }
 
     @Override
@@ -79,6 +90,16 @@ public class GameControllerWithDirectConnection extends AbstractGameController {
 
     private void handleExitToMainMenu() {
         super.disconnect();
+        CompletableFuture.runAsync(() -> {
+            try {
+                serviceManager.quitMatch();
+                logger.info("Successfully notified matchmaker of player exit.");
+            } catch (Exception e) {
+                logger.error("Failed to notify backend of player quitting match", e);
+            } finally {
+                serviceManager.clearMatchmakingData();
+            }
+        });
         if (navigator != null) {
             navigator.goTo(AppState.MAIN_MENU);
         }
